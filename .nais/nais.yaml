@@ -17,7 +17,7 @@ spec:
     max: 3
     cpuThresholdPercentage: 50
   prometheus:
-    enabled: false //todo
+    enabled: false
   limits:
     cpu: "200m"
     memory: "256Mi"
