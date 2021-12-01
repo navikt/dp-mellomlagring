@@ -10,12 +10,12 @@ import io.ktor.routing.routing
 fun Application.health() {
     routing {
         route("internal") {
-            get("isAlive") {
-                call.respondText("isAlive")
+            get("isalive") {
+                call.respondText("alive")
             }
 
-            get("isReady") {
-                call.respondText("isReady")
+            get("isready") {
+                call.respondText("ready")
             }
         }
     }

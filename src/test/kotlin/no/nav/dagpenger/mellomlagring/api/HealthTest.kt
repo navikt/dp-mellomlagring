@@ -12,13 +12,13 @@ internal class HealthTest {
     @Test
     fun `svarer på health tester`() {
         withTestApplication(Application::health) {
-            handleRequest(HttpMethod.Get, "internal/isAlive").apply {
-                response.content shouldBe "isAlive"
+            handleRequest(HttpMethod.Get, "internal/isalive").apply {
+                response.content shouldBe "alive"
                 response.status() shouldBe HttpStatusCode.OK
             }
 
-            handleRequest(HttpMethod.Get, "internal/isReady").apply {
-                response.content shouldBe "isReady"
+            handleRequest(HttpMethod.Get, "internal/isready").apply {
+                response.content shouldBe "ready"
                 response.status() shouldBe HttpStatusCode.OK
             }
         }
