@@ -51,49 +51,49 @@ jobs:
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-#
-#      - name: Archive NAIS yaml
-#        if: github.ref == 'refs/heads/main'
-#        uses: actions/upload-artifact@v1
-#        with:
-#          name: nais-yaml
-#          path: .nais
-#
-#  deploy-dev:
-#    name: Deploy to dev
-#    needs: [build]
-#    if: github.ref == 'refs/heads/main'
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Fetch NAIS yaml
-#        uses: actions/download-artifact@v1
-#        with:
-#          name: nais-yaml
-#          path: .nais
-#
-#      - uses: nais/deploy/actions/deploy@v1
-#        env:
-#          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-#          CLUSTER: dev-gcp
-#          RESOURCE: .nais/nais.yaml
-#          VARS: .nais/dev.yaml
-#          PRINT_PAYLOAD: true
-#
-#  deploy-prod:
-#    name: Deploy to Production
-#    needs: [deploy-dev]
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Fetch NAIS yaml
-#        uses: actions/download-artifact@v1
-#        with:
-#          name: nais-yaml
-#          path: .nais
-#
-#      - uses: nais/deploy/actions/deploy@v1
-#        env:
-#          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-#          CLUSTER: prod-gcp
-#          RESOURCE: .nais/nais.yaml
-#          VARS: .nais/prod.yaml
-#          PRINT_PAYLOAD: true
+
+      - name: Archive NAIS yaml
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v1
+        with:
+          name: nais-yaml
+          path: .nais
+
+  deploy-dev:
+    name: Deploy to dev
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch NAIS yaml
+        uses: actions/download-artifact@v1
+        with:
+          name: nais-yaml
+          path: .nais
+
+      - uses: nais/deploy/actions/deploy@v1
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/nais.yaml
+          VARS: .nais/dev.yaml
+          PRINT_PAYLOAD: true
+
+  deploy-prod:
+    name: Deploy to Production
+    needs: [deploy-dev]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch NAIS yaml
+        uses: actions/download-artifact@v1
+        with:
+          name: nais-yaml
+          path: .nais
+
+      - uses: nais/deploy/actions/deploy@v1
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/nais.yaml
+          VARS: .nais/prod.yaml
+          PRINT_PAYLOAD: true

@@ -1,0 +1,37 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: "dp-mellomlagring"
+  namespace: "teamdagpenger"
+  labels:
+    "team": "teamdagpenger"
+spec:
+  image: {{image}}
+  port: 8080
+  liveness:
+    path: "internal/isalive"
+  readiness:
+    path: "internal/isready"
+  replicas:
+    min: 2
+    max: 3
+    cpuThresholdPercentage: 50
+  prometheus:
+    enabled: false //todo
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+  requests:
+    cpu: "200m"
+    memory: "256Mi"
+  secureLogs:
+    enabled: false
+  ingresses:
+    {{#each ingresses as |url|}}
+     - {{url}}
+    {{/each}}
+  accessPolicy:
+    inbound:
+      rules:
+        - application: dp-quizshow
+#  gcp:
