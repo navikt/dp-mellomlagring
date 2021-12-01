@@ -39,16 +39,17 @@ dependencies {
     implementation(platform(kotlin("bom")))
     implementation(kotlin("stdlib"))
 
+    implementation(Konfig.konfig)
+    implementation(Kotlin.Logging.kotlinLogging)
+    implementation(Ktor.library("jackson"))
     implementation(Ktor.server)
     implementation(Ktor.serverNetty)
 
-    implementation(Konfig.konfig)
-    implementation(Kotlin.Logging.kotlinLogging)
-
-    testImplementation(Ktor.library("server-test-host"))
-    testImplementation(KoTest.assertions)
     testImplementation(Junit5.api)
+    testImplementation(KoTest.assertions)
+    testImplementation(Ktor.library("server-test-host"))
     testImplementation(Mockk.mockk)
+
     testRuntimeOnly(Junit5.engine)
 }
 
