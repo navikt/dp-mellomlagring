@@ -48,6 +48,7 @@ dependencies {
     testImplementation(Ktor.library("server-test-host"))
     testImplementation(KoTest.assertions)
     testImplementation(Junit5.api)
+    testImplementation(Mockk.mockk)
     testRuntimeOnly(Junit5.engine)
 }
 
