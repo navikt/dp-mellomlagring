@@ -4,7 +4,7 @@ interface Store {
     fun lagre(vedleggHolder: VedleggHolder)
     fun hent(soknadsId: String): List<VedleggMetadata>
 
-    data class VedleggHolder(val soknadsId: String)
+    class VedleggHolder(val soknadsId: String, val content: ByteArray)
 }
 
 class VedleggMetadata(val soknadsId: String, val filnavn: String)

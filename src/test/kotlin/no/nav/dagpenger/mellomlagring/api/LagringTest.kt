@@ -15,9 +15,8 @@ import org.junit.jupiter.api.Test
 internal class LagringTest {
     @Test
     fun `Lagring av fil`() {
-        val hubba = Store.VedleggHolder("soknadsId")
         val mockStore = mockk<Store>().also {
-            every { it.lagre(hubba) } returns Unit
+            every { it.lagre(any()) } returns Unit
         }
 
         withTestApplication({ store(mockStore) }) {
@@ -26,7 +25,7 @@ internal class LagringTest {
             }
         }
 
-        verify(exactly = 1) { mockStore.lagre(hubba) }
+        verify(exactly = 1) { mockStore.lagre(any()) }
     }
 
     @Test
@@ -42,7 +41,10 @@ internal class LagringTest {
     fun `Hente vedleggliste`() {
         val soknadsId = "soknadsId"
         val mockStore = mockk<Store>().also {
-            every { it.hent(soknadsId) } returns listOf(VedleggMetadata(soknadsId, "fil1"), VedleggMetadata(soknadsId, "fil2"))
+            every { it.hent(soknadsId) } returns listOf(
+                VedleggMetadata(soknadsId, "fil1"),
+                VedleggMetadata(soknadsId, "fil2")
+            )
         }
 
         withTestApplication({ store(mockStore) }) {

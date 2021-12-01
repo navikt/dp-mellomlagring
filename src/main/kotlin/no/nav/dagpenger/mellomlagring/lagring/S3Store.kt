@@ -1,14 +1,18 @@
 package no.nav.dagpenger.mellomlagring.lagring
 
+import com.google.auth.Credentials
+import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.storage.BucketInfo
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
 
 class S3Store(
-    host: String
+    host: String,
+    credentials: Credentials = GoogleCredentials.getApplicationDefault()
 ) : Store {
 
     private val storage: Storage = StorageOptions.newBuilder()
+        .setCredentials(credentials)
         .setHost(host)
         .setProjectId("dagpenger") // TODO
         .build()

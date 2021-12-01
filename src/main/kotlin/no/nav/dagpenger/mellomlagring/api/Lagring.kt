@@ -22,7 +22,7 @@ internal fun Application.store(store: Store) {
             route("/{soknadsId}") {
                 post {
                     val soknadsId = call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
-                    store.lagre(Store.VedleggHolder(soknadsId))
+                    store.lagre(Store.VedleggHolder(soknadsId, "".toByteArray())) // todo
                     call.respond(HttpStatusCode.Created)
                 }
                 get {
