@@ -20,7 +20,7 @@ repositories {
 
 application {
     applicationName = "dp-mellomlagring"
-    mainClass.set("no.nav.dagpegner.mellomlagring.AppKt")
+    mainClass.set("no.nav.dagpenger.mellomlagring.AppKt")
 }
 
 java {
