@@ -20,7 +20,7 @@ repositories {
 
 application {
     applicationName = "dp-mellomlagring"
-    mainClass.set("no.nav.dagpenger.AppKt")
+    mainClass.set("no.nav.dagpegner.mellomlagring.AppKt")
 }
 
 java {
@@ -33,6 +33,9 @@ tasks.withType<KotlinCompile>().all {
 
 dependencies {
     implementation(kotlin("stdlib"))
+
+    implementation(Ktor.server)
+    implementation(Ktor.serverNetty)
 
     implementation(Konfig.konfig)
     implementation(Kotlin.Logging.kotlinLogging)
