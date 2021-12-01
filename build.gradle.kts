@@ -31,7 +31,12 @@ tasks.withType<KotlinCompile>().all {
     kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8.toString()
 }
 
+tasks.withType<Jar>().configureEach {
+    dependsOn("test")
+}
+
 dependencies {
+    implementation(platform(kotlin("bom")))
     implementation(kotlin("stdlib"))
 
     implementation(Ktor.server)
@@ -40,9 +45,9 @@ dependencies {
     implementation(Konfig.konfig)
     implementation(Kotlin.Logging.kotlinLogging)
 
-    testImplementation(kotlin("test"))
+    testImplementation(Ktor.library("server-test-host"))
+    testImplementation(KoTest.assertions)
     testImplementation(Junit5.api)
-    testImplementation(KoTest.runner)
     testRuntimeOnly(Junit5.engine)
 }
 
@@ -56,8 +61,8 @@ spotless {
     }
 }
 
-tasks.named("compileKotlin") {
-    dependsOn("spotlessCheck")
+tasks.withType<KotlinCompile>().configureEach {
+    dependsOn("spotlessApply")
 }
 
 tasks.withType<Test> {
