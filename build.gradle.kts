@@ -39,12 +39,15 @@ dependencies {
     implementation(platform(kotlin("bom")))
     implementation(kotlin("stdlib"))
 
+    implementation("com.google.cloud:google-cloud-storage")
+    implementation(platform("com.google.cloud:libraries-bom:23.0.0"))
     implementation(Konfig.konfig)
     implementation(Kotlin.Logging.kotlinLogging)
     implementation(Ktor.library("jackson"))
     implementation(Ktor.server)
     implementation(Ktor.serverNetty)
 
+    testImplementation("org.testcontainers:testcontainers:${TestContainers.version}")
     testImplementation(Junit5.api)
     testImplementation(KoTest.assertions)
     testImplementation(Ktor.library("server-test-host"))
