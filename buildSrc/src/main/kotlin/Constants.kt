@@ -117,7 +117,7 @@ object Konfig {
 }
 
 object Kotlin {
-    const val version = "1.5.30"
+    const val version = "1.6.0"
     const val stdlib = "org.jetbrains.kotlin:kotlin-stdlib:$version"
 
     object Coroutines {
