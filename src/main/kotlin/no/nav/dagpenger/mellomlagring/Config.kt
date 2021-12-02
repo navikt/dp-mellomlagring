@@ -14,6 +14,8 @@ internal object Config {
         else -> Env.CLOUD
     }
 
+    const val bucketName: String = "teamdagpenger-mellomlagring-vedlegg"
+
     val storage: Storage = when (env) {
         Env.LOCAL -> localStorage()
         Env.CLOUD -> StorageOptions.getDefaultInstance().service
