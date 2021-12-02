@@ -1,6 +1,6 @@
 package no.nav.dagpenger.mellomlagring.lagring
 
-import com.google.cloud.NoCredentials
+import no.nav.dagpenger.mellomlagring.Config
 import org.junit.jupiter.api.Test
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.utility.DockerImageName
@@ -13,6 +13,7 @@ class StoreTest {
                 container.withCreateContainerCmdModifier { cmd ->
                     cmd.withEntrypoint("/bin/fake-gcs-server", "-data", "/data", "-scheme", "http")
                 }
+
                 container.start()
             }
     }
@@ -20,8 +21,7 @@ class StoreTest {
     @Test
     fun `Start mellomlager`() {
         val host = "http://${gcs.host}:${gcs.firstMappedPort}"
-        val store = S3Store(host, NoCredentials.getInstance())
-
+        val store = S3Store(Config.localStorage(host))
         store.lagre(Store.VedleggHolder("hubbabubba", "hubbabubba".toByteArray()))
     }
 }
