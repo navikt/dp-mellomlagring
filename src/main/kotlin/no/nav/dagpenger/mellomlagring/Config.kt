@@ -9,7 +9,7 @@ internal object Config {
         LOCAL, CLOUD
     }
 
-    val env: Env = when (System.getenv().getOrDefault("NAIS_CLUSTER_NAME", "LOCAL")) {
+    private val env: Env = when (System.getenv().getOrDefault("NAIS_CLUSTER_NAME", "LOCAL")) {
         "LOCAL" -> Env.LOCAL
         else -> Env.CLOUD
     }
