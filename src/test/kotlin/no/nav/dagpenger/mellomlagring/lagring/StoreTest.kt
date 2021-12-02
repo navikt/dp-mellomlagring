@@ -13,7 +13,6 @@ class StoreTest {
                 container.withCreateContainerCmdModifier { cmd ->
                     cmd.withEntrypoint("/bin/fake-gcs-server", "-data", "/data", "-scheme", "http")
                 }
-
                 container.start()
             }
     }

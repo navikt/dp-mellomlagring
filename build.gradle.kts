@@ -47,6 +47,11 @@ dependencies {
     implementation(Ktor.server)
     implementation(Ktor.serverNetty)
 
+    runtimeOnly("ch.qos.logback:logback-classic:1.3.0-alpha10")
+    runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.0") {
+        exclude("com.fasterxml.jackson.core")
+    }
+
     testImplementation("org.testcontainers:testcontainers:${TestContainers.version}")
     testImplementation(Junit5.api)
     testImplementation(KoTest.assertions)
