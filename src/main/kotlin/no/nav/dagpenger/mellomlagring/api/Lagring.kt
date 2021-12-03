@@ -25,7 +25,8 @@ internal fun Application.store(store: Store) {
         route("v1/mellomlagring") {
             route("/{soknadsId}") {
                 post {
-                    val soknadsId = call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
+                    val soknadsId =
+                        call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
                     val multipartData = call.receiveMultipart()
                     var fileDescription = ""
                     var fileName = ""
@@ -45,12 +46,13 @@ internal fun Application.store(store: Store) {
                         part.dispose()
                     }
                     fileBytes?.let {
-                        store.lagre(Store.VedleggHolder(soknadsId, it)) // todo
+                        store.lagre(soknadsId, it) // todo
                         call.respond(HttpStatusCode.Created)
                     }
                 }
                 get {
-                    val soknadsId = call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
+                    val soknadsId =
+                        call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
                     val vedlegg = store.hent(soknadsId)
                     call.respond(HttpStatusCode.OK, vedlegg)
                 }

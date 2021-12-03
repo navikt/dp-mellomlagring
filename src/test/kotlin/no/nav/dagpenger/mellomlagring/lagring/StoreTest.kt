@@ -3,6 +3,7 @@ package no.nav.dagpenger.mellomlagring.lagring
 import com.google.cloud.storage.Storage
 import io.kotest.assertions.throwables.shouldThrow
 import no.nav.dagpenger.mellomlagring.Config
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.utility.DockerImageName
@@ -32,8 +33,10 @@ class StoreTest {
     }
 
     @Test
+    @Disabled
     fun `Start mellomlager`() {
         val store = S3Store(gcs.getInstance())
-        store.lagre(Store.VedleggHolder("hubbabubba", "hubbabubba".toByteArray()))
+        store.lagre("hubbabubba", "hubbabubba".toByteArray())
+        store.hent("hubbabubba")
     }
 }

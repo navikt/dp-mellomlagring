@@ -1,8 +1,8 @@
 package no.nav.dagpenger.mellomlagring.lagring
 
 interface Store {
-    fun lagre(vedleggHolder: VedleggHolder)
-    fun hent(soknadsId: String): List<VedleggMetadata>
+    fun lagre(storageKey: StorageKey, storageValue: StorageValue)
+    fun hent(storageKey: StorageKey): List<VedleggMetadata>
 
     class VedleggHolder(val soknadsId: String, val innhold: ByteArray)
 }

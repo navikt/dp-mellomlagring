@@ -16,6 +16,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import no.nav.dagpenger.mellomlagring.lagring.StorageKey
+import no.nav.dagpenger.mellomlagring.lagring.StorageValue
 import no.nav.dagpenger.mellomlagring.lagring.Store
 import no.nav.dagpenger.mellomlagring.lagring.VedleggMetadata
 import org.junit.jupiter.api.Test
@@ -23,15 +25,19 @@ import org.junit.jupiter.api.Test
 internal class LagringTest {
     @Test
     fun `Lagring av fil`() {
-        val slot = slot<Store.VedleggHolder>()
+        val key = slot<StorageKey>()
+        val value = slot<StorageValue>()
         val content = byteArrayOf(1, 2, 3)
         val mockStore = mockk<Store>().also {
-            every { it.lagre(capture(slot)) } returns Unit
+            every { it.lagre(capture(key), capture(value)) } returns Unit
         }
 
         withTestApplication({ store(mockStore) }) {
             handleRequest(HttpMethod.Post, "v1/mellomlagring/soknadsId") {
-                this.addHeader(HttpHeaders.ContentType, ContentType.MultiPart.FormData.withParameter("boundary", "boundary").toString())
+                this.addHeader(
+                    HttpHeaders.ContentType,
+                    ContentType.MultiPart.FormData.withParameter("boundary", "boundary").toString()
+                )
                 setBody(
                     "boundary",
                     listOf(
@@ -61,12 +67,10 @@ internal class LagringTest {
             }
         }
 
-        verify(exactly = 1) { mockStore.lagre(any()) }
-        slot.isCaptured shouldBe true
-        with(slot.captured) {
-            soknadsId shouldBe "soknadsId"
-            innhold shouldBe content
-        }
+        verify(exactly = 1) { mockStore.lagre(any(), any()) }
+
+        key.captured shouldBe "soknadsId"
+        value.captured shouldBe content
     }
 
     @Test
