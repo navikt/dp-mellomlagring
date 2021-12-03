@@ -11,7 +11,7 @@ class VedleggService(val store: Store) {
         return "$soknadsId/$fileName"
     }
 
-    fun hent(key: StorageKey): Any {
-        return store.hent(key)
+    fun hent(key: StorageKey): List<VedleggMetadata> {
+        return store.list(key)
     }
 }
