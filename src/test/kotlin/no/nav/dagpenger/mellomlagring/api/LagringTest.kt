@@ -16,23 +16,23 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
-import no.nav.dagpenger.mellomlagring.lagring.StorageKey
-import no.nav.dagpenger.mellomlagring.lagring.StorageValue
-import no.nav.dagpenger.mellomlagring.lagring.Store
 import no.nav.dagpenger.mellomlagring.lagring.VedleggMetadata
+import no.nav.dagpenger.mellomlagring.lagring.VedleggService
 import org.junit.jupiter.api.Test
 
 internal class LagringTest {
     @Test
     fun `Lagring av fil`() {
-        val key = slot<StorageKey>()
-        val value = slot<StorageValue>()
+        val soknadsid = slot<String>()
+        val filnavn = slot<String>()
+        val value = slot<ByteArray>()
         val content = byteArrayOf(1, 2, 3)
-        val mockStore = mockk<Store>().also {
-            every { it.lagre(capture(key), capture(value)) } returns Unit
+
+        val vedleggServiceMock = mockk<VedleggService>().also {
+            every { it.lagre(capture(soknadsid), capture(filnavn), capture(value)) } returns Unit
         }
 
-        withTestApplication({ store(mockStore) }) {
+        withTestApplication({ vedleggApi(vedleggServiceMock) }) {
             handleRequest(HttpMethod.Post, "v1/mellomlagring/soknadsId") {
                 this.addHeader(
                     HttpHeaders.ContentType,
@@ -41,21 +41,11 @@ internal class LagringTest {
                 setBody(
                     "boundary",
                     listOf(
-                        PartData.FormItem(
-                            "title123", { },
-                            headersOf(
-                                HttpHeaders.ContentDisposition,
-                                ContentDisposition.Inline
-                                    .withParameter(ContentDisposition.Parameters.Name, "title")
-                                    .toString()
-                            )
-                        ),
                         PartData.FileItem(
                             { content.inputStream().asInput() }, {},
                             headersOf(
                                 HttpHeaders.ContentDisposition,
                                 ContentDisposition.File
-                                    .withParameter(ContentDisposition.Parameters.Name, "file")
                                     .withParameter(ContentDisposition.Parameters.FileName, "file.txt")
                                     .toString()
                             )
@@ -67,15 +57,16 @@ internal class LagringTest {
             }
         }
 
-        verify(exactly = 1) { mockStore.lagre(any(), any()) }
+        verify(exactly = 1) { vedleggServiceMock.lagre(any(), any(), any()) }
 
-        key.captured shouldBe "soknadsId"
+        soknadsid.captured shouldBe "soknadsId"
+        filnavn.captured shouldBe "file.txt"
         value.captured shouldBe content
     }
 
     @Test
     fun `Lagring krever søknads id`() {
-        withTestApplication({ store(mockk()) }) {
+        withTestApplication({ vedleggApi(mockk()) }) {
             handleRequest(HttpMethod.Post, "v1/mellomlagring/").apply {
                 response.status() shouldBe HttpStatusCode.NotFound
             }
@@ -85,22 +76,22 @@ internal class LagringTest {
     @Test
     fun `Hente vedleggliste`() {
         val soknadsId = "soknadsId"
-        val mockStore = mockk<Store>().also {
+        val vedleggServiceMock = mockk<VedleggService>().also {
             every { it.hent(soknadsId) } returns listOf(
-                VedleggMetadata(soknadsId, "fil1"),
-                VedleggMetadata(soknadsId, "fil2")
+                VedleggMetadata("fil1"),
+                VedleggMetadata("fil2")
             )
         }
 
-        withTestApplication({ store(mockStore) }) {
+        withTestApplication({ vedleggApi(vedleggServiceMock) }) {
 
             handleRequest(HttpMethod.Get, "v1/mellomlagring/$soknadsId").apply {
                 response.status() shouldBe HttpStatusCode.OK
                 //language=JSON
-                response.content shouldBe """[{"soknadsId":"soknadsId","filnavn":"fil1"},{"soknadsId":"soknadsId","filnavn":"fil2"}]"""
+                response.content shouldBe """[{"filnavn":"fil1"},{"filnavn":"fil2"}]"""
             }
         }
 
-        verify(exactly = 1) { mockStore.hent(soknadsId) }
+        verify(exactly = 1) { vedleggServiceMock.hent(soknadsId) }
     }
 }

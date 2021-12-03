@@ -39,11 +39,18 @@ class S3Store(
         }
     }
 
-    override fun hent(storageKey: StorageKey): List<VedleggMetadata> {
+    override fun hent(storageKey: StorageKey): List<Any> {
         val list: Page<Blob>? = gcpStorage.list(bucketName, Storage.BlobListOption.prefix(storageKey))
         list?.values?.forEach {
             println(it.name)
         }
         return emptyList()
+    }
+
+    override fun list(keyPrefix: StorageKey): List<VedleggMetadata> {
+        return gcpStorage.list(
+            bucketName,
+            Storage.BlobListOption.prefix(keyPrefix)
+        )?.values?.map { v -> VedleggMetadata(v.name) } ?: emptyList()
     }
 }

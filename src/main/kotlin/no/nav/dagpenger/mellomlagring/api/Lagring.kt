@@ -15,9 +15,9 @@ import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
 import io.ktor.routing.routing
-import no.nav.dagpenger.mellomlagring.lagring.Store
+import no.nav.dagpenger.mellomlagring.lagring.VedleggService
 
-internal fun Application.store(store: Store) {
+internal fun Application.vedleggApi(vedleggService: VedleggService) {
     install(ContentNegotiation) {
         jackson()
     }
@@ -29,7 +29,7 @@ internal fun Application.store(store: Store) {
                         call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
                     val multipartData = call.receiveMultipart()
                     var fileDescription = ""
-                    var fileName = ""
+                    var fileName: String = ""
                     var fileBytes: ByteArray? = null
 
                     multipartData.forEachPart { part ->
@@ -38,22 +38,22 @@ internal fun Application.store(store: Store) {
                                 fileDescription = part.value
                             }
                             is PartData.FileItem -> {
-                                fileName = part.originalFileName as String
+                                fileName = part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
                                 fileBytes = part.streamProvider().readBytes()
                             }
                             is PartData.BinaryItem -> TODO()
                         }
                         part.dispose()
                     }
-                    fileBytes?.let {
-                        store.lagre(soknadsId, it) // todo
+                    fileBytes?.let { filinnhold ->
+                        vedleggService.lagre(soknadsId, fileName, filinnhold)
                         call.respond(HttpStatusCode.Created)
                     }
                 }
                 get {
                     val soknadsId =
                         call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
-                    val vedlegg = store.hent(soknadsId)
+                    val vedlegg = vedleggService.hent(soknadsId)
                     call.respond(HttpStatusCode.OK, vedlegg)
                 }
             }
