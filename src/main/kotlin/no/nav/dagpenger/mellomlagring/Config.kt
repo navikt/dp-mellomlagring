@@ -1,6 +1,7 @@
 package no.nav.dagpenger.mellomlagring
 
 import com.google.cloud.NoCredentials
+import com.google.cloud.storage.BucketInfo
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
 import com.natpryce.konfig.Configuration
@@ -23,7 +24,8 @@ internal object Config {
 
     private val defaultProperties = ConfigurationMap(
         mapOf(
-            "DP_MELLOMLAGRING_BUCKETNAME" to "teamdagpenger-mellomlagring-vedlegg-dev"
+            "DP_MELLOMLAGRING_BUCKETNAME" to "teamdagpenger-mellomlagring-vedlegg-dev",
+            "DP_MELLOMLAGRING_STORAGE_URL" to "http://localhost:50000"
         )
     )
     private val prodProperties = ConfigurationMap(
@@ -45,14 +47,16 @@ internal object Config {
         get() = properties[Key("DP_MELLOMLAGRING_BUCKETNAME", stringType)]
 
     val storage: Storage = when (env) {
-        Env.LOCAL -> localStorage()
+        Env.LOCAL -> localStorage(properties[Key("DP_MELLOMLAGRING_STORAGE_URL", stringType)], true)
         Env.CLOUD -> StorageOptions.getDefaultInstance().service
     }
 
-    internal fun localStorage(host: String = "http://localhost:50000") = StorageOptions.newBuilder()
+    internal fun localStorage(storageUrl: String, createBucket: Boolean) = StorageOptions.newBuilder()
         .setCredentials(NoCredentials.getInstance())
-        .setHost(host) // From docker-compose
-        .setProjectId("dagpenger") // TODO
+        .setHost(storageUrl) // From docker-compose
+        .setProjectId("dagpenger")
         .build()
-        .service
+        .service.also {
+            if (createBucket) it.create(BucketInfo.of(bucketName))
+        }
 }
