@@ -24,7 +24,9 @@ class S3Store(
     }
 
     override fun lagre(vedleggHolder: Store.VedleggHolder) {
-        gcpStorage.create(BucketInfo.of(vedleggHolder.soknadsId))
+        gcpStorage.create(BucketInfo.of(vedleggHolder.soknadsId)).also {
+            logger.info { it }
+        }
     }
 
     override fun hent(soknadsId: String): List<VedleggMetadata> {

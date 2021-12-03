@@ -46,9 +46,11 @@ internal object Config {
     val bucketName: String
         get() = properties[Key("DP_MELLOMLAGRING_BUCKETNAME", stringType)]
 
-    val storage: Storage = when (env) {
-        Env.LOCAL -> localStorage(properties[Key("DP_MELLOMLAGRING_STORAGE_URL", stringType)], true)
-        Env.CLOUD -> StorageOptions.getDefaultInstance().service
+    val storage: Storage by lazy {
+        when (env) {
+            Env.LOCAL -> localStorage(properties[Key("DP_MELLOMLAGRING_STORAGE_URL", stringType)], true)
+            Env.CLOUD -> StorageOptions.getDefaultInstance().service
+        }
     }
 
     internal fun localStorage(storageUrl: String, createBucket: Boolean) = StorageOptions.newBuilder()
