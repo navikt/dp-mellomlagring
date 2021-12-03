@@ -14,12 +14,13 @@ import com.natpryce.konfig.stringType
 
 internal object Config {
     internal enum class Env {
-        LOCAL, CLOUD
+        LOCAL, DEV, PROD
     }
 
     private val env: Env = when (System.getenv().getOrDefault("NAIS_CLUSTER_NAME", "LOCAL")) {
-        "LOCAL" -> Env.LOCAL
-        else -> Env.CLOUD
+        "dev-gcp" -> Env.DEV
+        "prod-gcp" -> Env.PROD
+        else -> Env.LOCAL
     }
 
     private val defaultProperties = ConfigurationMap(
@@ -39,7 +40,8 @@ internal object Config {
             val systemAndEnvProperties = ConfigurationProperties.systemProperties() overriding EnvironmentVariables()
             return when (env) {
                 Env.LOCAL -> systemAndEnvProperties overriding defaultProperties
-                Env.CLOUD -> systemAndEnvProperties overriding prodProperties overriding defaultProperties
+                Env.DEV -> systemAndEnvProperties overriding defaultProperties
+                Env.PROD -> systemAndEnvProperties overriding prodProperties overriding defaultProperties
             }
         }
 
