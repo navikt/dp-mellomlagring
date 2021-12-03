@@ -79,21 +79,21 @@ jobs:
           VARS: .nais/dev.yaml
           PRINT_PAYLOAD: true
 
-  deploy-prod:
-    name: Deploy to Production
-    needs: [deploy-dev]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Fetch NAIS yaml
-        uses: actions/download-artifact@v1
-        with:
-          name: nais-yaml
-          path: .nais
-
-      - uses: nais/deploy/actions/deploy@v1
-        env:
-          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-          CLUSTER: prod-gcp
-          RESOURCE: .nais/nais.yaml
-          VARS: .nais/prod.yaml
-          PRINT_PAYLOAD: true
+#  deploy-prod:
+#    name: Deploy to Production
+#    needs: [deploy-dev]
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Fetch NAIS yaml
+#        uses: actions/download-artifact@v1
+#        with:
+#          name: nais-yaml
+#          path: .nais
+#
+#      - uses: nais/deploy/actions/deploy@v1
+#        env:
+#          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+#          CLUSTER: prod-gcp
+#          RESOURCE: .nais/nais.yaml
+#          VARS: .nais/prod.yaml
+#          PRINT_PAYLOAD: true

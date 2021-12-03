@@ -9,7 +9,7 @@ spec:
   image: {{image}}
   port: 8080
   liveness:
-    path: "internal/isalive"
+
   readiness:
     path: "internal/isready"
   replicas:
@@ -34,4 +34,11 @@ spec:
     inbound:
       rules:
         - application: dp-quizshow
-#  gcp:
+  gcp:
+    buckets:
+      - name: {{ bucketName }}
+        retentionPeriodDays: 90
+        lifecycleCondition:
+          age: 7
+          numNewerVersions: 2
+          withState: ANY
