@@ -38,7 +38,6 @@ class StoreTest {
         }
     }
 
-
     @Test
     fun `Start mellomlager`() = withMockGCS {
         val store = S3Store(gcs.instance)

@@ -7,10 +7,7 @@ interface Store {
     class VedleggHolder(val soknadsId: String, val innhold: ByteArray)
 }
 
-
-
 internal typealias StorageKey = String
 internal typealias StorageValue = ByteArray
-
 
 class VedleggMetadata(val soknadsId: String, val filnavn: String)
