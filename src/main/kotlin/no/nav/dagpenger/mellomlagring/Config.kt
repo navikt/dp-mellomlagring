@@ -51,7 +51,7 @@ internal object Config {
     val storage: Storage by lazy {
         when (env) {
             Env.LOCAL -> localStorage(properties[Key("DP_MELLOMLAGRING_STORAGE_URL", stringType)], true)
-            Env.CLOUD -> StorageOptions.getDefaultInstance().service
+            else -> StorageOptions.getDefaultInstance().service
         }
     }
 
