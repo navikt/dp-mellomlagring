@@ -1,6 +1,8 @@
 package no.nav.dagpenger.mellomlagring.lagring
 
-class VedleggService(val store: Store) {
+import no.nav.dagpenger.mellomlagring.crypto.Crypto
+
+internal class VedleggService(private val store: Store, private val crypto: Crypto) {
 
     fun lagre(soknadsId: String, fileName: String, filinnhold: ByteArray) {
         store.lagre(createStoreKey(soknadsId, fileName), filinnhold)

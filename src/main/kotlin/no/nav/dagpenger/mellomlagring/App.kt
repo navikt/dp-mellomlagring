@@ -6,6 +6,7 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import no.nav.dagpenger.mellomlagring.api.health
 import no.nav.dagpenger.mellomlagring.api.vedleggApi
+import no.nav.dagpenger.mellomlagring.crypto.AESCrypto
 import no.nav.dagpenger.mellomlagring.lagring.S3Store
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService
 
@@ -14,6 +15,14 @@ fun main() {
         install(CallLogging)
 
         health()
-        vedleggApi(VedleggService(S3Store(Config.storage)))
+        vedleggApi(
+            VedleggService(
+                store = S3Store(Config.storage),
+                crypto = AESCrypto(
+                    passphrase = Config.crypto.passPhrase,
+                    iv = Config.crypto.salt
+                )
+            )
+        )
     }.start(wait = true)
 }

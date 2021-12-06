@@ -25,10 +25,17 @@ internal object Config {
 
     private val defaultProperties = ConfigurationMap(
         mapOf(
-            "DP_MELLOMLAGRING_BUCKETNAME" to "teamdagpenger-mellomlagring-vedlegg-dev",
+            "DP_MELLOMLAGRING_BUCKETNAME" to "teamdagpenger-mellomlagring-vedlegg-local",
             "DP_MELLOMLAGRING_STORAGE_URL" to "http://localhost:50000"
         )
     )
+
+    private val devProperties = ConfigurationMap(
+        mapOf(
+            "DP_MELLOMLAGRING_BUCKETNAME" to "teamdagpenger-mellomlagring-vedlegg-dev",
+        )
+    )
+
     private val prodProperties = ConfigurationMap(
         mapOf(
             "DP_MELLOMLAGRING_BUCKETNAME" to "teamdagpenger-mellomlagring-vedlegg-prod"
@@ -40,10 +47,15 @@ internal object Config {
             val systemAndEnvProperties = ConfigurationProperties.systemProperties() overriding EnvironmentVariables()
             return when (env) {
                 Env.LOCAL -> systemAndEnvProperties overriding defaultProperties
-                Env.DEV -> systemAndEnvProperties overriding defaultProperties
+                Env.DEV -> systemAndEnvProperties overriding devProperties overriding defaultProperties
                 Env.PROD -> systemAndEnvProperties overriding prodProperties overriding defaultProperties
             }
         }
+
+    object crypto {
+        val passPhrase = properties[Key("DP_MELLOMLAGRING_CRYPTO_PASSPHRASE", stringType)]
+        val salt = properties[Key("DP_MELLOMLAGRING_CRYPTO_SALT", stringType)]
+    }
 
     val bucketName: String
         get() = properties[Key("DP_MELLOMLAGRING_BUCKETNAME", stringType)]
