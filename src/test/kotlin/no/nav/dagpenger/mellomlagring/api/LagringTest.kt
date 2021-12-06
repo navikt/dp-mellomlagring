@@ -1,20 +1,19 @@
 package no.nav.dagpenger.mellomlagring.api
 
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
-import io.ktor.http.ContentDisposition
+import io.ktor.client.request.forms.append
+import io.ktor.client.request.forms.formData
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
-import io.ktor.http.headersOf
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
-import io.ktor.utils.io.streams.asInput
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.verify
 import no.nav.dagpenger.mellomlagring.lagring.VedleggMetadata
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService
@@ -23,10 +22,9 @@ import org.junit.jupiter.api.Test
 internal class LagringTest {
     @Test
     fun `Lagring av fil`() {
-        val soknadsid = slot<String>()
-        val filnavn = slot<String>()
-        val value = slot<ByteArray>()
-        val content = byteArrayOf(1, 2, 3)
+        val soknadsid = mutableListOf<String>()
+        val filnavn = mutableListOf<String>()
+        val value = mutableListOf<ByteArray>()
 
         val vedleggServiceMock = mockk<VedleggService>().also {
             every { it.lagre(capture(soknadsid), capture(filnavn), capture(value)) } returns Unit
@@ -38,30 +36,25 @@ internal class LagringTest {
                     HttpHeaders.ContentType,
                     ContentType.MultiPart.FormData.withParameter("boundary", "boundary").toString()
                 )
-                setBody(
-                    "boundary",
-                    listOf(
-                        PartData.FileItem(
-                            { content.inputStream().asInput() }, {},
-                            headersOf(
-                                HttpHeaders.ContentDisposition,
-                                ContentDisposition.File
-                                    .withParameter(ContentDisposition.Parameters.FileName, "file.txt")
-                                    .toString()
-                            )
-                        )
-                    )
-                )
+                val partData: List<PartData> = formData {
+                    append("hubba", "file.csv", ContentType.Text.CSV) {
+                        this.append("1")
+                    }
+                    append("hubba", "file2.csv", ContentType.Text.CSV) {
+                        this.append("2")
+                    }
+                }
+                setBody("boundary", partData)
             }.apply {
                 response.status() shouldBe HttpStatusCode.Created
             }
         }
 
-        verify(exactly = 1) { vedleggServiceMock.lagre(any(), any(), any()) }
+        verify(exactly = 2) { vedleggServiceMock.lagre(any(), any(), any()) }
 
-        soknadsid.captured shouldBe "soknadsId"
-        filnavn.captured shouldBe "file.txt"
-        value.captured shouldBe content
+        soknadsid shouldContainExactly (listOf("soknadsId", "soknadsId"))
+        filnavn shouldContainExactly (listOf("file.csv", "file2.csv"))
+        value.map(::String) shouldContainExactly (listOf("1", "2"))
     }
 
     @Test

@@ -29,13 +29,15 @@ class S3Store(
 
     override fun lagre(storageKey: StorageKey, storageValue: StorageValue) {
         val blobInfo =
-            BlobInfo.newBuilder(BlobId.of(bucketName, storageKey)).setContentType("application/octet-stream").build()
+            BlobInfo.newBuilder(BlobId.of(bucketName, storageKey)).setContentType("application/octet-stream").build() // todo contentType?
         kotlin.runCatching {
             gcpStorage.writer(blobInfo).use {
                 it.write(ByteBuffer.wrap(storageValue, 0, storageValue.size))
             }
         }.onFailure { e ->
             logger.error("Feilet med å lagre dokument med id: ${blobInfo.blobId.name}", e)
+        }.onSuccess {
+            logger.info("Lagret fil med blobid:  ${blobInfo.blobId.name} og bytes: $it")
         }
     }
 
