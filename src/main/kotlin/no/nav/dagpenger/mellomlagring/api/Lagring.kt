@@ -27,10 +27,33 @@ import no.nav.dagpenger.mellomlagring.lagring.VedleggService
 private val logger = KotlinLogging.logger { }
 
 internal fun Application.vedleggApi(vedleggService: VedleggService) {
+    val fileUploadHandler = FileUploadHandler(vedleggService)
+
     install(ContentNegotiation) {
         jackson()
     }
+    routing {
+        route("v1/mellomlagring") {
+            route("/{soknadsId}") {
+                post {
+                    val soknadsId =
+                        call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
+                    val multiPartData = call.receiveMultipart()
+                    fileUploadHandler.handleFileupload(multiPartData, "", soknadsId)
+                    call.respond(HttpStatusCode.Created)
+                }
+                get {
+                    val soknadsId =
+                        call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
+                    val vedlegg = vedleggService.hent(soknadsId)
+                    call.respond(HttpStatusCode.OK, vedlegg)
+                }
+            }
+        }
+    }
+}
 
+private class FileUploadHandler(private val vedleggService: VedleggService) {
     suspend fun handleFileupload(multiPartData: MultiPartData, fnr: String, soknadsId: String) {
         coroutineScope {
             val jobs = mutableListOf<Deferred<Unit>>()
@@ -58,26 +81,6 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
                 }
             }
             jobs.awaitAll()
-        }
-    }
-
-    routing {
-        route("v1/mellomlagring") {
-            route("/{soknadsId}") {
-                post {
-                    val soknadsId =
-                        call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
-                    val multiPartData = call.receiveMultipart()
-                    handleFileupload(multiPartData, "", soknadsId)
-                    call.respond(HttpStatusCode.Created)
-                }
-                get {
-                    val soknadsId =
-                        call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
-                    val vedlegg = vedleggService.hent(soknadsId)
-                    call.respond(HttpStatusCode.OK, vedlegg)
-                }
-            }
         }
     }
 }
