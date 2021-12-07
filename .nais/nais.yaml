@@ -27,6 +27,8 @@ spec:
   requests:
     cpu: "200m"
     memory: "256Mi"
+  envFrom:
+    - secret: dp-mellomlagring-config
   secureLogs:
     enabled: false
   ingresses:
