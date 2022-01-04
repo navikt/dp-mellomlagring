@@ -1,42 +1,88 @@
 package no.nav.dagpenger.mellomlagring.lagring
 
-import com.google.cloud.storage.Storage
+import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.shouldBe
 import no.nav.dagpenger.mellomlagring.Config
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.testcontainers.containers.FixedHostPortGenericContainer
 import org.testcontainers.containers.GenericContainer
-import org.testcontainers.utility.DockerImageName
 
 class StoreTest {
-    private val gcs by lazy {
-        GenericContainer<Nothing>(DockerImageName.parse("fsouza/fake-gcs-server"))
+    companion object {
+        private const val FIXED_HOST_PORT = 44443
+        private const val IMAGE = "fsouza/fake-gcs-server:1.33"
+    }
+
+    private val gcsFixedHost by lazy {
+        // Because https://stackoverflow.com/questions/69337669/request-with-ipv4-from-python-to-gcs-emulator/70417427#70417427
+        FixedHostPortGenericContainer<Nothing>(IMAGE)
             .also { container ->
-                container.withExposedPorts(4443)
+                container.withFixedExposedPort(FIXED_HOST_PORT, 4443)
                 container.withCreateContainerCmdModifier { cmd ->
-                    cmd.withEntrypoint("/bin/fake-gcs-server", "-data", "/data", "-scheme", "http")
+                    cmd.withEntrypoint(
+                        "/bin/fake-gcs-server",
+                        "-external-url",
+                        "http://localhost:$FIXED_HOST_PORT",
+                        "-backend",
+                        "memory",
+                        "-scheme",
+                        "http"
+                    )
                 }
                 container.start()
             }
     }
 
-    private fun GenericContainer<Nothing>.getInstance(createBucket: Boolean = true): Storage {
-        require(isRunning) { "Container is not running" }
-        return Config.localStorage("http://$host:$firstMappedPort", createBucket)
+    private val gcs by lazy {
+        GenericContainer<Nothing>(IMAGE)
+            .also { container ->
+                container.withExposedPorts(4443)
+                container.withCreateContainerCmdModifier { cmd ->
+                    cmd.withEntrypoint(
+                        "/bin/fake-gcs-server",
+                        "-backend",
+                        "memory",
+                        "-scheme",
+                        "http"
+                    )
+                }
+                container.start()
+            }
     }
 
     @Test
     fun `Exception hvis ikke bucket finnes`() {
+        require(gcs.isRunning) { "Container is not running" }
         shouldThrow<IllegalStateException> {
-            S3Store(gcs.getInstance(false))
+            S3Store(Config.localStorage("http://${gcs.host}:${gcs.firstMappedPort}", false))
         }
     }
 
     @Test
-    @Disabled
-    fun `Start mellomlager`() {
-        val store = S3Store(gcs.getInstance())
-        store.lagre("hubbabubba", "hubbabubba".toByteArray())
-        store.hent("hubbabubba")
+    fun `happy path lagre,listing og henting av filer`() {
+        require(gcsFixedHost.isRunning) { "Container is not running" }
+        val store = S3Store(Config.localStorage("http://${gcsFixedHost.host}:$FIXED_HOST_PORT", true))
+
+        shouldNotThrowAny {
+            store.lagre("id/hubba", "hubba".toByteArray())
+            store.lagre("id/bubba", "bubba".toByteArray())
+        }
+
+        store.list("id").let {
+            it.size shouldBe 2
+            it shouldContainExactlyInAnyOrder listOf(VedleggMetadata("id/hubba"), VedleggMetadata("id/bubba"))
+        }
+
+        store.list("id/hubba").let {
+            it.size shouldBe 1
+            it shouldContainExactlyInAnyOrder listOf(VedleggMetadata("id/hubba"))
+        }
+
+        shouldNotThrowAny {
+            store.hent("id/hubba") shouldBe "hubba".toByteArray()
+            store.hent("id/bubba") shouldBe "bubba".toByteArray()
+        }
     }
 }
