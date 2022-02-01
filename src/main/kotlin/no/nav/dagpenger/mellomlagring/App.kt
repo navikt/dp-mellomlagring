@@ -12,7 +12,9 @@ import no.nav.dagpenger.mellomlagring.lagring.VedleggService
 
 fun main() {
     embeddedServer(Netty, port = 8080) {
-        install(CallLogging)
+        install(CallLogging) {
+            disableDefaultColors()
+        }
 
         health()
         vedleggApi(
