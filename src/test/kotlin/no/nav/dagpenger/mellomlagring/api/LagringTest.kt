@@ -105,7 +105,7 @@ internal class LagringTest {
             handleRequest(HttpMethod.Get, "hubba/mellomlagring").apply {
                 response.content shouldBe "WTF"
             }
-            handleRequest(HttpMethod.Get, "hubba/mellomlagring/1").apply {
+            handleRequest(HttpMethod.Get, "hubba/param/1").apply {
                 response.content shouldBe "WTH: 1"
             }
         }

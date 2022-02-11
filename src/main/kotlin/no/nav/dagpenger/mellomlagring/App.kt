@@ -10,6 +10,7 @@ import no.nav.dagpenger.mellomlagring.api.vedleggApi
 import no.nav.dagpenger.mellomlagring.crypto.AESCrypto
 import no.nav.dagpenger.mellomlagring.lagring.S3Store
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService
+import org.slf4j.event.Level
 
 fun main() {
     embeddedServer(Netty, port = 8080) {
@@ -18,6 +19,7 @@ fun main() {
             filter {
                 !it.request.path().startsWith("/internal")
             }
+            this.level = Level.DEBUG
         }
         health()
         vedleggApi(

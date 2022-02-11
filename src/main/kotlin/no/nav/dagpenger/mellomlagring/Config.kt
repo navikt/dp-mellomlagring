@@ -28,7 +28,7 @@ internal object Config {
     private val defaultProperties = ConfigurationMap(
         mapOf(
             "DP_MELLOMLAGRING_BUCKETNAME" to "teamdagpenger-mellomlagring-vedlegg-local",
-            "DP_MELLOMLAGRING_STORAGE_URL" to "http://localhost:50000",
+            "DP_MELLOMLAGRING_STORAGE_URL" to "http://localhost:4443",
             "DP_MELLOMLAGRING_CRYPTO_PASSPHRASE" to "a passphrase",
             "DP_MELLOMLAGRING_CRYPTO_SALT" to "rocksalt",
             "TOKEN_X_ACCEPTED_AUDIENCE" to "audience"

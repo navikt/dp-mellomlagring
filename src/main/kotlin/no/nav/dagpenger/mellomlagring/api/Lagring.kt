@@ -72,11 +72,13 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
                 }
             }
         }
-        route("hubba/mellomlagring") {
-            get {
-                call.respond("WTF")
+        route("hubba") {
+            route("mellomlagring") {
+                get {
+                    call.respond("WTF")
+                }
             }
-            route("/{id}") {
+            route("param/{id}") {
                 get {
                     call.respond("WTH: ${call.parameters["id"]}")
                 }
