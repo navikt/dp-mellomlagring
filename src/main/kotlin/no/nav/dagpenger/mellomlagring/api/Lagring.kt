@@ -44,7 +44,8 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
                 name = "tokenx",
                 config = Config.OAuth2IssuersConfig,
                 additionalValidation = {
-                    it.getClaims(Config.tokenxIssuerName)?.getStringClaim("pid") != null
+                    it.getClaims(Config.tokenxIssuerName)?.getStringClaim("pid") != null ||
+                        it.getClaims(Config.tokenxIssuerName)?.getStringClaim("sub") != null
                 }
             )
         }

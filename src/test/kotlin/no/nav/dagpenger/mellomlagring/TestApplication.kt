@@ -22,7 +22,7 @@ internal object TestApplication {
         mockOAuth2Server.issueToken(
             issuerId = Config.tokenxIssuerName,
             claims = mapOf(
-                "pid" to defaultDummyFodselsnummer,
+                "sub" to defaultDummyFodselsnummer,
                 "aud" to "audience"
             )
         ).serialize()
