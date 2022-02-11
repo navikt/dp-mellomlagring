@@ -67,6 +67,24 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
                 }
             }
         }
+        route("v0/mellomlagring") {
+            route("/{soknadsId}") {
+                post {
+                    val soknadsId =
+                        call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
+                    val multiPartData = call.receiveMultipart()
+                    fileUploadHandler.handleFileupload(multiPartData, "", soknadsId)
+                    call.respond(HttpStatusCode.Created)
+                }
+                get {
+                    val soknadsId =
+                        call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
+                    val vedlegg = vedleggService.hent(soknadsId)
+                    call.respond(HttpStatusCode.OK, vedlegg)
+                }
+            }
+        }
+
     }
 }
 
