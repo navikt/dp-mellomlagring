@@ -19,10 +19,8 @@ import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestA
 import no.nav.dagpenger.mellomlagring.lagring.VedleggMetadata
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService
 import no.nav.security.mock.oauth2.MockOAuth2Server
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
-@Disabled
 internal class LagringTest {
 
     private val mockOAuth2Server: MockOAuth2Server by lazy {
@@ -97,18 +95,6 @@ internal class LagringTest {
                 httpMethod = HttpMethod.Post
             ).apply {
                 response.status() shouldBe HttpStatusCode.NotFound
-            }
-        }
-    }
-
-    @Test
-    fun hubba() {
-        withMockAuthServerAndTestApplication({ vedleggApi(mockk()) }) {
-            handleRequest(HttpMethod.Get, "hubba/mellomlagring").apply {
-                response.content shouldBe "WTF"
-            }
-            handleRequest(HttpMethod.Get, "hubba/param/1").apply {
-                response.content shouldBe "WTH: 1"
             }
         }
     }
