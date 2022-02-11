@@ -3,6 +3,8 @@ package no.nav.dagpenger.mellomlagring.api
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
+import io.ktor.auth.Authentication
+import io.ktor.auth.authenticate
 import io.ktor.features.ContentNegotiation
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.MultiPartData
@@ -22,7 +24,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import mu.KotlinLogging
+import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService
+import no.nav.security.token.support.ktor.tokenValidationSupport
 
 private val logger = KotlinLogging.logger { }
 
@@ -32,21 +36,34 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
     install(ContentNegotiation) {
         jackson()
     }
+
+    install(Authentication) {
+        tokenValidationSupport(
+            name = Config.tokenxIssuerName,
+            config = Config.OAuth2IssuersConfig,
+            additionalValidation = {
+                it.getClaims(Config.tokenxIssuerName)?.getStringClaim("pid") != null
+            }
+        )
+    }
+
     routing {
-        route("v1/mellomlagring") {
-            route("/{soknadsId}") {
-                post {
-                    val soknadsId =
-                        call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
-                    val multiPartData = call.receiveMultipart()
-                    fileUploadHandler.handleFileupload(multiPartData, "", soknadsId)
-                    call.respond(HttpStatusCode.Created)
-                }
-                get {
-                    val soknadsId =
-                        call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
-                    val vedlegg = vedleggService.hent(soknadsId)
-                    call.respond(HttpStatusCode.OK, vedlegg)
+        authenticate("tokenx") {
+            route("v1/mellomlagring") {
+                route("/{soknadsId}") {
+                    post {
+                        val soknadsId =
+                            call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
+                        val multiPartData = call.receiveMultipart()
+                        fileUploadHandler.handleFileupload(multiPartData, "", soknadsId)
+                        call.respond(HttpStatusCode.Created)
+                    }
+                    get {
+                        val soknadsId =
+                            call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
+                        val vedlegg = vedleggService.hent(soknadsId)
+                        call.respond(HttpStatusCode.OK, vedlegg)
+                    }
                 }
             }
         }

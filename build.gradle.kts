@@ -24,11 +24,11 @@ application {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
 }
 
 tasks.withType<KotlinCompile>().all {
-    kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8.toString()
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
 }
 
 tasks.withType<Jar>().configureEach {
@@ -46,6 +46,7 @@ dependencies {
     implementation(Ktor.library("jackson"))
     implementation(Ktor.server)
     implementation(Ktor.serverNetty)
+    implementation("no.nav.security:token-validation-ktor:1.3.10")
 
     runtimeOnly("ch.qos.logback:logback-classic:1.3.0-alpha10")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.0") {
@@ -53,6 +54,7 @@ dependencies {
     }
 
     testImplementation("org.testcontainers:testcontainers:${TestContainers.version}")
+    testImplementation("no.nav.security:mock-oauth2-server:0.4.3")
     testImplementation(Junit5.api)
     testImplementation(KoTest.assertions)
     testImplementation(Ktor.library("server-test-host"))

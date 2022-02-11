@@ -11,15 +11,42 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
-import io.ktor.server.testing.withTestApplication
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import no.nav.dagpenger.mellomlagring.TestApplication.autentisert
+import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestApplication
 import no.nav.dagpenger.mellomlagring.lagring.VedleggMetadata
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService
+import no.nav.security.mock.oauth2.MockOAuth2Server
 import org.junit.jupiter.api.Test
 
 internal class LagringTest {
+
+    private val mockOAuth2Server: MockOAuth2Server by lazy {
+        MockOAuth2Server().also { server ->
+            server.start()
+        }
+    }
+
+    @Test
+    fun `Uautorisert dersom ingen token finnes`() {
+        withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
+            handleRequest(HttpMethod.Get, "v1/mellomlagring/1").apply {
+                response.status() shouldBe HttpStatusCode.Unauthorized
+            }
+        }
+    }
+
+    @Test
+    fun `Autorisert dersom token finnes`() {
+        withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
+            autentisert(endepunkt = "v1/mellomlagring/1").apply {
+                response.status() shouldBe HttpStatusCode.OK
+            }
+        }
+    }
+
     @Test
     fun `Lagring av fil`() {
         val soknadsid = mutableListOf<String>()
@@ -30,8 +57,11 @@ internal class LagringTest {
             every { it.lagre(capture(soknadsid), capture(filnavn), capture(value)) } returns Unit
         }
 
-        withTestApplication({ vedleggApi(vedleggServiceMock) }) {
-            handleRequest(HttpMethod.Post, "v1/mellomlagring/soknadsId") {
+        withMockAuthServerAndTestApplication({ vedleggApi(vedleggServiceMock) }) {
+            autentisert(
+                endepunkt = "v1/mellomlagring/soknadsId",
+                httpMethod = HttpMethod.Post,
+            ) {
                 this.addHeader(
                     HttpHeaders.ContentType,
                     ContentType.MultiPart.FormData.withParameter("boundary", "boundary").toString()
@@ -59,8 +89,11 @@ internal class LagringTest {
 
     @Test
     fun `Lagring krever søknads id`() {
-        withTestApplication({ vedleggApi(mockk()) }) {
-            handleRequest(HttpMethod.Post, "v1/mellomlagring/").apply {
+        withMockAuthServerAndTestApplication({ vedleggApi(mockk()) }) {
+            autentisert(
+                endepunkt = "v1/mellomlagring/",
+                httpMethod = HttpMethod.Post
+            ).apply {
                 response.status() shouldBe HttpStatusCode.NotFound
             }
         }
@@ -76,9 +109,11 @@ internal class LagringTest {
             )
         }
 
-        withTestApplication({ vedleggApi(vedleggServiceMock) }) {
-
-            handleRequest(HttpMethod.Get, "v1/mellomlagring/$soknadsId").apply {
+        withMockAuthServerAndTestApplication({ vedleggApi(vedleggServiceMock) }) {
+            autentisert(
+                endepunkt = "v1/mellomlagring/$soknadsId",
+                httpMethod = HttpMethod.Get
+            ).apply {
                 response.status() shouldBe HttpStatusCode.OK
                 //language=JSON
                 response.content shouldBe """[{"filnavn":"fil1"},{"filnavn":"fil2"}]"""

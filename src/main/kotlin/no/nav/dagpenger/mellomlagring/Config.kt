@@ -11,6 +11,8 @@ import com.natpryce.konfig.EnvironmentVariables
 import com.natpryce.konfig.Key
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
+import io.ktor.config.ApplicationConfig
+import io.ktor.config.MapApplicationConfig
 
 internal object Config {
     internal enum class Env {
@@ -28,31 +30,14 @@ internal object Config {
             "DP_MELLOMLAGRING_BUCKETNAME" to "teamdagpenger-mellomlagring-vedlegg-local",
             "DP_MELLOMLAGRING_STORAGE_URL" to "http://localhost:50000",
             "DP_MELLOMLAGRING_CRYPTO_PASSPHRASE" to "a passphrase",
-            "DP_MELLOMLAGRING_CRYPTO_SALT" to "rocksalt"
-        )
-    )
-
-    private val devProperties = ConfigurationMap(
-        mapOf(
-            "DP_MELLOMLAGRING_BUCKETNAME" to "teamdagpenger-mellomlagring-vedlegg-dev",
-        )
-    )
-
-    private val prodProperties = ConfigurationMap(
-        mapOf(
-            "DP_MELLOMLAGRING_BUCKETNAME" to "teamdagpenger-mellomlagring-vedlegg-prod"
+            "DP_MELLOMLAGRING_CRYPTO_SALT" to "rocksalt",
+            "TOKEN_X_ACCEPTED_AUDIENCE" to "audience"
         )
     )
 
     private val properties: Configuration
-        get() {
-            val systemAndEnvProperties = ConfigurationProperties.systemProperties() overriding EnvironmentVariables()
-            return when (env) {
-                Env.LOCAL -> systemAndEnvProperties overriding defaultProperties
-                Env.DEV -> systemAndEnvProperties overriding devProperties overriding defaultProperties
-                Env.PROD -> systemAndEnvProperties overriding prodProperties overriding defaultProperties
-            }
-        }
+        get() =
+            ConfigurationProperties.systemProperties() overriding EnvironmentVariables() overriding defaultProperties
 
     object crypto {
         val passPhrase = properties[Key("DP_MELLOMLAGRING_CRYPTO_PASSPHRASE", stringType)]
@@ -77,4 +62,21 @@ internal object Config {
         .service.also {
             if (createBucket) it.create(BucketInfo.of(bucketName))
         }
+
+    const val tokenxIssuerName = "tokenx"
+
+    val OAuth2IssuersConfig: ApplicationConfig by lazy {
+        MapApplicationConfig(
+            "no.nav.security.jwt.expirythreshold" to "60",
+            "no.nav.security.jwt.issuers.size" to "1", // to enable list config
+            "no.nav.security.jwt.issuers.0.issuer_name" to tokenxIssuerName,
+            "no.nav.security.jwt.issuers.0.discoveryurl" to properties[Key("TOKEN_X_WELL_KNOWN_URL", stringType)],
+            "no.nav.security.jwt.issuers.0.cookie_name" to "selvbetjening-idtoken",
+            "no.nav.security.jwt.issuers.0.accepted_audience" to properties[
+                Key(
+                    "TOKEN_X_ACCEPTED_AUDIENCE", stringType
+                )
+            ]
+        )
+    }
 }

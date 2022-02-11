@@ -1,3 +1,4 @@
 ingresses:
   - "https://dp-mellomlagring.intern.nav.no"
 bucketName: teamdagpenger-mellomlagring-vedlegg-prod
+acceptedAudience: "prod-gcp:teamdagpenger:dp-quizshow-api"

@@ -38,7 +38,14 @@ spec:
   accessPolicy:
     inbound:
       rules:
-        - application: dp-quizshow
+        - application: dp-quizshow-api
+  tokenx:
+    enabled: true
+  env:
+    - name: TOKEN_X_ACCEPTED_AUDIENCE
+      value: {{acceptedAudience}}
+    - name: DP_MELLOMLAGRING_BUCKETNAME
+      value: {{bucketName}}
   gcp:
     buckets:
       - name: {{ bucketName }}
