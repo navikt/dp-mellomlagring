@@ -100,6 +100,18 @@ internal class LagringTest {
     }
 
     @Test
+    fun hubba() {
+        withMockAuthServerAndTestApplication({ vedleggApi(mockk()) }) {
+            handleRequest(HttpMethod.Get, "hubba/mellomlagring").apply {
+                response.content shouldBe "WTF"
+            }
+            handleRequest(HttpMethod.Get, "hubba/mellomlagring/1").apply {
+                response.content shouldBe "WTH: 1"
+            }
+        }
+    }
+
+    @Test
     fun `Hente vedleggliste`() {
         val soknadsId = "soknadsId"
         val vedleggServiceMock = mockk<VedleggService>().also {
