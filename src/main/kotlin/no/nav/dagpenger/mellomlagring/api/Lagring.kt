@@ -38,8 +38,9 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
     }
 
     install(Authentication) {
+        logger.debug { "installing auth feature" }
         tokenValidationSupport(
-            name = Config.tokenxIssuerName,
+            name = "tokenx",
             config = Config.OAuth2IssuersConfig,
             additionalValidation = {
                 it.getClaims(Config.tokenxIssuerName)?.getStringClaim("pid") != null
@@ -68,6 +69,9 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
             }
         }
         route("v0/mellomlagring") {
+            get {
+                call.respond("WTF")
+            }
             route("/{soknadsId}") {
                 post {
                     val soknadsId =
@@ -84,7 +88,6 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
                 }
             }
         }
-
     }
 }
 
