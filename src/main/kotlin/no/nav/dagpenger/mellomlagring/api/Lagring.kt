@@ -38,14 +38,18 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
     }
 
     install(Authentication) {
-        logger.debug { "installing auth feature" }
-        tokenValidationSupport(
-            name = "tokenx",
-            config = Config.OAuth2IssuersConfig,
-            additionalValidation = {
-                it.getClaims(Config.tokenxIssuerName)?.getStringClaim("pid") != null
-            }
-        )
+        kotlin.runCatching {
+            logger.debug { "installing auth feature" }
+            tokenValidationSupport(
+                name = "tokenx",
+                config = Config.OAuth2IssuersConfig,
+                additionalValidation = {
+                    it.getClaims(Config.tokenxIssuerName)?.getStringClaim("pid") != null
+                }
+            )
+        }
+            .onSuccess { logger.debug { "Finished installing auth feature" } }
+            .onFailure { e -> logger.error(e) { "Failed installing auth feature" } }
     }
 
     routing {
