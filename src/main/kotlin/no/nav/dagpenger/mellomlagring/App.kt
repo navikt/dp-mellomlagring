@@ -16,7 +16,7 @@ fun main() {
         install(CallLogging) {
             disableDefaultColors()
             filter {
-                it.request.path().startsWith("/internal")
+                !it.request.path().startsWith("/internal")
             }
         }
         health()
