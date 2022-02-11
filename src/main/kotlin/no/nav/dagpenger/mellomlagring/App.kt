@@ -2,6 +2,7 @@ package no.nav.dagpenger.mellomlagring
 
 import io.ktor.application.install
 import io.ktor.features.CallLogging
+import io.ktor.request.path
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import no.nav.dagpenger.mellomlagring.api.health
@@ -14,6 +15,9 @@ fun main() {
     embeddedServer(Netty, port = 8080) {
         install(CallLogging) {
             disableDefaultColors()
+            filter {
+                it.request.path().startsWith("/internal")
+            }
         }
         health()
         vedleggApi(
