@@ -19,8 +19,10 @@ import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestA
 import no.nav.dagpenger.mellomlagring.lagring.VedleggMetadata
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService
 import no.nav.security.mock.oauth2.MockOAuth2Server
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
+@Disabled
 internal class LagringTest {
 
     private val mockOAuth2Server: MockOAuth2Server by lazy {

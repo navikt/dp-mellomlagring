@@ -4,7 +4,6 @@ import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.auth.Authentication
-import io.ktor.auth.authenticate
 import io.ktor.features.ContentNegotiation
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.MultiPartData
@@ -53,25 +52,25 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
     }
 
     routing {
-        authenticate("tokenx") {
-            route("v1/mellomlagring") {
-                route("/{soknadsId}") {
-                    post {
-                        val soknadsId =
-                            call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
-                        val multiPartData = call.receiveMultipart()
-                        fileUploadHandler.handleFileupload(multiPartData, "", soknadsId)
-                        call.respond(HttpStatusCode.Created)
-                    }
-                    get {
-                        val soknadsId =
-                            call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
-                        val vedlegg = vedleggService.hent(soknadsId)
-                        call.respond(HttpStatusCode.OK, vedlegg)
-                    }
+//        authenticate("tokenx") {
+        route("v1/mellomlagring") {
+            route("/{soknadsId}") {
+                post {
+                    val soknadsId =
+                        call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
+                    val multiPartData = call.receiveMultipart()
+                    fileUploadHandler.handleFileupload(multiPartData, "", soknadsId)
+                    call.respond(HttpStatusCode.Created)
+                }
+                get {
+                    val soknadsId =
+                        call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
+                    val vedlegg = vedleggService.hent(soknadsId)
+                    call.respond(HttpStatusCode.OK, vedlegg)
                 }
             }
         }
+//        }
         route("hubba") {
             route("mellomlagring") {
                 get {
