@@ -9,6 +9,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
+import io.ktor.server.testing.contentType
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
 import io.mockk.every
@@ -18,16 +19,9 @@ import no.nav.dagpenger.mellomlagring.TestApplication.autentisert
 import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestApplication
 import no.nav.dagpenger.mellomlagring.lagring.VedleggMetadata
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService
-import no.nav.security.mock.oauth2.MockOAuth2Server
 import org.junit.jupiter.api.Test
 
 internal class LagringTest {
-
-    private val mockOAuth2Server: MockOAuth2Server by lazy {
-        MockOAuth2Server().also { server ->
-            server.start()
-        }
-    }
 
     @Test
     fun `Uautorisert dersom ingen token finnes`() {
@@ -59,7 +53,7 @@ internal class LagringTest {
 
         withMockAuthServerAndTestApplication({ vedleggApi(vedleggServiceMock) }) {
             autentisert(
-                endepunkt = "v1/mellomlagring/soknadsId",
+                endepunkt = "v1/mellomlagring/id",
                 httpMethod = HttpMethod.Post,
             ) {
                 this.addHeader(
@@ -77,12 +71,14 @@ internal class LagringTest {
                 setBody("boundary", partData)
             }.apply {
                 response.status() shouldBe HttpStatusCode.Created
+                response.content shouldBe """{"urn": "urn:vedlegg:id"}"""
+                response.contentType().toString() shouldBe "application/json; charset=UTF-8"
             }
         }
 
         verify(exactly = 2) { vedleggServiceMock.lagre(any(), any(), any()) }
 
-        soknadsid shouldContainExactly (listOf("soknadsId", "soknadsId"))
+        soknadsid shouldContainExactly (listOf("id", "id"))
         filnavn shouldContainExactly (listOf("file.csv", "file2.csv"))
         value.map(::String) shouldContainExactly (listOf("1", "2"))
     }

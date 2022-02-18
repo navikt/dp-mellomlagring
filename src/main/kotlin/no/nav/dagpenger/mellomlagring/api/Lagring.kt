@@ -6,6 +6,7 @@ import io.ktor.application.install
 import io.ktor.auth.Authentication
 import io.ktor.auth.authenticate
 import io.ktor.features.ContentNegotiation
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.MultiPartData
 import io.ktor.http.content.PartData
@@ -14,6 +15,7 @@ import io.ktor.http.content.streamProvider
 import io.ktor.jackson.jackson
 import io.ktor.request.receiveMultipart
 import io.ktor.response.respond
+import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
@@ -56,13 +58,18 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
     routing {
         authenticate("tokenx") {
             route("v1/mellomlagring") {
-                route("/{soknadsId}") {
+                route("/{id}") {
                     post {
-                        val soknadsId =
-                            call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
+                        val id =
+                            call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
                         val multiPartData = call.receiveMultipart()
-                        fileUploadHandler.handleFileupload(multiPartData, "", soknadsId)
-                        call.respond(HttpStatusCode.Created)
+                        fileUploadHandler.handleFileupload(multiPartData, "", id)
+                        call.respondText(
+                            ContentType.Application.Json, HttpStatusCode.Created,
+                            suspend {
+                                """{"urn": "urn:vedlegg:$id"}"""
+                            }
+                        )
                     }
                     get {
                         val soknadsId =
