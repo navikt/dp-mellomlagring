@@ -73,7 +73,7 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
                     }
                     get {
                         val soknadsId =
-                            call.parameters["soknadsId"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
+                            call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
                         val vedlegg = vedleggService.hent(soknadsId)
                         call.respond(HttpStatusCode.OK, vedlegg)
                     }
