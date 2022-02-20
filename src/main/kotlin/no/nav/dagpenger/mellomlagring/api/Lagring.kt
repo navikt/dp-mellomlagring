@@ -6,7 +6,6 @@ import io.ktor.application.install
 import io.ktor.auth.Authentication
 import io.ktor.auth.authenticate
 import io.ktor.features.ContentNegotiation
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.MultiPartData
 import io.ktor.http.content.PartData
@@ -15,7 +14,6 @@ import io.ktor.http.content.streamProvider
 import io.ktor.jackson.jackson
 import io.ktor.request.receiveMultipart
 import io.ktor.response.respond
-import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
@@ -28,6 +26,7 @@ import kotlinx.coroutines.coroutineScope
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService
+import no.nav.dagpenger.mellomlagring.lagring.VedleggService.Urn
 import no.nav.security.token.support.ktor.tokenValidationSupport
 
 private val logger = KotlinLogging.logger { }
@@ -63,13 +62,8 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
                         val id =
                             call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
                         val multiPartData = call.receiveMultipart()
-                        fileUploadHandler.handleFileupload(multiPartData, "", id)
-                        call.respondText(
-                            ContentType.Application.Json, HttpStatusCode.Created,
-                            suspend {
-                                """{"urn": "urn:vedlegg:$id"}"""
-                            }
-                        )
+                        val urnList = fileUploadHandler.handleFileupload(multiPartData, "", id)
+                        call.respond(HttpStatusCode.Created, urnList)
                     }
                     get {
                         val soknadsId =
@@ -84,9 +78,9 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
 }
 
 private class FileUploadHandler(private val vedleggService: VedleggService) {
-    suspend fun handleFileupload(multiPartData: MultiPartData, fnr: String, soknadsId: String) {
-        coroutineScope {
-            val jobs = mutableListOf<Deferred<Unit>>()
+    suspend fun handleFileupload(multiPartData: MultiPartData, fnr: String, soknadsId: String): List<Urn> {
+        return coroutineScope {
+            val jobs = mutableListOf<Deferred<Urn>>()
             multiPartData.forEachPart { part ->
                 when (part) {
                     is PartData.FileItem -> {
@@ -94,11 +88,9 @@ private class FileUploadHandler(private val vedleggService: VedleggService) {
                             async(Dispatchers.IO) {
                                 val fileName =
                                     part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
-                                part.streamProvider().use {
-                                    // todo should we just use inputstream?
-                                    vedleggService.lagre(soknadsId, fileName, it.readBytes())
-                                }
+                                val bytes = part.streamProvider().use { it.readBytes() }
                                 part.dispose()
+                                vedleggService.lagre(soknadsId, fileName, bytes)
                             }
                         )
                     }

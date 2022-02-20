@@ -1,5 +1,6 @@
 package no.nav.dagpenger.mellomlagring.lagring
 
+import com.google.cloud.storage.Blob
 import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
@@ -28,7 +29,10 @@ class S3Store(
     override fun lagre(storageKey: StorageKey, storageValue: StorageValue) {
         val blobInfo =
             BlobInfo.newBuilder(BlobId.of(bucketName, storageKey))
-                .setContentType("application/octet-stream").build() // todo contentType?
+                .setContentType("application/octet-stream")
+                .setMetadata(emptyMap())
+                .build() // todo contentType?
+
         kotlin.runCatching {
             gcpStorage.writer(blobInfo).use {
                 it.write(ByteBuffer.wrap(storageValue, 0, storageValue.size))
@@ -48,6 +52,8 @@ class S3Store(
         return gcpStorage.list(
             bucketName,
             Storage.BlobListOption.prefix(keyPrefix)
-        )?.values?.map { v -> VedleggMetadata(v.name) } ?: emptyList()
+        )?.values?.map { v: Blob ->
+            VedleggMetadata(v.name)
+        } ?: emptyList()
     }
 }

@@ -1,6 +1,5 @@
 package no.nav.dagpenger.mellomlagring.api
 
-import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.ktor.client.request.forms.append
 import io.ktor.client.request.forms.formData
@@ -17,6 +16,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import no.nav.dagpenger.mellomlagring.TestApplication.autentisert
 import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestApplication
+import no.nav.dagpenger.mellomlagring.lagring.Store
 import no.nav.dagpenger.mellomlagring.lagring.VedleggMetadata
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService
 import org.junit.jupiter.api.Test
@@ -43,15 +43,9 @@ internal class LagringTest {
 
     @Test
     fun `Lagring av fil`() {
-        val soknadsid = mutableListOf<String>()
-        val filnavn = mutableListOf<String>()
-        val value = mutableListOf<ByteArray>()
+        val storeMock = mockk<Store>(relaxed = true)
 
-        val vedleggServiceMock = mockk<VedleggService>().also {
-            every { it.lagre(capture(soknadsid), capture(filnavn), capture(value)) } returns Unit
-        }
-
-        withMockAuthServerAndTestApplication({ vedleggApi(vedleggServiceMock) }) {
+        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(storeMock, mockk())) }) {
             autentisert(
                 endepunkt = "v1/mellomlagring/id",
                 httpMethod = HttpMethod.Post,
@@ -71,16 +65,13 @@ internal class LagringTest {
                 setBody("boundary", partData)
             }.apply {
                 response.status() shouldBe HttpStatusCode.Created
-                response.content shouldBe """{"urn": "urn:vedlegg:id"}"""
+                response.content shouldBe """[{"urn":"urn:vedlegg:id/file.csv"},{"urn":"urn:vedlegg:id/file2.csv"}]"""
                 response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+
+                verify(exactly = 1) { storeMock.lagre("id/file.csv", "1".toByteArray()) }
+                verify(exactly = 1) { storeMock.lagre("id/file2.csv", "2".toByteArray()) }
             }
         }
-
-        verify(exactly = 2) { vedleggServiceMock.lagre(any(), any(), any()) }
-
-        soknadsid shouldContainExactly (listOf("id", "id"))
-        filnavn shouldContainExactly (listOf("file.csv", "file2.csv"))
-        value.map(::String) shouldContainExactly (listOf("1", "2"))
     }
 
     @Test

@@ -47,6 +47,7 @@ dependencies {
     implementation(Ktor.server)
     implementation(Ktor.serverNetty)
     implementation("no.nav.security:token-validation-ktor:1.3.10")
+    implementation("de.slub-dresden:urnlib:2.0.1")
 
     runtimeOnly("ch.qos.logback:logback-classic:1.3.0-alpha10")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.0") {
