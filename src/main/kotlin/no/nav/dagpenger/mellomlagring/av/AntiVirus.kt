@@ -12,7 +12,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.utils.io.streams.asInput
 import mu.KotlinLogging
-import org.checkerframework.checker.units.qual.t
 import java.io.ByteArrayInputStream
 
 internal interface AntiVirus {
