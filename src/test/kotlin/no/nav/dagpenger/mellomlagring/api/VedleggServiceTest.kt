@@ -11,6 +11,7 @@ import io.ktor.http.content.PartData
 import io.ktor.server.testing.contentType
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -18,6 +19,7 @@ import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.TestApplication
 import no.nav.dagpenger.mellomlagring.TestApplication.autentisert
 import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestApplication
+import no.nav.dagpenger.mellomlagring.av.AntiVirus
 import no.nav.dagpenger.mellomlagring.lagring.Store
 import no.nav.dagpenger.mellomlagring.lagring.VedleggMetadata
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService
@@ -26,11 +28,44 @@ import org.junit.jupiter.api.Test
 internal class VedleggServiceTest {
     private val crypto = Config.crypto()
 
+    private val mockAv = mockk<AntiVirus>().also {
+        coEvery { it.infisert(any(), any()) } returns false
+    }
+
     @Test
     fun `Uautorisert dersom ingen token finnes`() {
         withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
             handleRequest(HttpMethod.Get, "v1/mellomlagring/1").apply {
                 response.status() shouldBe HttpStatusCode.Unauthorized
+            }
+        }
+    }
+
+    @Test
+    fun `Feil dersom fil inneholder virus`() {
+        val avMock = mockk<AntiVirus>().also {
+            coEvery { it.infisert(any(), any()) } returns true
+        }
+
+        withMockAuthServerAndTestApplication({
+            vedleggApi(VedleggService(mockk(), crypto, avMock))
+        }) {
+            autentisert(
+                endepunkt = "v1/mellomlagring/id",
+                httpMethod = HttpMethod.Post,
+            ) {
+                this.addHeader(
+                    HttpHeaders.ContentType,
+                    ContentType.MultiPart.FormData.withParameter("boundary", "boundary").toString()
+                )
+                val partData: List<PartData> = formData {
+                    append("hubba", "file.csv", ContentType.Text.CSV) {
+                        this.append("1")
+                    }
+                }
+                setBody("boundary", partData)
+            }.also {
+                it.response.status() shouldBe HttpStatusCode.BadRequest
             }
         }
     }
@@ -50,7 +85,7 @@ internal class VedleggServiceTest {
             every { it.list(any()) } returns listOf(VedleggMetadata("fil", crypto.encrypt("eier")))
         }
 
-        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(storeMock, crypto)) }) {
+        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(storeMock, crypto, mockAv)) }) {
             autentisert(
                 endepunkt = "v1/mellomlagring/id",
                 httpMethod = HttpMethod.Post,
@@ -68,7 +103,7 @@ internal class VedleggServiceTest {
             }
         }
 
-        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(storeMock, crypto)) }) {
+        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(storeMock, crypto, mockAv)) }) {
             autentisert(
                 endepunkt = "v1/mellomlagring?urn=urn:vedlegg:id",
                 httpMethod = HttpMethod.Get,
@@ -82,7 +117,7 @@ internal class VedleggServiceTest {
     fun `Lagring av fil`() {
         val storeMock = mockk<Store>(relaxed = true)
 
-        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(storeMock, crypto)) }) {
+        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(storeMock, crypto, mockAv)) }) {
             autentisert(
                 endepunkt = "v1/mellomlagring/id",
                 httpMethod = HttpMethod.Post,
@@ -140,7 +175,7 @@ internal class VedleggServiceTest {
         val store = mockk<Store>().also {
             every { it.list(any()) } returns emptyList()
         }
-        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(store, mockk())) }) {
+        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(store, mockk(), mockAv)) }) {
             autentisert(
                 endepunkt = "v1/mellomlagring?urn=urn:vedlegg:id",
                 httpMethod = HttpMethod.Get,
@@ -161,7 +196,7 @@ internal class VedleggServiceTest {
                 )
             )
         }
-        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(store, crypto)) }) {
+        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(store, crypto, mockAv)) }) {
             autentisert(
                 endepunkt = "v1/mellomlagring?urn=urn:vedlegg:id",
                 httpMethod = HttpMethod.Get,
@@ -183,7 +218,7 @@ internal class VedleggServiceTest {
             )
         }
 
-        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(store, crypto)) }) {
+        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(store, crypto, mockAv)) }) {
             autentisert(
                 endepunkt = "v1/mellomlagring/$soknadsId",
                 httpMethod = HttpMethod.Get

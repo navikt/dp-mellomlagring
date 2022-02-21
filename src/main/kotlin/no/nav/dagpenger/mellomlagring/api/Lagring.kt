@@ -32,6 +32,7 @@ import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.auth.fnr
+import no.nav.dagpenger.mellomlagring.lagring.InfisertFilException
 import no.nav.dagpenger.mellomlagring.lagring.OwnerException
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService.Urn
@@ -87,6 +88,13 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
             call.respond(
                 HttpStatusCode.Forbidden,
                 HttpProblem(title = "Ikke gyldig eier", status = 403, detail = cause.message)
+            )
+        }
+
+        exception<InfisertFilException> { cause ->
+            call.respond(
+                HttpStatusCode.BadRequest,
+                HttpProblem(title = "Fil har virus", status = 400, detail = cause.message)
             )
         }
     }

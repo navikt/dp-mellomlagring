@@ -2,11 +2,18 @@ package no.nav.dagpenger.mellomlagring.lagring
 
 import de.slub.urn.URN
 import io.ktor.features.NotFoundException
+import no.nav.dagpenger.mellomlagring.av.AntiVirus
+import no.nav.dagpenger.mellomlagring.av.ClamAv
 import no.nav.dagpenger.mellomlagring.crypto.Crypto
 
-internal class VedleggService(private val store: Store, private val crypto: Crypto) {
+internal class VedleggService(
+    private val store: Store,
+    private val crypto: Crypto,
+    private val antiVirus: AntiVirus = ClamAv
+) {
 
-    fun lagre(soknadsId: String, fileName: String, filinnhold: ByteArray, eier: String): Urn {
+    suspend fun lagre(soknadsId: String, fileName: String, filinnhold: ByteArray, eier: String): Urn {
+        if (antiVirus.infisert(fileName, filinnhold)) throw InfisertFilException("Fil $fileName har virus")
         val storageKey = createStoreKey(soknadsId, fileName)
         store.lagre(storageKey, filinnhold, crypto.encrypt(eier))
         return Urn("urn:vedlegg:$storageKey")
@@ -36,5 +43,7 @@ internal class VedleggService(private val store: Store, private val crypto: Cryp
 
     internal data class Urn(val urn: String)
 }
+
+class InfisertFilException(s: String) : Throwable(s)
 
 class OwnerException(eier: String, urn: String) : Throwable("$eier er ikke eier av $urn")
