@@ -3,13 +3,13 @@ package no.nav.dagpenger.mellomlagring.lagring
 import de.slub.urn.URN
 import io.ktor.features.NotFoundException
 import no.nav.dagpenger.mellomlagring.av.AntiVirus
-import no.nav.dagpenger.mellomlagring.av.ClamAv
+import no.nav.dagpenger.mellomlagring.av.clamAv
 import no.nav.dagpenger.mellomlagring.crypto.Crypto
 
 internal class VedleggService(
     private val store: Store,
     private val crypto: Crypto,
-    private val antiVirus: AntiVirus = ClamAv
+    private val antiVirus: AntiVirus = clamAv()
 ) {
 
     suspend fun lagre(soknadsId: String, fileName: String, filinnhold: ByteArray, eier: String): Urn {
