@@ -35,7 +35,8 @@ class S3Store(
             bucketName,
             Storage.BlobListOption.prefix(keyPrefix)
         )?.values?.map { v: Blob ->
-            VedleggMetadata(v.name, v.metadata["eier"] ?: "")
+            val eier = v.metadata?.let { it["eier"] ?: "" } ?: ""
+            VedleggMetadata(v.name, eier)
         } ?: emptyList()
     }
 
