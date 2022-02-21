@@ -25,7 +25,7 @@ object ClamAv : AntiVirus {
         }
     }
 
-    private data class ScanResult(val filename: String, val result: String)
+    private data class ScanResult(val Filename: String, val Result: String)
 
     override suspend fun infisert(filnavn: String, filinnhold: ByteArray): Boolean {
         val result =
@@ -50,6 +50,6 @@ object ClamAv : AntiVirus {
                 .onFailure { t ->
                     logger.error(t) { "Fikk ikke scannet fil: ${t.message}" }
                 }
-        return result.getOrThrow().first().result.uppercase() == "OK"
+        return result.getOrThrow().first().Result.uppercase() == "OK"
     }
 }
