@@ -8,7 +8,7 @@ internal class VedleggService(private val store: Store, private val crypto: Cryp
 
     fun lagre(soknadsId: String, fileName: String, filinnhold: ByteArray, eier: String): Urn {
         val storageKey = createStoreKey(soknadsId, fileName)
-        store.lagre(storageKey, filinnhold, eier)
+        store.lagre(storageKey, filinnhold, crypto.encrypt(eier))
         return Urn("urn:vedlegg:$storageKey")
     }
 
@@ -20,7 +20,7 @@ internal class VedleggService(private val store: Store, private val crypto: Cryp
     fun liste(key: StorageKey, eier: String): List<Urn> {
         return store.list(key)
             .filter {
-                it.eier == eier
+                crypto.decrypt(it.eier) == eier
             }
             .map {
                 Urn("urn:vedlegg:${it.filnavn}")
@@ -30,7 +30,7 @@ internal class VedleggService(private val store: Store, private val crypto: Cryp
     fun hent(urn: Urn, eier: String): StorageValue {
         val urn8141 = URN.rfc8141().parse(urn.urn).namespaceSpecificString().toString()
         val metadata = store.list(urn8141).firstOrNull() ?: throw NotFoundException()
-        if (eier != metadata.eier) throw OwnerException(eier.substring(0, 6), urn8141)
+        if (eier != crypto.decrypt(metadata.eier)) throw OwnerException(eier.substring(0, 6), urn8141)
         return store.hent(urn8141)
     }
 
@@ -38,7 +38,3 @@ internal class VedleggService(private val store: Store, private val crypto: Cryp
 }
 
 class OwnerException(eier: String, urn: String) : Throwable("$eier er ikke eier av $urn")
-
-
-
-

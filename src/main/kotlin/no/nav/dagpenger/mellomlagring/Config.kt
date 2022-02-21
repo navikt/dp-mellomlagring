@@ -13,6 +13,7 @@ import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 import io.ktor.config.ApplicationConfig
 import io.ktor.config.MapApplicationConfig
+import no.nav.dagpenger.mellomlagring.crypto.AESCrypto
 
 internal object Config {
     internal enum class Env {
@@ -43,6 +44,11 @@ internal object Config {
         val passPhrase = properties[Key("DP_MELLOMLAGRING_CRYPTO_PASSPHRASE", stringType)]
         val salt = properties[Key("DP_MELLOMLAGRING_CRYPTO_SALT", stringType)]
     }
+
+    fun crypto() = AESCrypto(
+        passphrase = crypto.passPhrase,
+        iv = crypto.salt
+    )
 
     val bucketName: String
         get() = properties[Key("DP_MELLOMLAGRING_BUCKETNAME", stringType)]

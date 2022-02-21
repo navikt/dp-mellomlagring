@@ -10,7 +10,7 @@ import io.ktor.server.testing.withTestApplication
 import no.nav.security.mock.oauth2.MockOAuth2Server
 
 internal object TestApplication {
-    const val defaultDummyFodselsnummer = "12345"
+    const val defaultDummyFodselsnummer = "123456789"
 
     private val mockOAuth2Server: MockOAuth2Server by lazy {
         MockOAuth2Server().also { server ->
