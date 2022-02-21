@@ -1,5 +1,6 @@
 package no.nav.dagpenger.mellomlagring.av
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
@@ -19,9 +20,14 @@ internal interface AntiVirus {
 
 private val logger = KotlinLogging.logger { }
 
-internal data class ScanResult(val Filename: String, val Result: String) {
-    fun harVirus(): Boolean {
-        return Result.uppercase() != "OK"
+internal data class ScanResult(
+    @JsonProperty("Filename")
+    val fileName: String,
+    @JsonProperty("Result")
+    val result: String
+) {
+    fun infisert(): Boolean {
+        return result.uppercase() != "OK"
     }
 }
 
@@ -35,32 +41,30 @@ internal fun clamAv(engine: HttpClientEngine = CIO.create()): AntiVirus {
         }
 
         override suspend fun infisert(filnavn: String, filinnhold: ByteArray): Boolean {
-            val result =
-                kotlin.runCatching {
-                    httpClient.submitFormWithBinaryData<List<ScanResult>>(
-                        url = "http://clamav.clamav.svc.cluster.local/scan",
-                        formData = formData {
-                            this.appendInput(
-                                key = filnavn,
-                                headers = Headers.build {
-                                    append(HttpHeaders.ContentDisposition, "filename=$filnavn")
-                                },
-                            ) {
-                                ByteArrayInputStream(filinnhold).asInput()
-                            }
+            return runCatching<List<ScanResult>> {
+                httpClient.submitFormWithBinaryData(
+                    url = "http://clamav.clamav.svc.cluster.local/scan",
+                    formData = formData {
+                        appendInput(
+                            key = filnavn,
+                            headers = Headers.build {
+                                append(HttpHeaders.ContentDisposition, "filename=$filnavn")
+                            },
+                        ) {
+                            ByteArrayInputStream(filinnhold).asInput()
                         }
-                    )
+                    }
+                )
+            }.fold(
+                onSuccess = {
+                    logger.info { "Scannet fil $filnavn med resultat $it" }
+                    it
+                },
+                onFailure = { t ->
+                    logger.error(t) { "Fikk ikke scannet fil: ${t.message}" }
+                    throw t
                 }
-                    .onSuccess { result ->
-                        logger.info { "Scannet fil $filnavn med resultat $result" }
-                    }
-                    .onFailure { t ->
-                        logger.error(t) { "Fikk ikke scannet fil: ${t.message}" }
-                    }
-
-            return result.getOrThrow().any { scanResult ->
-                scanResult.harVirus()
-            }
+            ).any { it.infisert() }
         }
     }
 }

@@ -36,34 +36,33 @@ tasks.withType<Jar>().configureEach {
 }
 
 dependencies {
-    implementation(platform(kotlin("bom")))
-    implementation(kotlin("stdlib"))
-
     implementation("com.google.cloud:google-cloud-storage")
-    implementation(platform("com.google.cloud:libraries-bom:24.3.0"))
+    implementation("de.slub-dresden:urnlib:2.0.1")
+    implementation("no.nav.security:token-validation-ktor:1.3.10")
     implementation(Konfig.konfig)
     implementation(Kotlin.Logging.kotlinLogging)
-    implementation(Ktor.library("jackson"))
-    implementation(Ktor.server)
-    implementation(Ktor.library("server-cio"))
+    implementation(Ktor.library("auth-jwt"))
+    implementation(Ktor.library("client-cio-jvm"))
     implementation(Ktor.library("client-core"))
     implementation(Ktor.library("client-jackson"))
-    implementation(Ktor.library("client-cio-jvm"))
-
-    implementation("no.nav.security:token-validation-ktor:1.3.10")
-    implementation("de.slub-dresden:urnlib:2.0.1")
-    implementation(Ktor.library("auth-jwt"))
+    implementation(Ktor.library("jackson"))
+    implementation(Ktor.library("server-cio"))
+    implementation(Ktor.server)
+    implementation(kotlin("stdlib"))
+    implementation(platform("com.google.cloud:libraries-bom:24.3.0"))
+    implementation(platform(kotlin("bom")))
 
     runtimeOnly("ch.qos.logback:logback-classic:1.3.0-alpha10")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.0") {
         exclude("com.fasterxml.jackson.core")
     }
 
-    testImplementation("org.testcontainers:testcontainers:${TestContainers.version}")
     testImplementation("no.nav.security:mock-oauth2-server:0.4.3")
+    testImplementation("org.testcontainers:testcontainers:${TestContainers.version}")
     testImplementation(Junit5.api)
     testImplementation(KoTest.assertions)
     testImplementation(Ktor.library("server-test-host"))
+    testImplementation(Ktor.library("client-mock"))
     testImplementation(Mockk.mockk)
 
     testRuntimeOnly(Junit5.engine)
