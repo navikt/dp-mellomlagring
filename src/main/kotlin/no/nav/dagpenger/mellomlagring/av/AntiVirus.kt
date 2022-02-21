@@ -1,14 +1,11 @@
 package no.nav.dagpenger.mellomlagring.av
 
 import io.ktor.client.HttpClient
-import io.ktor.client.features.defaultRequest
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.request.forms.formData
-import io.ktor.client.request.header
-import io.ktor.client.request.host
 import io.ktor.client.request.post
-import io.ktor.http.ContentType
+import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.utils.io.streams.asInput
 import mu.KotlinLogging
@@ -26,10 +23,6 @@ object ClamAv : AntiVirus {
             serializer = JacksonSerializer {
             }
         }
-        defaultRequest {
-            host = "http://clamav.clamav.svc.cluster.local"
-            header(HttpHeaders.ContentType, ContentType.MultiPart.FormData)
-        }
     }
 
     private data class ScanResult(val filename: String, val result: String)
@@ -37,10 +30,13 @@ object ClamAv : AntiVirus {
     override suspend fun infisert(filnavn: String, filinnhold: ByteArray): Boolean {
         val result: Result<ScanResult> =
             kotlin.runCatching {
-                httpClient.post<ScanResult>() {
+                httpClient.post<ScanResult>("http://clamav.clamav.svc.cluster.local") {
                     formData {
                         this.appendInput(
                             key = filnavn,
+                            headers = Headers.build {
+                                append(HttpHeaders.ContentDisposition, "filename=$filnavn")
+                            },
                         ) {
                             ByteArrayInputStream(filinnhold).asInput()
                         }

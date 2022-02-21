@@ -48,7 +48,7 @@ dependencies {
     implementation(Ktor.serverNetty)
     implementation(Ktor.library("client-core"))
     implementation(Ktor.library("client-jackson"))
-    implementation(Ktor.library("client-core"))
+    implementation(Ktor.library("client-cio-jvm"))
 
     implementation("no.nav.security:token-validation-ktor:1.3.10")
     implementation("de.slub-dresden:urnlib:2.0.1")
