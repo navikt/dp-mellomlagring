@@ -45,7 +45,7 @@ dependencies {
     implementation(Kotlin.Logging.kotlinLogging)
     implementation(Ktor.library("jackson"))
     implementation(Ktor.server)
-    implementation(Ktor.serverNetty)
+    implementation(Ktor.library("server-cio"))
     implementation(Ktor.library("client-core"))
     implementation(Ktor.library("client-jackson"))
     implementation(Ktor.library("client-cio-jvm"))

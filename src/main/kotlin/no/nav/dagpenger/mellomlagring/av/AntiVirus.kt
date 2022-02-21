@@ -63,6 +63,4 @@ internal fun clamAv(engine: HttpClientEngine = CIO.create()): AntiVirus {
             }
         }
     }
-
 }
-
