@@ -87,26 +87,43 @@ internal class LagringTest {
     }
 
     @Test
+    fun `Hente fil`() {
+        val store = mockk<Store>().also {
+            every { it.hent("id") } returns "1".toByteArray()
+        }
+        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(store, mockk())) }) {
+            autentisert(
+                endepunkt = "v1/mellomlagring?urn=urn:vedlegg:id",
+                httpMethod = HttpMethod.Get,
+            ).apply {
+                response.status() shouldBe HttpStatusCode.OK
+                response.contentType() shouldBe ContentType.Application.OctetStream
+                response.content shouldBe "1"
+            }
+        }
+    }
+
+    @Test
     fun `Hente vedleggliste`() {
         val soknadsId = "soknadsId"
-        val vedleggServiceMock = mockk<VedleggService>().also {
-            every { it.hent(soknadsId) } returns listOf(
-                VedleggMetadata("fil1"),
-                VedleggMetadata("fil2")
+        val store = mockk<Store>().also {
+            every { it.list(soknadsId) } returns listOf(
+                VedleggMetadata("$soknadsId/fil1"),
+                VedleggMetadata("$soknadsId/fil2"),
             )
         }
 
-        withMockAuthServerAndTestApplication({ vedleggApi(vedleggServiceMock) }) {
+        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(store, mockk())) }) {
             autentisert(
                 endepunkt = "v1/mellomlagring/$soknadsId",
                 httpMethod = HttpMethod.Get
             ).apply {
                 response.status() shouldBe HttpStatusCode.OK
                 //language=JSON
-                response.content shouldBe """[{"filnavn":"fil1"},{"filnavn":"fil2"}]"""
+                response.content shouldBe """[{"urn":"urn:vedlegg:soknadsId/fil1"},{"urn":"urn:vedlegg:soknadsId/fil2"}]"""
             }
         }
 
-        verify(exactly = 1) { vedleggServiceMock.hent(soknadsId) }
+        verify(exactly = 1) { store.list(soknadsId) }
     }
 }

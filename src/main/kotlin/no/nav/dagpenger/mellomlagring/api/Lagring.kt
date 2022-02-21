@@ -6,6 +6,7 @@ import io.ktor.application.install
 import io.ktor.auth.Authentication
 import io.ktor.auth.authenticate
 import io.ktor.features.ContentNegotiation
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.MultiPartData
 import io.ktor.http.content.PartData
@@ -14,6 +15,7 @@ import io.ktor.http.content.streamProvider
 import io.ktor.jackson.jackson
 import io.ktor.request.receiveMultipart
 import io.ktor.response.respond
+import io.ktor.response.respondOutputStream
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
@@ -23,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService
@@ -57,6 +60,16 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
     routing {
         authenticate("tokenx") {
             route("v1/mellomlagring") {
+                get {
+                    val urn = call.request.queryParameters["urn"]?.let { Urn(it) }!!
+                    vedleggService.hent(urn).also {
+                        call.respondOutputStream(ContentType.Application.OctetStream, HttpStatusCode.OK) {
+                            withContext(Dispatchers.IO) {
+                                this@respondOutputStream.write(it)
+                            }
+                        }
+                    }
+                }
                 route("/{id}") {
                     post {
                         val id =
@@ -68,7 +81,7 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
                     get {
                         val soknadsId =
                             call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
-                        val vedlegg = vedleggService.hent(soknadsId)
+                        val vedlegg = vedleggService.liste(soknadsId)
                         call.respond(HttpStatusCode.OK, vedlegg)
                     }
                 }
