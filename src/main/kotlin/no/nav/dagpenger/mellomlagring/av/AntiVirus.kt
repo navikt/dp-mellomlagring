@@ -28,9 +28,9 @@ object ClamAv : AntiVirus {
     private data class ScanResult(val filename: String, val result: String)
 
     override suspend fun infisert(filnavn: String, filinnhold: ByteArray): Boolean {
-        val result: Result<ScanResult> =
+        val result =
             kotlin.runCatching {
-                httpClient.submitFormWithBinaryData<ScanResult>(
+                httpClient.submitFormWithBinaryData<List<ScanResult>>(
                     url = "http://clamav.clamav.svc.cluster.local/scan",
                     formData = formData {
                         this.appendInput(
@@ -50,6 +50,6 @@ object ClamAv : AntiVirus {
                 .onFailure { t ->
                     logger.error(t) { "Fikk ikke scannet fil: ${t.message}" }
                 }
-        return result.getOrThrow().result.uppercase() == "OK"
+        return result.getOrThrow().first().result.uppercase() == "OK"
     }
 }
