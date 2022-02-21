@@ -4,6 +4,8 @@ import io.ktor.client.HttpClient
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.request.forms.formData
+import io.ktor.client.request.forms.submitForm
+import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.post
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
@@ -30,7 +32,7 @@ object ClamAv : AntiVirus {
     override suspend fun infisert(filnavn: String, filinnhold: ByteArray): Boolean {
         val result: Result<ScanResult> =
             kotlin.runCatching {
-                httpClient.post<ScanResult>("http://clamav.clamav.svc.cluster.local/scan") {
+                httpClient.submitFormWithBinaryData<ScanResult>("http://clamav.clamav.svc.cluster.local/scan") {
                     formData {
                         this.appendInput(
                             key = filnavn,
