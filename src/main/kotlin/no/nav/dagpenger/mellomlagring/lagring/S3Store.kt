@@ -26,11 +26,28 @@ class S3Store(
         }
     }
 
-    override fun lagre(storageKey: StorageKey, storageValue: StorageValue) {
+    override fun hent(storageKey: StorageKey): StorageValue {
+        return gcpStorage.get(BlobId.of(bucketName, storageKey)).getContent() ?: throw RuntimeException("FIXME")
+    }
+
+    override fun list(keyPrefix: StorageKey): List<VedleggMetadata> {
+        return gcpStorage.list(
+            bucketName,
+            Storage.BlobListOption.prefix(keyPrefix)
+        )?.values?.map { v: Blob ->
+            VedleggMetadata(v.name, v.metadata["eier"] ?: "")
+        } ?: emptyList()
+    }
+
+    override fun lagre(storageKey: StorageKey, storageValue: StorageValue, eier: String) {
         val blobInfo =
             BlobInfo.newBuilder(BlobId.of(bucketName, storageKey))
                 .setContentType("application/octet-stream")
-                .setMetadata(emptyMap())
+                .setMetadata(
+                    mapOf(
+                        "eier" to eier
+                    )
+                )
                 .build() // todo contentType?
 
         kotlin.runCatching {
@@ -42,18 +59,5 @@ class S3Store(
         }.onSuccess {
             logger.info("Lagret fil med blobid:  ${blobInfo.blobId.name} og bytes: $it")
         }
-    }
-
-    override fun hent(storageKey: StorageKey): StorageValue {
-        return gcpStorage.get(BlobId.of(bucketName, storageKey)).getContent() ?: throw RuntimeException("FIXME")
-    }
-
-    override fun list(keyPrefix: StorageKey): List<VedleggMetadata> {
-        return gcpStorage.list(
-            bucketName,
-            Storage.BlobListOption.prefix(keyPrefix)
-        )?.values?.map { v: Blob ->
-            VedleggMetadata(v.name)
-        } ?: emptyList()
     }
 }

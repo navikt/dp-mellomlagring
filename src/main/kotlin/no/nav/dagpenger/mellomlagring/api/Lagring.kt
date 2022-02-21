@@ -5,7 +5,10 @@ import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.auth.Authentication
 import io.ktor.auth.authenticate
+import io.ktor.auth.authentication
 import io.ktor.features.ContentNegotiation
+import io.ktor.features.NotFoundException
+import io.ktor.features.StatusPages
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.MultiPartData
@@ -28,6 +31,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
+import no.nav.dagpenger.mellomlagring.auth.fnr
+import no.nav.dagpenger.mellomlagring.lagring.OwnerException
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService.Urn
 import no.nav.security.token.support.ktor.tokenValidationSupport
@@ -57,12 +62,42 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
             .onFailure { e -> logger.error(e) { "Failed installing auth feature" } }
     }
 
+    install(StatusPages) {
+        exception<Throwable> { cause ->
+            logger.error(cause) { "Kunne ikke håndtere API kall" }
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                HttpProblem(title = "Feilet", detail = cause.message)
+            )
+        }
+        exception<IllegalArgumentException> { cause ->
+            call.respond(
+                HttpStatusCode.BadRequest,
+                HttpProblem(title = "Klient feil", status = 400, detail = cause.message)
+            )
+        }
+        exception<NotFoundException> { cause ->
+            call.respond(
+                HttpStatusCode.NotFound,
+                HttpProblem(title = "Ikke funnet", status = 404, detail = cause.message)
+            )
+        }
+
+        exception<OwnerException> { cause ->
+            call.respond(
+                HttpStatusCode.Forbidden,
+                HttpProblem(title = "Ikke gyldig eier", status = 403, detail = cause.message)
+            )
+        }
+    }
+
     routing {
         authenticate("tokenx") {
             route("v1/mellomlagring") {
                 get {
+                    val jwtPrincipal = call.authentication.fnr()
                     val urn = call.request.queryParameters["urn"]?.let { Urn(it) }!!
-                    vedleggService.hent(urn).also {
+                    vedleggService.hent(urn, jwtPrincipal).also {
                         call.respondOutputStream(ContentType.Application.OctetStream, HttpStatusCode.OK) {
                             withContext(Dispatchers.IO) {
                                 this@respondOutputStream.write(it)
@@ -72,16 +107,18 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
                 }
                 route("/{id}") {
                     post {
+                        val jwtPrincipal = call.authentication.fnr()
                         val id =
                             call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
                         val multiPartData = call.receiveMultipart()
-                        val urnList = fileUploadHandler.handleFileupload(multiPartData, "", id)
+                        val urnList = fileUploadHandler.handleFileupload(multiPartData, jwtPrincipal, id)
                         call.respond(HttpStatusCode.Created, urnList)
                     }
                     get {
+                        val jwtPrincipal = call.authentication.fnr()
                         val soknadsId =
                             call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke soknadsId")
-                        val vedlegg = vedleggService.liste(soknadsId)
+                        val vedlegg = vedleggService.liste(soknadsId, jwtPrincipal)
                         call.respond(HttpStatusCode.OK, vedlegg)
                     }
                 }
@@ -91,7 +128,7 @@ internal fun Application.vedleggApi(vedleggService: VedleggService) {
 }
 
 private class FileUploadHandler(private val vedleggService: VedleggService) {
-    suspend fun handleFileupload(multiPartData: MultiPartData, fnr: String, soknadsId: String): List<Urn> {
+    suspend fun handleFileupload(multiPartData: MultiPartData, eier: String, soknadsId: String): List<Urn> {
         return coroutineScope {
             val jobs = mutableListOf<Deferred<Urn>>()
             multiPartData.forEachPart { part ->
@@ -103,7 +140,7 @@ private class FileUploadHandler(private val vedleggService: VedleggService) {
                                     part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
                                 val bytes = part.streamProvider().use { it.readBytes() }
                                 part.dispose()
-                                vedleggService.lagre(soknadsId, fileName, bytes)
+                                vedleggService.lagre(soknadsId, fileName, bytes, eier)
                             }
                         )
                     }

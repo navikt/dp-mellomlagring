@@ -66,18 +66,18 @@ class StoreTest {
         val store = S3Store(Config.localStorage("http://${gcsFixedHost.host}:$FIXED_HOST_PORT", true))
 
         shouldNotThrowAny {
-            store.lagre("id/hubba", "hubba".toByteArray())
-            store.lagre("id/bubba", "bubba".toByteArray())
+            store.lagre("id/hubba", "hubba".toByteArray(), "eier1")
+            store.lagre("id/bubba", "bubba".toByteArray(), "eier2")
         }
 
         store.list("id").let {
             it.size shouldBe 2
-            it shouldContainExactlyInAnyOrder listOf(VedleggMetadata("id/hubba"), VedleggMetadata("id/bubba"))
+            it shouldContainExactlyInAnyOrder listOf(VedleggMetadata("id/hubba", "eier1"), VedleggMetadata("id/bubba", "eier2"))
         }
 
         store.list("id/hubba").let {
             it.size shouldBe 1
-            it shouldContainExactlyInAnyOrder listOf(VedleggMetadata("id/hubba"))
+            it shouldContainExactlyInAnyOrder listOf(VedleggMetadata("id/hubba", "eier1"))
         }
 
         shouldNotThrowAny {

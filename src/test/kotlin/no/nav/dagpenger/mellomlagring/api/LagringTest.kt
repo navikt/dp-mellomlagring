@@ -14,6 +14,7 @@ import io.ktor.server.testing.setBody
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import no.nav.dagpenger.mellomlagring.TestApplication
 import no.nav.dagpenger.mellomlagring.TestApplication.autentisert
 import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestApplication
 import no.nav.dagpenger.mellomlagring.lagring.Store
@@ -37,6 +38,40 @@ internal class LagringTest {
         withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
             autentisert(endepunkt = "v1/mellomlagring/1").apply {
                 response.status() shouldBe HttpStatusCode.OK
+            }
+        }
+    }
+
+    @Test
+    fun `Skal ikke kunne hente vedlegg som andre eier`() {
+        val storeMock = mockk<Store>(relaxed = true).also {
+            every { it.list(any()) } returns listOf(VedleggMetadata("fil", "eier"))
+        }
+
+        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(storeMock, mockk())) }) {
+            autentisert(
+                endepunkt = "v1/mellomlagring/id",
+                httpMethod = HttpMethod.Post,
+            ) {
+                this.addHeader(
+                    HttpHeaders.ContentType,
+                    ContentType.MultiPart.FormData.withParameter("boundary", "boundary").toString()
+                )
+                val partData: List<PartData> = formData {
+                    append("hubba", "file.csv", ContentType.Text.CSV) {
+                        this.append("1")
+                    }
+                }
+                setBody("boundary", partData)
+            }
+        }
+
+        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(storeMock, mockk())) }) {
+            autentisert(
+                endepunkt = "v1/mellomlagring?urn=urn:vedlegg:id",
+                httpMethod = HttpMethod.Get,
+            ).apply {
+                response.status() shouldBe HttpStatusCode.Forbidden
             }
         }
     }
@@ -68,8 +103,8 @@ internal class LagringTest {
                 response.content shouldBe """[{"urn":"urn:vedlegg:id/file.csv"},{"urn":"urn:vedlegg:id/file2.csv"}]"""
                 response.contentType().toString() shouldBe "application/json; charset=UTF-8"
 
-                verify(exactly = 1) { storeMock.lagre("id/file.csv", "1".toByteArray()) }
-                verify(exactly = 1) { storeMock.lagre("id/file2.csv", "2".toByteArray()) }
+                verify(exactly = 1) { storeMock.lagre("id/file.csv", "1".toByteArray(), TestApplication.defaultDummyFodselsnummer) }
+                verify(exactly = 1) { storeMock.lagre("id/file2.csv", "2".toByteArray(), TestApplication.defaultDummyFodselsnummer) }
             }
         }
     }
@@ -90,6 +125,7 @@ internal class LagringTest {
     fun `Hente fil`() {
         val store = mockk<Store>().also {
             every { it.hent("id") } returns "1".toByteArray()
+            every { it.list(any()) } returns listOf(VedleggMetadata("fil", TestApplication.defaultDummyFodselsnummer))
         }
         withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(store, mockk())) }) {
             autentisert(
@@ -108,8 +144,8 @@ internal class LagringTest {
         val soknadsId = "soknadsId"
         val store = mockk<Store>().also {
             every { it.list(soknadsId) } returns listOf(
-                VedleggMetadata("$soknadsId/fil1"),
-                VedleggMetadata("$soknadsId/fil2"),
+                VedleggMetadata("$soknadsId/fil1", "eier1"),
+                VedleggMetadata("$soknadsId/fil2", TestApplication.defaultDummyFodselsnummer),
             )
         }
 
@@ -120,7 +156,7 @@ internal class LagringTest {
             ).apply {
                 response.status() shouldBe HttpStatusCode.OK
                 //language=JSON
-                response.content shouldBe """[{"urn":"urn:vedlegg:soknadsId/fil1"},{"urn":"urn:vedlegg:soknadsId/fil2"}]"""
+                response.content shouldBe """[{"urn":"urn:vedlegg:soknadsId/fil2"}]"""
             }
         }
 
