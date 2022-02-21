@@ -22,7 +22,7 @@ import no.nav.dagpenger.mellomlagring.lagring.VedleggMetadata
 import no.nav.dagpenger.mellomlagring.lagring.VedleggService
 import org.junit.jupiter.api.Test
 
-internal class LagringTest {
+internal class VedleggServiceTest {
 
     @Test
     fun `Uautorisert dersom ingen token finnes`() {
@@ -115,6 +115,21 @@ internal class LagringTest {
             autentisert(
                 endepunkt = "v1/mellomlagring/",
                 httpMethod = HttpMethod.Post
+            ).apply {
+                response.status() shouldBe HttpStatusCode.NotFound
+            }
+        }
+    }
+
+    @Test
+    fun `Henting av fil som ikke eksisterer`() {
+        val store = mockk<Store>().also {
+            every { it.list(any()) } returns emptyList()
+        }
+        withMockAuthServerAndTestApplication({ vedleggApi(VedleggService(store, mockk())) }) {
+            autentisert(
+                endepunkt = "v1/mellomlagring?urn=urn:vedlegg:id",
+                httpMethod = HttpMethod.Get,
             ).apply {
                 response.status() shouldBe HttpStatusCode.NotFound
             }

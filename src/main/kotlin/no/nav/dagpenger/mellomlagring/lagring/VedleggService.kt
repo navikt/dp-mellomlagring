@@ -1,6 +1,7 @@
 package no.nav.dagpenger.mellomlagring.lagring
 
 import de.slub.urn.URN
+import io.ktor.features.NotFoundException
 import no.nav.dagpenger.mellomlagring.crypto.Crypto
 
 internal class VedleggService(private val store: Store, private val crypto: Crypto) {
@@ -28,7 +29,7 @@ internal class VedleggService(private val store: Store, private val crypto: Cryp
 
     fun hent(urn: Urn, eier: String): StorageValue {
         val urn8141 = URN.rfc8141().parse(urn.urn).namespaceSpecificString().toString()
-        val metadata = store.list(urn8141).first()
+        val metadata = store.list(urn8141).firstOrNull() ?: throw NotFoundException()
         if (eier != metadata.eier) throw OwnerException(eier, urn8141)
         return store.hent(urn8141)
     }
