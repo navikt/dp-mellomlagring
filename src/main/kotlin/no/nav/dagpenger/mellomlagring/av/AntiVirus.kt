@@ -30,7 +30,7 @@ object ClamAv : AntiVirus {
     override suspend fun infisert(filnavn: String, filinnhold: ByteArray): Boolean {
         val result: Result<ScanResult> =
             kotlin.runCatching {
-                httpClient.post<ScanResult>("http://clamav.clamav.svc.cluster.local") {
+                httpClient.post<ScanResult>("http://clamav.clamav.svc.cluster.local/scan") {
                     formData {
                         this.appendInput(
                             key = filnavn,
