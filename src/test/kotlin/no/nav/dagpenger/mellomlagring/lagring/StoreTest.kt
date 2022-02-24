@@ -17,6 +17,7 @@ class StoreTest {
 
     private val gcsFixedHost by lazy {
         // Because https://stackoverflow.com/questions/69337669/request-with-ipv4-from-python-to-gcs-emulator/70417427#70417427
+        @Suppress("DEPRECATION")
         FixedHostPortGenericContainer<Nothing>(IMAGE)
             .also { container ->
                 container.withFixedExposedPort(FIXED_HOST_PORT, 4443)
