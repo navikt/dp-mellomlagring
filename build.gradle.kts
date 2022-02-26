@@ -23,12 +23,13 @@ application {
     mainClass.set("no.nav.dagpenger.mellomlagring.AppKt")
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
+kotlin {
+    jvmToolchain {
+        (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(JavaVersion.VERSION_17.toString())) // "8"
+    }
 }
-
-tasks.withType<KotlinCompile>().all {
-    kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
 }
 
 tasks.withType<Jar>().configureEach {

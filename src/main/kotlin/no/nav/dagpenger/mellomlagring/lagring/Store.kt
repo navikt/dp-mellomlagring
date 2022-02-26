@@ -1,13 +1,19 @@
 package no.nav.dagpenger.mellomlagring.lagring
 
-interface Store {
+internal interface Store {
 
-    fun hent(storageKey: StorageKey): StorageValue
-    fun list(keyPrefix: StorageKey): List<VedleggMetadata>
-    fun lagre(storageKey: StorageKey, storageValue: StorageValue, eier: String)
+    fun hent(storageKey: StorageKey): Result<Klump?>
+    fun lagre(klump: Klump): Result<Int>
+    fun slett(storageKey: StorageKey /* = kotlin.String */): Result<Boolean>
+    fun hentKlumpInfo(storageKey: StorageKey /* = kotlin.String */): Result<KlumpInfo?>
+    fun listKlumpInfo(keyPrefix: StorageKey /* = kotlin.String */): Result<List<KlumpInfo>>
 }
 
-internal typealias StorageKey = String
-internal typealias StorageValue = ByteArray
+internal data class KlumpInfo(val navn: String, val metadata: Map<String, String>)
+internal class Klump(
+    val innhold: ByteArray,
+    val klumpInfo: KlumpInfo
+)
 
-data class VedleggMetadata(val filnavn: String, val eier: String)
+internal typealias StorageKey = String
+internal class StoreException(msg: String) : Throwable(msg)
