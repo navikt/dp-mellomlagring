@@ -22,7 +22,7 @@ import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
 import org.junit.jupiter.api.Test
 
-internal class LagringTest {
+internal class ApiTest {
     @Test
     fun `Uautorisert dersom ingen token finnes`() {
         withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
