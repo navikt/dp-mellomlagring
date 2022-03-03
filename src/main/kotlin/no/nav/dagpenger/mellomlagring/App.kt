@@ -9,6 +9,7 @@ import no.nav.dagpenger.mellomlagring.api.health
 import no.nav.dagpenger.mellomlagring.av.clamAv
 import no.nav.dagpenger.mellomlagring.crypto.AESCrypto
 import no.nav.dagpenger.mellomlagring.lagring.S3Store
+import no.nav.dagpenger.mellomlagring.monitoring.metrics
 import no.nav.dagpenger.mellomlagring.vedlegg.MediatorImpl
 import no.nav.dagpenger.mellomlagring.vedlegg.VirusValidering
 import no.nav.dagpenger.mellomlagring.vedlegg.vedleggApi
@@ -34,5 +35,6 @@ fun main() {
                 filValideringer = listOf(VirusValidering(clamAv()))
             )
         )
+        metrics()
     }.start(wait = true)
 }

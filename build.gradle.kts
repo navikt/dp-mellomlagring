@@ -39,6 +39,7 @@ tasks.withType<Jar>().configureEach {
 dependencies {
     implementation("com.google.cloud:google-cloud-storage")
     implementation("de.slub-dresden:urnlib:2.0.1")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.8.3")
     implementation("no.nav.security:token-validation-ktor:1.3.10")
     implementation(Konfig.konfig)
     implementation(Kotlin.Logging.kotlinLogging)
@@ -47,6 +48,7 @@ dependencies {
     implementation(Ktor.library("client-core"))
     implementation(Ktor.library("client-jackson"))
     implementation(Ktor.library("jackson"))
+    implementation(Ktor.library("metrics-micrometer"))
     implementation(Ktor.library("server-cio"))
     implementation(Ktor.server)
     implementation(kotlin("stdlib"))
