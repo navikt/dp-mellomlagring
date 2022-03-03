@@ -90,7 +90,7 @@ internal class S3Store(
         return kotlin.runCatching {
             gcpStorage.list(bucketName, Storage.BlobListOption.prefix(keyPrefix))
                 ?.values
-                ?.map { KlumpInfo(navn = it.name, metadata = it.metadata) }
+                ?.map { KlumpInfo(navn = it.name, metadata = it.metadata ?: emptyMap()) }
                 ?: emptyList()
         }.onSuccess {
             logger.debug { "Listet klumpinfo for path: $keyPrefix" }
