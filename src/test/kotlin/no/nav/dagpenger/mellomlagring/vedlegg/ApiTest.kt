@@ -15,6 +15,7 @@ import io.ktor.server.testing.setBody
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import no.nav.dagpenger.mellomlagring.TestApplication
 import no.nav.dagpenger.mellomlagring.TestApplication.autentisert
 import no.nav.dagpenger.mellomlagring.TestApplication.defaultDummyFodselsnummer
 import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestApplication
@@ -33,9 +34,24 @@ internal class ApiTest {
     }
 
     @Test
-    fun `Autorisert dersom token finnes`() {
+    fun `Autorisert dersom tokenx finnes`() {
         withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
-            autentisert(endepunkt = "v1/mellomlagring/vedlegg/1").apply {
+            autentisert(
+                endepunkt = "v1/mellomlagring/vedlegg/1",
+                token = TestApplication.tokenXToken
+            ).apply {
+                response.status() shouldBe HttpStatusCode.OK
+            }
+        }
+    }
+
+    @Test
+    fun `Autorisert dersom azureAd finnes`() {
+        withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
+            autentisert(
+                endepunkt = "v1/mellomlagring/vedlegg/1",
+                token = TestApplication.azureAd
+            ).apply {
                 response.status() shouldBe HttpStatusCode.OK
             }
         }

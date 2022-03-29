@@ -18,12 +18,21 @@ internal object TestApplication {
         }
     }
 
-    private val testOAuthToken: String by lazy {
+    internal val tokenXToken: String by lazy {
         mockOAuth2Server.issueToken(
             issuerId = Config.tokenxIssuerName,
             claims = mapOf(
                 "sub" to defaultDummyFodselsnummer,
                 "aud" to "audience"
+            )
+        ).serialize()
+    }
+
+    internal val azureAd: String by lazy {
+        mockOAuth2Server.issueToken(
+            issuerId = Config.azureAdIssuerName,
+            claims = mapOf(
+                "aud" to "audience1"
             )
         ).serialize()
     }
@@ -34,7 +43,7 @@ internal object TestApplication {
     ): R {
         try {
             System.setProperty("TOKEN_X_WELL_KNOWN_URL", "${mockOAuth2Server.wellKnownUrl(Config.tokenxIssuerName)}")
-
+            System.setProperty("AZURE_APP_WELL_KNOWN_URL", "${mockOAuth2Server.wellKnownUrl(Config.azureAdIssuerName)}")
             return withTestApplication(moduleFunction, test)
         } finally {
         }
@@ -42,7 +51,7 @@ internal object TestApplication {
 
     internal fun TestApplicationEngine.autentisert(
         endepunkt: String,
-        token: String = testOAuthToken,
+        token: String = tokenXToken,
         httpMethod: HttpMethod = HttpMethod.Get,
         setup: TestApplicationRequest.() -> Unit = {}
     ) = handleRequest(httpMethod, endepunkt) {

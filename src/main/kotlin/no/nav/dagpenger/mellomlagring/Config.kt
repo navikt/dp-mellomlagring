@@ -32,7 +32,8 @@ internal object Config {
             "DP_MELLOMLAGRING_STORAGE_URL" to "http://localhost:4443",
             "DP_MELLOMLAGRING_CRYPTO_PASSPHRASE" to "a passphrase",
             "DP_MELLOMLAGRING_CRYPTO_SALT" to "rocksalt",
-            "TOKEN_X_ACCEPTED_AUDIENCE" to "audience"
+            "TOKEN_X_ACCEPTED_AUDIENCE" to "audience",
+            "AZURE_AD_ACCEPTED_AUDIENCE" to "audience1,audience2"
         )
     )
 
@@ -70,17 +71,29 @@ internal object Config {
         }
 
     const val tokenxIssuerName = "tokenx"
+    const val azureAdIssuerName = "azureAd"
 
-    val OAuth2IssuersConfig: ApplicationConfig by lazy {
+    internal val azureAdAcceptedAudience by lazy {
+        properties[Key("AZURE_AD_ACCEPTED_AUDIENCE", stringType)].split(",").map { it.trim() }
+    }
+
+    val OAuth2IssuerConfig: ApplicationConfig by lazy {
         MapApplicationConfig(
             "no.nav.security.jwt.expirythreshold" to "60",
-            "no.nav.security.jwt.issuers.size" to "1", // to enable list config
+            "no.nav.security.jwt.issuers.size" to "2", // to enable list config
             "no.nav.security.jwt.issuers.0.issuer_name" to tokenxIssuerName,
             "no.nav.security.jwt.issuers.0.discoveryurl" to properties[Key("TOKEN_X_WELL_KNOWN_URL", stringType)],
             "no.nav.security.jwt.issuers.0.cookie_name" to "selvbetjening-idtoken",
             "no.nav.security.jwt.issuers.0.accepted_audience" to properties[
                 Key(
                     "TOKEN_X_ACCEPTED_AUDIENCE", stringType
+                )
+            ],
+            "no.nav.security.jwt.issuers.1.issuer_name" to azureAdIssuerName,
+            "no.nav.security.jwt.issuers.1.discoveryurl" to properties[Key("AZURE_APP_WELL_KNOWN_URL", stringType)],
+            "no.nav.security.jwt.issuers.1.accepted_audience" to properties[
+                Key(
+                    "AZURE_AD_ACCEPTED_AUDIENCE", stringType
                 )
             ]
         )

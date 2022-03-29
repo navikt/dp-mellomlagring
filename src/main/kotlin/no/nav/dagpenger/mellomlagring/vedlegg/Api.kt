@@ -50,11 +50,20 @@ internal fun Application.vedleggApi(mediator: Mediator) {
         kotlin.runCatching {
             logger.debug { "installing auth feature" }
             tokenValidationSupport(
-                name = "tokenx",
-                config = Config.OAuth2IssuersConfig,
+                name = Config.tokenxIssuerName,
+                config = Config.OAuth2IssuerConfig,
                 additionalValidation = {
                     it.getClaims(Config.tokenxIssuerName)?.getStringClaim("pid") != null ||
                         it.getClaims(Config.tokenxIssuerName)?.getStringClaim("sub") != null
+                }
+            )
+
+            tokenValidationSupport(
+                name = Config.azureAdIssuerName,
+                config = Config.OAuth2IssuerConfig,
+                additionalValidation = {
+                    it.getClaims(Config.azureAdIssuerName)?.getAsList("aud")
+                        ?.any { Config.azureAdAcceptedAudience.contains(it) } ?: false
                 }
             )
         }
@@ -99,7 +108,7 @@ internal fun Application.vedleggApi(mediator: Mediator) {
     }
 
     routing {
-        authenticate("tokenx") {
+        authenticate(Config.tokenxIssuerName, Config.azureAdIssuerName) {
             route("v1/mellomlagring/vedlegg") {
                 route("/{id}") {
                     post {
