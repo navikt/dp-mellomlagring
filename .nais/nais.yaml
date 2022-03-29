@@ -52,7 +52,7 @@ spec:
     enabled: true
   env:
     - name: TOKEN_X_ACCEPTED_AUDIENCE
-      value: {{acceptedAudience}}
+      value: {{TokenXAcceptedAudience}}
     - name: DP_MELLOMLAGRING_BUCKETNAME
       value: {{bucketName}}
   gcp:
