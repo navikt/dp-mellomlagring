@@ -43,8 +43,12 @@ spec:
           namespace: clamav
     inbound:
       rules:
-        - application: dp-quizshow-api
+        - application: dp-soknadsdialog
+        - application: dp-behov-soknad-pdf
+        - application: dp-behov-journalforing
   tokenx:
+    enabled: true
+  azure:
     enabled: true
   env:
     - name: TOKEN_X_ACCEPTED_AUDIENCE
