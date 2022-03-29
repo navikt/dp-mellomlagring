@@ -49,7 +49,8 @@ spec:
   tokenx:
     enabled: true
   azure:
-    enabled: true
+    application:
+      enabled: true
   env:
     - name: TOKEN_X_ACCEPTED_AUDIENCE
       value: {{TOKEN_X_ACCEPTED_AUDIENCE}}
