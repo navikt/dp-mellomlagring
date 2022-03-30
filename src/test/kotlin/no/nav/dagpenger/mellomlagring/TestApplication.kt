@@ -32,7 +32,7 @@ internal object TestApplication {
         mockOAuth2Server.issueToken(
             issuerId = Config.azureAdIssuerName,
             claims = mapOf(
-                "aud" to "audience1"
+                "aud" to "clientId1"
             )
         ).serialize()
     }

@@ -42,7 +42,7 @@ internal object Config {
                [
   {
     "name": "audience1",
-    "clientId": "cliendtId1"
+    "clientId": "clientId1"
   },
   {
     "name": "audience2",
@@ -94,7 +94,7 @@ internal object Config {
     private val azureAdAcceptedAudience by lazy {
         val json = properties[Key("AZURE_APP_PRE_AUTHORIZED_APPS", stringType)]
         val apps: List<App> = jacksonObjectMapper().readValue(json)
-        apps.joinToString(",") { it.name }.also {
+        apps.joinToString(",") { it.clientId }.also {
             logger.info { "Setter audience: $it" }
         }
     }
