@@ -1,4 +1,4 @@
 ingresses:
   - "https://dp-mellomlagring.dev.intern.nav.no"
-bucketName: teamdagpenger-mellomlagring-vedlegg-dev
+bucketName: teamdagpenger-mellomlagring-dev
 TOKEN_X_ACCEPTED_AUDIENCE: "dev-gcp:teamdagpenger:dp-soknadsdialog"
