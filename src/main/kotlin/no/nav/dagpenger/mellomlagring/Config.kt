@@ -1,5 +1,7 @@
 package no.nav.dagpenger.mellomlagring
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.cloud.NoCredentials
 import com.google.cloud.storage.BucketInfo
 import com.google.cloud.storage.Storage
@@ -33,7 +35,18 @@ internal object Config {
             "DP_MELLOMLAGRING_CRYPTO_PASSPHRASE" to "a passphrase",
             "DP_MELLOMLAGRING_CRYPTO_SALT" to "rocksalt",
             "TOKEN_X_ACCEPTED_AUDIENCE" to "audience",
-            "AZURE_AD_ACCEPTED_AUDIENCE" to "audience1,audience2"
+            "AZURE_APP_PRE_AUTHORIZED_APPS" to """
+               [
+  {
+    "name": "audience1",
+    "clientId": "cliendtId1"
+  },
+  {
+    "name": "audience2",
+    "clientId": "clientId2"
+  }
+] 
+            """.trimIndent()
         )
     )
 
@@ -73,8 +86,12 @@ internal object Config {
     const val tokenxIssuerName = "tokenx"
     const val azureAdIssuerName = "azureAd"
 
-    internal val azureAdAcceptedAudience by lazy {
-        properties[Key("AZURE_AD_ACCEPTED_AUDIENCE", stringType)].split(",").map { it.trim() }
+    private data class App(val name: String, val clientId: String)
+
+    private val azureAdAcceptedAudience by lazy {
+        val json = properties[Key("AZURE_APP_PRE_AUTHORIZED_APPS", stringType)]
+        val apps: List<App> = jacksonObjectMapper().readValue(json)
+        apps.joinToString(",") { it.name }
     }
 
     val OAuth2IssuerConfig: ApplicationConfig by lazy {
@@ -91,11 +108,7 @@ internal object Config {
             ],
             "no.nav.security.jwt.issuers.1.issuer_name" to azureAdIssuerName,
             "no.nav.security.jwt.issuers.1.discoveryurl" to properties[Key("AZURE_APP_WELL_KNOWN_URL", stringType)],
-            "no.nav.security.jwt.issuers.1.accepted_audience" to properties[
-                Key(
-                    "AZURE_AD_ACCEPTED_AUDIENCE", stringType
-                )
-            ]
+            "no.nav.security.jwt.issuers.1.accepted_audience" to azureAdAcceptedAudience // audience1,audience2
         )
     }
 }

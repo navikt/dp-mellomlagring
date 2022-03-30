@@ -53,18 +53,13 @@ internal fun Application.vedleggApi(mediator: Mediator) {
                 name = Config.tokenxIssuerName,
                 config = Config.OAuth2IssuerConfig,
                 additionalValidation = {
-                    it.getClaims(Config.tokenxIssuerName)?.getStringClaim("pid") != null ||
-                        it.getClaims(Config.tokenxIssuerName)?.getStringClaim("sub") != null
+                    it.getClaims(Config.tokenxIssuerName)?.getStringClaim("pid") != null
                 }
             )
 
             tokenValidationSupport(
                 name = Config.azureAdIssuerName,
                 config = Config.OAuth2IssuerConfig,
-                additionalValidation = {
-                    it.getClaims(Config.azureAdIssuerName)?.getAsList("aud")
-                        ?.any { Config.azureAdAcceptedAudience.contains(it) } ?: false
-                }
             )
         }
             .onSuccess { logger.debug { "Finished installing auth feature" } }

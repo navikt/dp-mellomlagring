@@ -50,6 +50,7 @@ dependencies {
     implementation(Ktor.library("jackson"))
     implementation(Ktor.library("metrics-micrometer"))
     implementation(Ktor.library("server-cio"))
+    implementation(Jackson.kotlin)
     implementation(Ktor.server)
     implementation(kotlin("stdlib"))
     implementation(platform("com.google.cloud:libraries-bom:24.3.0"))
