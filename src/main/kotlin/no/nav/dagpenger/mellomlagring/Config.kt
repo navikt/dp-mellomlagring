@@ -15,7 +15,10 @@ import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 import io.ktor.config.ApplicationConfig
 import io.ktor.config.MapApplicationConfig
+import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.crypto.AESCrypto
+
+private val logger = KotlinLogging.logger { }
 
 internal object Config {
     internal enum class Env {
@@ -91,7 +94,9 @@ internal object Config {
     private val azureAdAcceptedAudience by lazy {
         val json = properties[Key("AZURE_APP_PRE_AUTHORIZED_APPS", stringType)]
         val apps: List<App> = jacksonObjectMapper().readValue(json)
-        apps.joinToString(",") { it.name }
+        apps.joinToString(",") { it.name }.also {
+            logger.info { "Setter audience: $it" }
+        }
     }
 
     val OAuth2IssuerConfig: ApplicationConfig by lazy {
