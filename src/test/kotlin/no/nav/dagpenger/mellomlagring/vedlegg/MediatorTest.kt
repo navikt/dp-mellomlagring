@@ -30,7 +30,6 @@ class MediatorTest {
     private val mediator by lazy {
         MediatorImpl(
             store = S3Store(gcpStorage = Config.localStorage("http://${gcsFixedHost.host}:$FIXED_HOST_PORT", true)),
-            crypto = Config.crypto(),
             filValideringer = listOf(
                 mockk<Mediator.FilValidering>().also {
                     coEvery { it.valider(any(), any()) } returns FilValideringResultat.Gyldig("filnavn")
@@ -43,15 +42,15 @@ class MediatorTest {
     fun `happy path lagre,listing, henting og sletting av filer`() {
 
         runBlocking {
-            mediator.lagre("id", "hubba", "hubba".toByteArray(), "eier1").urn shouldBe "urn:vedlegg:id/hubba"
-            mediator.lagre("id", "bubba", "bubba".toByteArray(), "eier1").urn shouldBe "urn:vedlegg:id/bubba"
+            mediator.lagre("id", "hubba", "hubba".toByteArray()).urn shouldBe "urn:vedlegg:id/hubba"
+            mediator.lagre("id", "bubba", "bubba".toByteArray()).urn shouldBe "urn:vedlegg:id/bubba"
 
-            mediator.liste("id", "eier1") shouldContainExactlyInAnyOrder listOf(
+            mediator.liste("id") shouldContainExactlyInAnyOrder listOf(
                 VedleggUrn("id/hubba"),
                 VedleggUrn("id/bubba"),
             )
 
-            mediator.hent(VedleggUrn("id/hubba"), "eier1").also {
+            mediator.hent(VedleggUrn("id/hubba")).also {
                 it shouldNotBe null
                 it?.let { klump ->
                     klump.klumpInfo.navn shouldBe "id/hubba"
@@ -59,38 +58,19 @@ class MediatorTest {
                 }
             }
 
-            mediator.slett(VedleggUrn("id/hubba"), "eier1") shouldBe true
-            mediator.hent(VedleggUrn("id/hubba"), "eier1") shouldBe null
-        }
-    }
-
-    @Test
-    fun `Skal ikke kunne hente, slette eller liste filer som bruker ikke eier`() {
-
-        runBlocking {
-            mediator.lagre("id1", "hubba", "hubba".toByteArray(), "eier1")
-            mediator.lagre("id1", "bubba", "bubba".toByteArray(), "eier1")
-
-            mediator.liste("id1", "eier2") shouldBe emptyList()
-
-            shouldThrow<NotOwnerException> {
-                mediator.hent(VedleggUrn("id1/hubba"), "eier2")
-            }
-
-            shouldThrow<NotOwnerException> {
-                mediator.slett(VedleggUrn("id1/hubba"), "eier2")
-            }
+            mediator.slett(VedleggUrn("id/hubba")) shouldBe true
+            mediator.hent(VedleggUrn("id/hubba")) shouldBe null
         }
     }
 
     @Test
     fun `Hente, slette liste vedlegg som ikke finnes`() {
         runBlocking {
-            mediator.liste("finnesIkke", "finnesIkkde") shouldBe emptyList()
+            mediator.liste("finnesIkke") shouldBe emptyList()
 
-            mediator.hent(VedleggUrn("finnesIkke"), "finnesIkkde") shouldBe null
+            mediator.hent(VedleggUrn("finnesIkke")) shouldBe null
 
-            mediator.slett(VedleggUrn("finnesIkke"), "finnesIkkde") shouldBe false
+            mediator.slett(VedleggUrn("finnesIkke")) shouldBe false
         }
     }
 
@@ -100,7 +80,6 @@ class MediatorTest {
             mockk<Store>(relaxed = true).also {
                 coEvery { it.lagre(any()) } returns Result.success(1)
             },
-            Config.crypto(),
             filValideringer = listOf(
                 mockk<Mediator.FilValidering>().also {
                     coEvery { it.valider("exception", any()) } throws Throwable("En feil")
@@ -112,15 +91,15 @@ class MediatorTest {
 
         runBlocking {
             shouldNotThrow<Throwable> {
-                mockedMediator.lagre("id", "OK", "infisert".toByteArray(), "eier")
+                mockedMediator.lagre("id", "OK", "infisert".toByteArray())
             }
 
             shouldThrow<UgyldigFilInnhold> {
-                mockedMediator.lagre("id", "infisert", "infisert".toByteArray(), "eier")
+                mockedMediator.lagre("id", "infisert", "infisert".toByteArray())
             }
 
             shouldThrow<Throwable> {
-                mockedMediator.lagre("id", "exception", "infisert".toByteArray(), "eier")
+                mockedMediator.lagre("id", "exception", "infisert".toByteArray())
             }
         }
     }
@@ -135,23 +114,22 @@ class MediatorTest {
                 every { it.slett(any()) } returns Result.failure(Throwable("feil"))
                 every { it.listKlumpInfo(any()) } returns Result.failure(Throwable("feil"))
             },
-            Config.crypto(),
         )
         runBlocking() {
             shouldThrow<StoreException> {
-                mockedMediator.hent(VedleggUrn("id"), "eier")
+                mockedMediator.hent(VedleggUrn("id"))
             }
 
             shouldThrow<StoreException> {
-                mockedMediator.liste("id", "eier")
+                mockedMediator.liste("id")
             }
 
             shouldThrow<StoreException> {
-                mockedMediator.lagre("id", "filnavn", "innhold".toByteArray(), "eier")
+                mockedMediator.lagre("id", "filnavn", "innhold".toByteArray())
             }
 
             shouldThrow<StoreException> {
-                mockedMediator.slett(VedleggUrn("nss"), "eier")
+                mockedMediator.slett(VedleggUrn("nss"))
             }
         }
     }

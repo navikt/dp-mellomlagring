@@ -4,7 +4,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import mu.KotlinLogging
-import no.nav.dagpenger.mellomlagring.crypto.Crypto
 import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
 import no.nav.dagpenger.mellomlagring.lagring.StorageKey
@@ -13,10 +12,10 @@ import no.nav.dagpenger.mellomlagring.lagring.StoreException
 
 internal interface Mediator {
 
-    suspend fun lagre(soknadsId: String, filnavn: String, filinnhold: ByteArray, eier: String): VedleggUrn
-    suspend fun liste(soknadsId: String, eier: String): List<VedleggUrn>
-    suspend fun hent(vedleggUrn: VedleggUrn, eier: String): Klump?
-    suspend fun slett(vedleggUrn: VedleggUrn, eier: String): Boolean
+    suspend fun lagre(soknadsId: String, filnavn: String, filinnhold: ByteArray): VedleggUrn
+    suspend fun liste(soknadsId: String): List<VedleggUrn>
+    suspend fun hent(vedleggUrn: VedleggUrn): Klump?
+    suspend fun slett(vedleggUrn: VedleggUrn): Boolean
     fun interface FilValidering {
         suspend fun valider(filnavn: String, filinnhold: ByteArray): FilValideringResultat
     }
@@ -36,15 +35,13 @@ private val logger = KotlinLogging.logger { }
 
 internal class MediatorImpl(
     private val store: Store,
-    private val crypto: Crypto,
     private val filValideringer: List<Mediator.FilValidering> = emptyList()
 ) : Mediator {
 
     override suspend fun lagre(
         soknadsId: String,
         filnavn: String,
-        filinnhold: ByteArray,
-        eier: String
+        filinnhold: ByteArray
     ): VedleggUrn {
         valider(filnavn, filinnhold)
         val navn = createStoreKey(soknadsId = soknadsId, fileName = filnavn)
@@ -53,31 +50,30 @@ internal class MediatorImpl(
                 innhold = filinnhold,
                 klumpInfo = KlumpInfo(
                     navn = navn,
-                    metadata = mapOf("eier" to crypto.encrypt(eier))
+                    metadata = emptyMap()
                 )
             )
         ).getOrThrow().let { VedleggUrn(navn) }
     }
 
-    override suspend fun liste(soknadsId: String, eier: String): List<VedleggUrn> {
+    override suspend fun liste(soknadsId: String): List<VedleggUrn> {
         return store
             .listKlumpInfo(soknadsId)
             .getOrThrow()
-            .filter { harTilgang(eier, it.metadata) }
             .map { VedleggUrn(it.navn) }
     }
 
-    override suspend fun hent(vedleggUrn: VedleggUrn, eier: String): Klump? {
+    override suspend fun hent(vedleggUrn: VedleggUrn): Klump? {
         return vedleggUrn.nss.let { klumpNavn ->
-            hvisFinnesOgHarTilgang(klumpNavn, eier) {
+            hvisFinnes(klumpNavn) {
                 store.hent(klumpNavn).getOrThrow()
             }
         }
     }
 
-    override suspend fun slett(vedleggUrn: VedleggUrn, eier: String): Boolean {
+    override suspend fun slett(vedleggUrn: VedleggUrn): Boolean {
         return vedleggUrn.nss.let { klumpnavn ->
-            hvisFinnesOgHarTilgang(klumpnavn, eier) {
+            hvisFinnes(klumpnavn) {
                 store.slett(klumpnavn).getOrThrow()
             } ?: false
         }
@@ -112,15 +108,9 @@ internal class MediatorImpl(
         }
     }
 
-    private fun harTilgang(eier: String, metadata: Map<String, String>): Boolean =
-        metadata["eier"]?.let { crypto.decrypt(it) } == eier
-
-    private inline fun <T> hvisFinnesOgHarTilgang(klumpNavn: String, eier: String, block: () -> T?): T? {
-        return store.hentKlumpInfo(klumpNavn).getOrThrow()?.let { info ->
-            when (harTilgang(eier, info.metadata)) {
-                true -> block.invoke()
-                else -> throw NotOwnerException("ikke tilgang")
-            }
+    private inline fun <T> hvisFinnes(klumpNavn: String, block: () -> T?): T? {
+        return store.hentKlumpInfo(klumpNavn).getOrThrow()?.let { _ ->
+            block.invoke()
         }
     }
 }

@@ -33,7 +33,7 @@ internal class S3Store(
                     innhold = blob.getContent(),
                     klumpInfo = KlumpInfo(
                         navn = blob.name,
-                        metadata = blob.metadata
+                        metadata = blob.metadata ?: emptyMap()
                     )
                 )
             }
@@ -76,7 +76,7 @@ internal class S3Store(
                 ?.let {
                     KlumpInfo(
                         navn = it.name,
-                        metadata = it.metadata
+                        metadata = it.metadata ?: emptyMap()
                     )
                 }
         }.onSuccess {

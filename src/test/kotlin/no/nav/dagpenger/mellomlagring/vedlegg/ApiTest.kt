@@ -17,7 +17,6 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import no.nav.dagpenger.mellomlagring.TestApplication
 import no.nav.dagpenger.mellomlagring.TestApplication.autentisert
-import no.nav.dagpenger.mellomlagring.TestApplication.defaultDummyFodselsnummer
 import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestApplication
 import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
@@ -60,10 +59,10 @@ internal class ApiTest {
     @Test
     fun `Liste filer for en id`() {
         val mediatorMock = mockk<Mediator>().also {
-            coEvery { it.liste("id", defaultDummyFodselsnummer) } returns listOf(
+            coEvery { it.liste("id") } returns listOf(
                 VedleggUrn("id/fil1"), VedleggUrn("id/fil2")
             )
-            coEvery { it.liste("finnesIkke", defaultDummyFodselsnummer) } returns emptyList()
+            coEvery { it.liste("finnesIkke") } returns emptyList()
         }
         withMockAuthServerAndTestApplication({ vedleggApi(mediatorMock) }) {
             autentisert(
@@ -89,8 +88,8 @@ internal class ApiTest {
     @Test
     fun `Lagring av fil`() {
         val mediator = mockk<Mediator>(relaxed = true).also {
-            coEvery { it.lagre("id", "file.csv", any(), defaultDummyFodselsnummer) } returns VedleggUrn("id/file.csv")
-            coEvery { it.lagre("id", "file2.csv", any(), defaultDummyFodselsnummer) } returns VedleggUrn("id/file2.csv")
+            coEvery { it.lagre("id", "file.csv", any()) } returns VedleggUrn("id/file.csv")
+            coEvery { it.lagre("id", "file2.csv", any()) } returns VedleggUrn("id/file2.csv")
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
@@ -113,6 +112,7 @@ internal class ApiTest {
                 setBody("boundary", partData)
             }.apply {
                 response.status() shouldBe HttpStatusCode.Created
+                //language=JSON
                 response.content shouldBe """[{"urn":"urn:vedlegg:id/file.csv"},{"urn":"urn:vedlegg:id/file2.csv"}]"""
                 response.contentType().toString() shouldBe "application/json; charset=UTF-8"
 
@@ -120,16 +120,14 @@ internal class ApiTest {
                     mediator.lagre(
                         soknadsId = "id",
                         filnavn = "file.csv",
-                        filinnhold = "1".toByteArray(),
-                        eier = defaultDummyFodselsnummer
+                        filinnhold = "1".toByteArray()
                     )
                 }
                 coVerify(exactly = 1) {
                     mediator.lagre(
                         soknadsId = "id",
                         filnavn = "file2.csv",
-                        filinnhold = "2".toByteArray(),
-                        eier = defaultDummyFodselsnummer
+                        filinnhold = "2".toByteArray()
                     )
                 }
             }
@@ -139,7 +137,7 @@ internal class ApiTest {
     @Test
     fun `Hente vedlegg`() {
         val mockMediator = mockk<Mediator>().also {
-            coEvery { it.hent(VedleggUrn("id/filnavn.pdf"), defaultDummyFodselsnummer) } returns Klump(
+            coEvery { it.hent(VedleggUrn("id/filnavn.pdf")) } returns Klump(
                 innhold = "1".toByteArray(),
                 klumpInfo = KlumpInfo(
                     navn = "id/filnavn.pdf",
@@ -147,7 +145,7 @@ internal class ApiTest {
                 )
             )
 
-            coEvery { it.hent(VedleggUrn("id/finnesIkke.pdf"), defaultDummyFodselsnummer) } returns null
+            coEvery { it.hent(VedleggUrn("id/finnesIkke.pdf")) } returns null
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
@@ -172,8 +170,8 @@ internal class ApiTest {
     @Test
     fun `Slette vedlegg`() {
         val mockMediator = mockk<Mediator>().also {
-            coEvery { it.slett(VedleggUrn("id/filnavn.pdf"), defaultDummyFodselsnummer) } returns true
-            coEvery { it.slett(VedleggUrn("id/finnesIkke.pdf"), defaultDummyFodselsnummer) } returns false
+            coEvery { it.slett(VedleggUrn("id/filnavn.pdf")) } returns true
+            coEvery { it.slett(VedleggUrn("id/finnesIkke.pdf")) } returns false
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
@@ -196,11 +194,11 @@ internal class ApiTest {
     @Test
     fun statusPages() {
         val mockMediator = mockk<Mediator>().also {
-            coEvery { it.hent(VedleggUrn("id/illegalargument"), any()) } throws IllegalArgumentException("test")
-            coEvery { it.hent(VedleggUrn("id/notfound"), any()) } throws NotFoundException("test")
-            coEvery { it.hent(VedleggUrn("id/notOwner"), any()) } throws NotOwnerException("test")
-            coEvery { it.hent(VedleggUrn("id/ugyldiginnhold"), any()) } throws UgyldigFilInnhold("test", listOf("test"))
-            coEvery { it.hent(VedleggUrn("id/throwable"), any()) } throws Throwable("test")
+            coEvery { it.hent(VedleggUrn("id/illegalargument")) } throws IllegalArgumentException("test")
+            coEvery { it.hent(VedleggUrn("id/notfound")) } throws NotFoundException("test")
+            coEvery { it.hent(VedleggUrn("id/notOwner")) } throws NotOwnerException("test")
+            coEvery { it.hent(VedleggUrn("id/ugyldiginnhold")) } throws UgyldigFilInnhold("test", listOf("test"))
+            coEvery { it.hent(VedleggUrn("id/throwable")) } throws Throwable("test")
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {

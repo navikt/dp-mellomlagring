@@ -6,7 +6,6 @@ import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.auth.Authentication
 import io.ktor.auth.authenticate
-import io.ktor.auth.authentication
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.NotFoundException
 import io.ktor.features.StatusPages
@@ -34,7 +33,6 @@ import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.api.HttpProblem
-import no.nav.dagpenger.mellomlagring.auth.fnr
 import no.nav.security.token.support.ktor.tokenValidationSupport
 
 private val logger = KotlinLogging.logger { }
@@ -107,18 +105,16 @@ internal fun Application.vedleggApi(mediator: Mediator) {
             route("v1/mellomlagring/vedlegg") {
                 route("/{id}") {
                     post {
-                        val jwtPrincipal = call.authentication.fnr()
                         val id =
                             call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
                         val multiPartData = call.receiveMultipart()
-                        val urnList = fileUploadHandler.handleFileupload(multiPartData, jwtPrincipal, id)
+                        val urnList = fileUploadHandler.handleFileupload(multiPartData, id)
                         call.respond(HttpStatusCode.Created, urnList)
                     }
                     get {
-                        val jwtPrincipal = call.authentication.fnr()
                         val soknadsId =
                             call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
-                        val vedlegg = mediator.liste(soknadsId, jwtPrincipal)
+                        val vedlegg = mediator.liste(soknadsId)
                         call.respond(HttpStatusCode.OK, vedlegg)
                     }
                     route("/{filnavn}") {
@@ -129,9 +125,8 @@ internal fun Application.vedleggApi(mediator: Mediator) {
                         }
 
                         get() {
-                            val jwtPrincipal = call.authentication.fnr()
                             val vedleggUrn = call.vedleggUrn()
-                            mediator.hent(vedleggUrn, jwtPrincipal)?.let {
+                            mediator.hent(vedleggUrn)?.let {
                                 call.respondOutputStream(ContentType.Application.OctetStream, HttpStatusCode.OK) {
                                     withContext(Dispatchers.IO) {
                                         this@respondOutputStream.write(it.innhold)
@@ -140,9 +135,8 @@ internal fun Application.vedleggApi(mediator: Mediator) {
                             }
                         }
                         delete {
-                            val jwtPrincipal = call.authentication.fnr()
                             val vedleggUrn = call.vedleggUrn()
-                            mediator.slett(vedleggUrn, jwtPrincipal).also {
+                            mediator.slett(vedleggUrn).also {
                                 when (it) {
                                     true -> call.respond(HttpStatusCode.NoContent)
                                     else -> call.respond(HttpStatusCode.NotFound)
@@ -157,7 +151,7 @@ internal fun Application.vedleggApi(mediator: Mediator) {
 }
 
 private class FileUploadHandler(private val mediator: Mediator) {
-    suspend fun handleFileupload(multiPartData: MultiPartData, eier: String, soknadsId: String): List<VedleggUrn> {
+    suspend fun handleFileupload(multiPartData: MultiPartData, soknadsId: String): List<VedleggUrn> {
         return coroutineScope {
             val jobs = mutableListOf<Deferred<VedleggUrn>>()
             multiPartData.forEachPart { part ->
@@ -169,7 +163,7 @@ private class FileUploadHandler(private val mediator: Mediator) {
                                     part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
                                 val bytes = part.streamProvider().use { it.readBytes() }
                                 part.dispose()
-                                mediator.lagre(soknadsId, fileName, bytes, eier)
+                                mediator.lagre(soknadsId, fileName, bytes)
                             }
                         )
                     }
