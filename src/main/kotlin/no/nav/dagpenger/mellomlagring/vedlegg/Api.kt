@@ -99,22 +99,22 @@ internal fun Application.vedleggApi(mediator: Mediator) {
     }
 
     routing {
-        route("v1/azuread/mellomlagring/vedlegg") {
+        route("v1/azuread") {
             authenticate(Config.azureAdIssuerName) {
-                hubba(fileUploadHandler, mediator)
+                vedlegg(fileUploadHandler, mediator)
             }
         }
 
-        route("v1/obo/mellomlagring/vedlegg") {
+        route("v1/obo") {
             authenticate(Config.tokenxIssuerName) {
-                hubba(fileUploadHandler, mediator)
+                vedlegg(fileUploadHandler, mediator)
             }
         }
     }
 }
 
-internal fun Route.hubba(fileUploadHandler: FileUploadHandler, mediator: Mediator) {
-    route("/{id}") {
+internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Mediator) {
+    route("/mellomlagring/vedlegg/{id}") {
         post {
             val id =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
