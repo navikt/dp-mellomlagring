@@ -26,7 +26,10 @@ internal class ApiTest {
     @Test
     fun `Uautorisert dersom ingen token finnes`() {
         withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
-            handleRequest(HttpMethod.Get, "v1/mellomlagring/vedlegg/1").apply {
+            handleRequest(HttpMethod.Get, "v1/azuread/mellomlagring/vedlegg/1").apply {
+                response.status() shouldBe HttpStatusCode.Unauthorized
+            }
+            handleRequest(HttpMethod.Get, "v1/obo/mellomlagring/vedlegg/1").apply {
                 response.status() shouldBe HttpStatusCode.Unauthorized
             }
         }
@@ -36,7 +39,7 @@ internal class ApiTest {
     fun `Autorisert dersom tokenx finnes`() {
         withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
             autentisert(
-                endepunkt = "v1/mellomlagring/vedlegg/1",
+                endepunkt = "v1/obo/mellomlagring/vedlegg/1",
                 token = TestApplication.tokenXToken
             ).apply {
                 response.status() shouldBe HttpStatusCode.OK
@@ -48,7 +51,7 @@ internal class ApiTest {
     fun `Autorisert dersom azureAd finnes`() {
         withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
             autentisert(
-                endepunkt = "v1/mellomlagring/vedlegg/1",
+                endepunkt = "v1/azuread/mellomlagring/vedlegg/1",
                 token = TestApplication.azureAd
             ).apply {
                 response.status() shouldBe HttpStatusCode.OK
@@ -66,7 +69,7 @@ internal class ApiTest {
         }
         withMockAuthServerAndTestApplication({ vedleggApi(mediatorMock) }) {
             autentisert(
-                endepunkt = "v1/mellomlagring/vedlegg/id",
+                endepunkt = "v1/obo/mellomlagring/vedlegg/id",
                 httpMethod = HttpMethod.Get,
             ).apply {
                 response.status() shouldBe HttpStatusCode.OK
@@ -75,7 +78,7 @@ internal class ApiTest {
             }
 
             autentisert(
-                endepunkt = "v1/mellomlagring/vedlegg/finnesIkke",
+                endepunkt = "v1/obo/mellomlagring/vedlegg/finnesIkke",
                 httpMethod = HttpMethod.Get,
             ).apply {
                 response.status() shouldBe HttpStatusCode.OK
@@ -94,7 +97,7 @@ internal class ApiTest {
 
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
             autentisert(
-                endepunkt = "v1/mellomlagring/vedlegg/id",
+                endepunkt = "v1/obo/mellomlagring/vedlegg/id",
                 httpMethod = HttpMethod.Post,
             ) {
                 this.addHeader(
@@ -150,7 +153,7 @@ internal class ApiTest {
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
             autentisert(
-                endepunkt = "v1/mellomlagring/vedlegg/id/filnavn.pdf",
+                endepunkt = "v1/obo/mellomlagring/vedlegg/id/filnavn.pdf",
                 httpMethod = HttpMethod.Get,
             ).apply {
                 response.status() shouldBe HttpStatusCode.OK
@@ -159,7 +162,7 @@ internal class ApiTest {
             }
 
             autentisert(
-                endepunkt = "v1/mellomlagring/vedlegg/id/finnesIkke.pdf",
+                endepunkt = "v1/obo/mellomlagring/vedlegg/id/finnesIkke.pdf",
                 httpMethod = HttpMethod.Get,
             ).apply {
                 response.status() shouldBe HttpStatusCode.NotFound
@@ -176,14 +179,14 @@ internal class ApiTest {
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
             autentisert(
-                endepunkt = "v1/mellomlagring/vedlegg/id/filnavn.pdf",
+                endepunkt = "v1/obo/mellomlagring/vedlegg/id/filnavn.pdf",
                 httpMethod = HttpMethod.Delete,
             ).apply {
                 response.status() shouldBe HttpStatusCode.NoContent
             }
 
             autentisert(
-                endepunkt = "v1/mellomlagring/vedlegg/id/finnesIkke.pdf",
+                endepunkt = "v1/obo/mellomlagring/vedlegg/id/finnesIkke.pdf",
                 httpMethod = HttpMethod.Delete,
             ).apply {
                 response.status() shouldBe HttpStatusCode.NotFound
@@ -203,7 +206,7 @@ internal class ApiTest {
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
             autentisert(
-                endepunkt = "v1/mellomlagring/vedlegg/id/illegalargument",
+                endepunkt = "v1/obo/mellomlagring/vedlegg/id/illegalargument",
                 httpMethod = HttpMethod.Get,
             ).apply {
                 response.status() shouldBe HttpStatusCode.BadRequest
@@ -212,7 +215,7 @@ internal class ApiTest {
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
             autentisert(
-                endepunkt = "v1/mellomlagring/vedlegg/id/notfound",
+                endepunkt = "v1/obo/mellomlagring/vedlegg/id/notfound",
                 httpMethod = HttpMethod.Get,
             ).apply {
                 response.status() shouldBe HttpStatusCode.NotFound
@@ -221,7 +224,7 @@ internal class ApiTest {
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
             autentisert(
-                endepunkt = "v1/mellomlagring/vedlegg/id/notOwner",
+                endepunkt = "v1/obo/mellomlagring/vedlegg/id/notOwner",
                 httpMethod = HttpMethod.Get,
             ).apply {
                 response.status() shouldBe HttpStatusCode.Forbidden
@@ -230,7 +233,7 @@ internal class ApiTest {
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
             autentisert(
-                endepunkt = "v1/mellomlagring/vedlegg/id/ugyldiginnhold",
+                endepunkt = "v1/obo/mellomlagring/vedlegg/id/ugyldiginnhold",
                 httpMethod = HttpMethod.Get,
             ).apply {
                 response.status() shouldBe HttpStatusCode.BadRequest
@@ -239,7 +242,7 @@ internal class ApiTest {
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
             autentisert(
-                endepunkt = "v1/mellomlagring/vedlegg/id/throwable",
+                endepunkt = "v1/obo/mellomlagring/vedlegg/id/throwable",
                 httpMethod = HttpMethod.Get,
             ).apply {
                 response.status() shouldBe HttpStatusCode.InternalServerError

@@ -19,6 +19,7 @@ import io.ktor.jackson.jackson
 import io.ktor.request.receiveMultipart
 import io.ktor.response.respond
 import io.ktor.response.respondOutputStream
+import io.ktor.routing.Route
 import io.ktor.routing.delete
 import io.ktor.routing.get
 import io.ktor.routing.post
@@ -50,9 +51,6 @@ internal fun Application.vedleggApi(mediator: Mediator) {
             tokenValidationSupport(
                 name = Config.tokenxIssuerName,
                 config = Config.OAuth2IssuerConfig,
-                additionalValidation = {
-                    it.getClaims(Config.tokenxIssuerName)?.getStringClaim("pid") != null
-                }
             )
 
             tokenValidationSupport(
@@ -101,48 +99,58 @@ internal fun Application.vedleggApi(mediator: Mediator) {
     }
 
     routing {
-        authenticate(Config.tokenxIssuerName, Config.azureAdIssuerName) {
-            route("v1/mellomlagring/vedlegg") {
-                route("/{id}") {
-                    post {
-                        val id =
-                            call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
-                        val multiPartData = call.receiveMultipart()
-                        val urnList = fileUploadHandler.handleFileupload(multiPartData, id)
-                        call.respond(HttpStatusCode.Created, urnList)
-                    }
-                    get {
-                        val soknadsId =
-                            call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
-                        val vedlegg = mediator.liste(soknadsId)
-                        call.respond(HttpStatusCode.OK, vedlegg)
-                    }
-                    route("/{filnavn}") {
-                        fun ApplicationCall.vedleggUrn(): VedleggUrn {
-                            val id = this.parameters["id"]
-                            val filnavn = this.parameters["filnavn"]
-                            return VedleggUrn("$id/$filnavn")
-                        }
+        route("v1/azuread/mellomlagring/vedlegg") {
+            authenticate(Config.azureAdIssuerName) {
+                hubba(fileUploadHandler, mediator)
+            }
+        }
 
-                        get() {
-                            val vedleggUrn = call.vedleggUrn()
-                            mediator.hent(vedleggUrn)?.let {
-                                call.respondOutputStream(ContentType.Application.OctetStream, HttpStatusCode.OK) {
-                                    withContext(Dispatchers.IO) {
-                                        this@respondOutputStream.write(it.innhold)
-                                    }
-                                }
-                            }
+        route("v1/obo/mellomlagring/vedlegg") {
+            authenticate(Config.tokenxIssuerName) {
+                hubba(fileUploadHandler, mediator)
+            }
+        }
+    }
+}
+
+internal fun Route.hubba(fileUploadHandler: FileUploadHandler, mediator: Mediator) {
+    route("/{id}") {
+        post {
+            val id =
+                call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
+            val multiPartData = call.receiveMultipart()
+            val urnList = fileUploadHandler.handleFileupload(multiPartData, id)
+            call.respond(HttpStatusCode.Created, urnList)
+        }
+        get {
+            val soknadsId =
+                call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
+            val vedlegg = mediator.liste(soknadsId)
+            call.respond(HttpStatusCode.OK, vedlegg)
+        }
+        route("/{filnavn}") {
+            fun ApplicationCall.vedleggUrn(): VedleggUrn {
+                val id = this.parameters["id"]
+                val filnavn = this.parameters["filnavn"]
+                return VedleggUrn("$id/$filnavn")
+            }
+
+            get() {
+                val vedleggUrn = call.vedleggUrn()
+                mediator.hent(vedleggUrn)?.let {
+                    call.respondOutputStream(ContentType.Application.OctetStream, HttpStatusCode.OK) {
+                        withContext(Dispatchers.IO) {
+                            this@respondOutputStream.write(it.innhold)
                         }
-                        delete {
-                            val vedleggUrn = call.vedleggUrn()
-                            mediator.slett(vedleggUrn).also {
-                                when (it) {
-                                    true -> call.respond(HttpStatusCode.NoContent)
-                                    else -> call.respond(HttpStatusCode.NotFound)
-                                }
-                            }
-                        }
+                    }
+                }
+            }
+            delete {
+                val vedleggUrn = call.vedleggUrn()
+                mediator.slett(vedleggUrn).also {
+                    when (it) {
+                        true -> call.respond(HttpStatusCode.NoContent)
+                        else -> call.respond(HttpStatusCode.NotFound)
                     }
                 }
             }
@@ -150,7 +158,7 @@ internal fun Application.vedleggApi(mediator: Mediator) {
     }
 }
 
-private class FileUploadHandler(private val mediator: Mediator) {
+internal class FileUploadHandler(private val mediator: Mediator) {
     suspend fun handleFileupload(multiPartData: MultiPartData, soknadsId: String): List<VedleggUrn> {
         return coroutineScope {
             val jobs = mutableListOf<Deferred<VedleggUrn>>()
