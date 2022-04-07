@@ -13,7 +13,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.MultiPartData
 import io.ktor.http.content.PartData
-import io.ktor.http.content.forEachPart
+import io.ktor.http.content.readAllParts
 import io.ktor.http.content.streamProvider
 import io.ktor.jackson.jackson
 import io.ktor.request.receiveMultipart
@@ -25,11 +25,7 @@ import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
 import io.ktor.routing.routing
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
@@ -119,8 +115,8 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
             val id =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
             val multiPartData = call.receiveMultipart()
-            val urnList = fileUploadHandler.handleFileupload(multiPartData, id)
-            call.respond(HttpStatusCode.Created, urnList)
+            val urn = fileUploadHandler.handleFileupload(multiPartData, id)
+            call.respond(HttpStatusCode.Created, urn)
         }
         get {
             val soknadsId =
@@ -159,31 +155,12 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
 }
 
 internal class FileUploadHandler(private val mediator: Mediator) {
-    suspend fun handleFileupload(multiPartData: MultiPartData, soknadsId: String): List<VedleggUrn> {
-        return coroutineScope {
-            val jobs = mutableListOf<Deferred<VedleggUrn>>()
-            multiPartData.forEachPart { part ->
-                when (part) {
-                    is PartData.FileItem -> {
-                        jobs.add(
-                            async(Dispatchers.IO) {
-                                val fileName =
-                                    part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
-                                val bytes = part.streamProvider().use { it.readBytes() }
-                                part.dispose()
-                                mediator.lagre(soknadsId, fileName, bytes)
-                            }
-                        )
-                    }
-                    is PartData.BinaryItem -> part.dispose().also {
-                        logger.warn { "binary item not supported" }
-                    }
-                    is PartData.FormItem -> part.dispose().also {
-                        logger.warn { "form item not supported" }
-                    }
-                }
-            }
-            jobs.awaitAll()
+    suspend fun handleFileupload(multiPartData: MultiPartData, soknadsId: String): VedleggUrn {
+        return with(multiPartData.readAllParts().first { it is PartData.FileItem } as PartData.FileItem) {
+            val fileName = this.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
+            val bytes = this.streamProvider().use { it.readBytes() }
+            this.dispose()
+            mediator.lagre(soknadsId, fileName, bytes)
         }
     }
 }
