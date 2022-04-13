@@ -35,12 +35,39 @@ java {
 tasks.withType<Jar>().configureEach {
     dependsOn("test")
 }
+spotless {
+    kotlin {
+        ktlint(Ktlint.version)
+    }
+    kotlinGradle {
+        target("*.gradle.kts", "buildSrc/**/*.kt*")
+        ktlint(Ktlint.version)
+    }
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    dependsOn("spotlessApply")
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+    testLogging {
+        showExceptions = true
+        showStackTraces = true
+        exceptionFormat = TestExceptionFormat.FULL
+        events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
+    }
+}
 
 dependencies {
     implementation("com.google.cloud:google-cloud-storage")
     implementation("de.slub-dresden:urnlib:2.0.1")
-    implementation("io.micrometer:micrometer-registry-prometheus:1.8.3")
-    implementation("no.nav.security:token-validation-ktor:1.3.10")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.8.4")
+    implementation("no.nav.security:token-validation-ktor:2.0.14")
     implementation(Konfig.konfig)
     implementation(Kotlin.Logging.kotlinLogging)
     implementation(Ktor.library("auth-jwt"))
@@ -57,11 +84,11 @@ dependencies {
     implementation(platform(kotlin("bom")))
 
     runtimeOnly("ch.qos.logback:logback-classic:1.3.0-alpha10")
-    runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.0") {
+    runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.0.1") {
         exclude("com.fasterxml.jackson.core")
     }
 
-    testImplementation("no.nav.security:mock-oauth2-server:0.4.3")
+    testImplementation("no.nav.security:mock-oauth2-server:0.4.4")
     testImplementation("org.testcontainers:testcontainers:${TestContainers.version}")
     testImplementation(Junit5.api)
     testImplementation(KoTest.assertions)
@@ -70,28 +97,4 @@ dependencies {
     testImplementation(Mockk.mockk)
 
     testRuntimeOnly(Junit5.engine)
-}
-
-spotless {
-    kotlin {
-        ktlint(Ktlint.version)
-    }
-    kotlinGradle {
-        target("*.gradle.kts", "buildSrc/**/*.kt*")
-        ktlint(Ktlint.version)
-    }
-}
-
-tasks.withType<KotlinCompile>().configureEach {
-    dependsOn("spotlessApply")
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
-    testLogging {
-        showExceptions = true
-        showStackTraces = true
-        exceptionFormat = TestExceptionFormat.FULL
-        events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
-    }
 }
