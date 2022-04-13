@@ -23,6 +23,14 @@ application {
     mainClass.set("no.nav.dagpenger.mellomlagring.AppKt")
 }
 
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    dependsOn("spotlessApply")
+}
+
 kotlin {
     jvmToolchain {
         (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(JavaVersion.VERSION_17.toString())) // "8"
@@ -43,14 +51,6 @@ spotless {
         target("*.gradle.kts", "buildSrc/**/*.kt*")
         ktlint(Ktlint.version)
     }
-}
-
-tasks.withType<KotlinCompile>().configureEach {
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
-    dependsOn("spotlessApply")
 }
 
 tasks.withType<Test> {
