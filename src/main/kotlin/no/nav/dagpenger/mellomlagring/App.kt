@@ -1,10 +1,10 @@
 package no.nav.dagpenger.mellomlagring
 
-import io.ktor.application.install
-import io.ktor.features.CallLogging
-import io.ktor.request.path
+import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
+import io.ktor.server.plugins.callloging.CallLogging
+import io.ktor.server.request.path
 import no.nav.dagpenger.mellomlagring.api.health
 import no.nav.dagpenger.mellomlagring.av.clamAv
 import no.nav.dagpenger.mellomlagring.lagring.S3Store

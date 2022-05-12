@@ -1,36 +1,35 @@
 package no.nav.dagpenger.mellomlagring.vedlegg
 
-import io.ktor.application.Application
-import io.ktor.application.ApplicationCall
-import io.ktor.application.call
-import io.ktor.application.install
-import io.ktor.auth.Authentication
-import io.ktor.auth.authenticate
-import io.ktor.features.ContentNegotiation
-import io.ktor.features.NotFoundException
-import io.ktor.features.StatusPages
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.MultiPartData
 import io.ktor.http.content.PartData
 import io.ktor.http.content.readAllParts
 import io.ktor.http.content.streamProvider
-import io.ktor.jackson.jackson
-import io.ktor.request.receiveMultipart
-import io.ktor.response.respond
-import io.ktor.response.respondOutputStream
-import io.ktor.routing.Route
-import io.ktor.routing.delete
-import io.ktor.routing.get
-import io.ktor.routing.post
-import io.ktor.routing.route
-import io.ktor.routing.routing
+import io.ktor.serialization.jackson.jackson
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.call
+import io.ktor.server.application.install
+import io.ktor.server.auth.Authentication
+import io.ktor.server.auth.authenticate
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.request.receiveMultipart
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondOutputStream
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.delete
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.api.HttpProblem
-import no.nav.security.token.support.ktor.tokenValidationSupport
+import no.nav.dagpenger.mellomlagring.auth.jwt
 
 private val logger = KotlinLogging.logger { }
 
@@ -42,67 +41,57 @@ internal fun Application.vedleggApi(mediator: Mediator) {
     }
 
     install(Authentication) {
-        kotlin.runCatching {
-            logger.debug { "installing auth feature" }
-            tokenValidationSupport(
-                name = Config.tokenxIssuerName,
-                config = Config.OAuth2IssuerConfig,
-            )
-
-            tokenValidationSupport(
-                name = Config.azureAdIssuerName,
-                config = Config.OAuth2IssuerConfig,
-            )
+        jwt(Config.AzureAd.name, Config.AzureAd.wellKnownUrl) {
+            withAudience(Config.AzureAd.audience)
         }
-            .onSuccess { logger.debug { "Finished installing auth feature" } }
-            .onFailure { e -> logger.error(e) { "Failed installing auth feature" } }
+
+        jwt(Config.TokenX.name, Config.TokenX.wellKnownUrl) {
+            withAudience(Config.TokenX.audience)
+        }
     }
 
     install(StatusPages) {
-        exception<Throwable> { cause ->
+        exception<Throwable> { call, cause ->
             logger.error(cause) { "Kunne ikke håndtere API kall" }
-            call.respond(
-                HttpStatusCode.InternalServerError,
-                HttpProblem(title = "Feilet", detail = cause.message)
-            )
-        }
-        exception<IllegalArgumentException> { cause ->
-            call.respond(
-                HttpStatusCode.BadRequest,
-                HttpProblem(title = "Klient feil", status = 400, detail = cause.message)
-            )
-        }
-        exception<NotFoundException> { cause ->
-            call.respond(
-                HttpStatusCode.NotFound,
-                HttpProblem(title = "Ikke funnet", status = 404, detail = cause.message)
-            )
-        }
 
-        exception<NotOwnerException> { cause ->
-            call.respond(
-                HttpStatusCode.Forbidden,
-                HttpProblem(title = "Ikke gyldig eier", status = 403, detail = cause.message)
-            )
-        }
-
-        exception<UgyldigFilInnhold> { cause ->
-            call.respond(
-                HttpStatusCode.BadRequest,
-                HttpProblem(title = "Fil er ugyldig", status = 400, detail = cause.message)
-            )
+            when (cause) {
+                is IllegalArgumentException -> {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        HttpProblem(title = "Klient feil", status = 400, detail = cause.message)
+                    )
+                }
+                is NotOwnerException -> {
+                    call.respond(
+                        HttpStatusCode.Forbidden,
+                        HttpProblem(title = "Ikke gyldig eier", status = 403, detail = cause.message)
+                    )
+                }
+                is UgyldigFilInnhold -> {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        HttpProblem(title = "Fil er ugyldig", status = 400, detail = cause.message)
+                    )
+                }
+                else -> {
+                    call.respond(
+                        HttpStatusCode.InternalServerError,
+                        HttpProblem(title = "Feilet", detail = cause.message)
+                    )
+                }
+            }
         }
     }
 
     routing {
         route("v1/azuread") {
-            authenticate(Config.azureAdIssuerName) {
+            authenticate(Config.AzureAd.name) {
                 vedlegg(fileUploadHandler, mediator)
             }
         }
 
         route("v1/obo") {
-            authenticate(Config.tokenxIssuerName) {
+            authenticate(Config.TokenX.name) {
                 vedlegg(fileUploadHandler, mediator)
             }
         }
@@ -131,7 +120,7 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
                 return VedleggUrn("$id/$filnavn")
             }
 
-            get() {
+            get {
                 val vedleggUrn = call.vedleggUrn()
                 mediator.hent(vedleggUrn)?.let {
                     call.respondOutputStream(ContentType.Application.OctetStream, HttpStatusCode.OK) {

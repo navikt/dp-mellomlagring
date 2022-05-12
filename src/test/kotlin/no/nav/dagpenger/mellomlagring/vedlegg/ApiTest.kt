@@ -1,17 +1,17 @@
 package no.nav.dagpenger.mellomlagring.vedlegg
 
 import io.kotest.matchers.shouldBe
+import io.ktor.client.request.delete
+import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.append
 import io.ktor.client.request.forms.formData
-import io.ktor.features.NotFoundException
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.content.PartData
-import io.ktor.server.testing.contentType
-import io.ktor.server.testing.handleRequest
-import io.ktor.server.testing.setBody
+import io.ktor.http.contentType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -26,36 +26,22 @@ internal class ApiTest {
     @Test
     fun `Uautorisert dersom ingen token finnes`() {
         withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
-            handleRequest(HttpMethod.Get, "v1/azuread/mellomlagring/vedlegg/1").apply {
-                response.status() shouldBe HttpStatusCode.Unauthorized
-            }
-            handleRequest(HttpMethod.Get, "v1/obo/mellomlagring/vedlegg/1").apply {
-                response.status() shouldBe HttpStatusCode.Unauthorized
-            }
+            client.get("v1/azuread/mellomlagring/vedlegg/1").status shouldBe HttpStatusCode.Unauthorized
+            client.get("v1/obo/mellomlagring/vedlegg/1").status shouldBe HttpStatusCode.Unauthorized
         }
     }
 
     @Test
     fun `Autorisert dersom tokenx finnes`() {
         withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
-            autentisert(
-                endepunkt = "v1/obo/mellomlagring/vedlegg/1",
-                token = TestApplication.tokenXToken
-            ).apply {
-                response.status() shouldBe HttpStatusCode.OK
-            }
+            client.get("v1/obo/mellomlagring/vedlegg/1") { autentisert(token = TestApplication.tokenXToken) }.status shouldBe HttpStatusCode.OK
         }
     }
 
     @Test
     fun `Autorisert dersom azureAd finnes`() {
         withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
-            autentisert(
-                endepunkt = "v1/azuread/mellomlagring/vedlegg/1",
-                token = TestApplication.azureAd
-            ).apply {
-                response.status() shouldBe HttpStatusCode.OK
-            }
+            client.get("v1/azuread/mellomlagring/vedlegg/1") { autentisert(token = TestApplication.azureAd) }.status shouldBe HttpStatusCode.OK
         }
     }
 
@@ -65,25 +51,19 @@ internal class ApiTest {
             coEvery { it.liste("id") } returns listOf(
                 VedleggUrn("id/fil1"), VedleggUrn("id/fil2")
             )
-            coEvery { it.liste("finnesIkke") } returns emptyList()
+            coEvery { it.liste("finnesikke") } returns emptyList()
         }
         withMockAuthServerAndTestApplication({ vedleggApi(mediatorMock) }) {
-            autentisert(
-                endepunkt = "v1/obo/mellomlagring/vedlegg/id",
-                httpMethod = HttpMethod.Get,
-            ).apply {
-                response.status() shouldBe HttpStatusCode.OK
+            client.get("v1/obo/mellomlagring/vedlegg/id") { autentisert() }.let { response ->
+                response.status shouldBe HttpStatusCode.OK
                 response.contentType().toString() shouldBe "application/json; charset=UTF-8"
-                response.content shouldBe """[{"urn":"urn:vedlegg:id/fil1"},{"urn":"urn:vedlegg:id/fil2"}]"""
+                response.bodyAsText() shouldBe """[{"urn":"urn:vedlegg:id/fil1"},{"urn":"urn:vedlegg:id/fil2"}]"""
             }
 
-            autentisert(
-                endepunkt = "v1/obo/mellomlagring/vedlegg/finnesIkke",
-                httpMethod = HttpMethod.Get,
-            ).apply {
-                response.status() shouldBe HttpStatusCode.OK
+            client.get("v1/obo/mellomlagring/vedlegg/finnesikke") { autentisert() }.let { response ->
+                response.status shouldBe HttpStatusCode.OK
                 response.contentType().toString() shouldBe "application/json; charset=UTF-8"
-                response.content shouldBe """[]"""
+                response.bodyAsText() shouldBe """[]"""
             }
         }
     }
@@ -95,24 +75,23 @@ internal class ApiTest {
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
-            autentisert(
-                endepunkt = "v1/obo/mellomlagring/vedlegg/id",
-                httpMethod = HttpMethod.Post,
-            ) {
-                this.addHeader(
-                    HttpHeaders.ContentType,
-                    ContentType.MultiPart.FormData.withParameter("boundary", "boundary").toString()
+            client.post("v1/obo/mellomlagring/vedlegg/id") {
+                autentisert()
+                setBody(
+                    MultiPartFormDataContent(
+                        formData {
+                            append("hubba", "file.csv", ContentType.Text.CSV) {
+                                this.append("1")
+                            }
+                        },
+                        "boundary",
+                        ContentType.MultiPart.FormData.withParameter("boundary", "boundary")
+                    )
                 )
-                val partData: List<PartData> = formData {
-                    append("hubba", "file.csv", ContentType.Text.CSV) {
-                        this.append("1")
-                    }
-                }
-                setBody("boundary", partData)
-            }.apply {
-                response.status() shouldBe HttpStatusCode.Created
+            }.let { response ->
+                response.status shouldBe HttpStatusCode.Created
                 //language=JSON
-                response.content shouldBe """{"urn":"urn:vedlegg:id/file.csv"}"""
+                response.bodyAsText() shouldBe """{"urn":"urn:vedlegg:id/file.csv"}"""
                 response.contentType().toString() shouldBe "application/json; charset=UTF-8"
 
                 coVerify(exactly = 1) {
@@ -141,21 +120,13 @@ internal class ApiTest {
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
-            autentisert(
-                endepunkt = "v1/obo/mellomlagring/vedlegg/id/filnavn.pdf",
-                httpMethod = HttpMethod.Get,
-            ).apply {
-                response.status() shouldBe HttpStatusCode.OK
+            client.get("v1/obo/mellomlagring/vedlegg/id/filnavn.pdf") { autentisert() }.let { response ->
+                response.status shouldBe HttpStatusCode.OK
                 response.contentType() shouldBe ContentType.Application.OctetStream
-                response.content shouldBe "1"
+                response.bodyAsText() shouldBe "1"
             }
 
-            autentisert(
-                endepunkt = "v1/obo/mellomlagring/vedlegg/id/finnesIkke.pdf",
-                httpMethod = HttpMethod.Get,
-            ).apply {
-                response.status() shouldBe HttpStatusCode.NotFound
-            }
+            client.get("v1/obo/mellomlagring/vedlegg/id/finnesIkke.pdf") { autentisert() }.status shouldBe HttpStatusCode.NotFound
         }
     }
 
@@ -167,19 +138,8 @@ internal class ApiTest {
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
-            autentisert(
-                endepunkt = "v1/obo/mellomlagring/vedlegg/id/filnavn.pdf",
-                httpMethod = HttpMethod.Delete,
-            ).apply {
-                response.status() shouldBe HttpStatusCode.NoContent
-            }
-
-            autentisert(
-                endepunkt = "v1/obo/mellomlagring/vedlegg/id/finnesIkke.pdf",
-                httpMethod = HttpMethod.Delete,
-            ).apply {
-                response.status() shouldBe HttpStatusCode.NotFound
-            }
+            client.delete("v1/obo/mellomlagring/vedlegg/id/filnavn.pdf") { autentisert() }.status shouldBe HttpStatusCode.NoContent
+            client.delete("v1/obo/mellomlagring/vedlegg/id/finnesIkke.pdf") { autentisert() }.status shouldBe HttpStatusCode.NotFound
         }
     }
 
@@ -187,55 +147,16 @@ internal class ApiTest {
     fun statusPages() {
         val mockMediator = mockk<Mediator>().also {
             coEvery { it.hent(VedleggUrn("id/illegalargument")) } throws IllegalArgumentException("test")
-            coEvery { it.hent(VedleggUrn("id/notfound")) } throws NotFoundException("test")
             coEvery { it.hent(VedleggUrn("id/notOwner")) } throws NotOwnerException("test")
             coEvery { it.hent(VedleggUrn("id/ugyldiginnhold")) } throws UgyldigFilInnhold("test", listOf("test"))
             coEvery { it.hent(VedleggUrn("id/throwable")) } throws Throwable("test")
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
-            autentisert(
-                endepunkt = "v1/obo/mellomlagring/vedlegg/id/illegalargument",
-                httpMethod = HttpMethod.Get,
-            ).apply {
-                response.status() shouldBe HttpStatusCode.BadRequest
-            }
-        }
-
-        withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
-            autentisert(
-                endepunkt = "v1/obo/mellomlagring/vedlegg/id/notfound",
-                httpMethod = HttpMethod.Get,
-            ).apply {
-                response.status() shouldBe HttpStatusCode.NotFound
-            }
-        }
-
-        withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
-            autentisert(
-                endepunkt = "v1/obo/mellomlagring/vedlegg/id/notOwner",
-                httpMethod = HttpMethod.Get,
-            ).apply {
-                response.status() shouldBe HttpStatusCode.Forbidden
-            }
-        }
-
-        withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
-            autentisert(
-                endepunkt = "v1/obo/mellomlagring/vedlegg/id/ugyldiginnhold",
-                httpMethod = HttpMethod.Get,
-            ).apply {
-                response.status() shouldBe HttpStatusCode.BadRequest
-            }
-        }
-
-        withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
-            autentisert(
-                endepunkt = "v1/obo/mellomlagring/vedlegg/id/throwable",
-                httpMethod = HttpMethod.Get,
-            ).apply {
-                response.status() shouldBe HttpStatusCode.InternalServerError
-            }
+            client.get("v1/obo/mellomlagring/vedlegg/id/illegalargument") { autentisert() }.status shouldBe HttpStatusCode.BadRequest
+            client.get("v1/obo/mellomlagring/vedlegg/id/notOwner") { autentisert() }.status shouldBe HttpStatusCode.Forbidden
+            client.get("v1/obo/mellomlagring/vedlegg/id/ugyldiginnhold") { autentisert() }.status shouldBe HttpStatusCode.BadRequest
+            client.get("v1/obo/mellomlagring/vedlegg/id/throwable") { autentisert() }.status shouldBe HttpStatusCode.InternalServerError
         }
     }
 }
