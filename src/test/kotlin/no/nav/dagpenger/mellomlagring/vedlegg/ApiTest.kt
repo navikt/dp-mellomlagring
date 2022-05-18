@@ -95,7 +95,7 @@ internal class ApiTest {
             }.let { response ->
                 response.status shouldBe HttpStatusCode.Created
                 //language=JSON
-                response.bodyAsText() shouldBe """[{"urn":"urn:vedlegg:id/file.csv"},{"urn":"urn:vedlegg:id/file2.csv"}]"""
+                response.bodyAsText() shouldBe """[{"filnavn":"file.csv","urn":"urn:vedlegg:id/file.csv"},{"filnavn":"file2.csv","urn":"urn:vedlegg:id/file2.csv"}]"""
                 response.contentType().toString() shouldBe "application/json; charset=UTF-8"
 
                 coVerify(exactly = 1) {

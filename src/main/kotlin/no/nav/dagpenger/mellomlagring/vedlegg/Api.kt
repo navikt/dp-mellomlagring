@@ -27,7 +27,6 @@ import io.ktor.server.routing.routing
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
@@ -108,8 +107,13 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
             val id =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
             val multiPartData = call.receiveMultipart()
-            val urn = fileUploadHandler.handleFileupload(multiPartData, id)
-            call.respond(HttpStatusCode.Created, urn)
+            val respond = fileUploadHandler.handleFileupload(multiPartData, id).map { e ->
+                Respond(
+                    filnavn = e.key,
+                    urn = e.value.urn
+                )
+            }
+            call.respond(HttpStatusCode.Created, respond)
         }
         get {
             val soknadsId =
@@ -147,22 +151,21 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
     }
 }
 
+private data class Respond(val filnavn: String, val urn: String)
+
 internal class FileUploadHandler(private val mediator: Mediator) {
-    suspend fun handleFileupload(multiPartData: MultiPartData, soknadsId: String): List<VedleggUrn> {
+    suspend fun handleFileupload(multiPartData: MultiPartData, soknadsId: String): Map<String, VedleggUrn> {
         return coroutineScope {
-            val jobs = mutableListOf<Deferred<VedleggUrn>>()
+            val jobs = mutableMapOf<String, Deferred<VedleggUrn>>()
             multiPartData.forEachPart { part ->
                 when (part) {
                     is PartData.FileItem -> {
-                        jobs.add(
-                            async(Dispatchers.IO) {
-                                val fileName =
-                                    part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
-                                val bytes = part.streamProvider().use { it.readBytes() }
-                                part.dispose()
-                                mediator.lagre(soknadsId, fileName, bytes)
-                            }
-                        )
+                        val fileName = part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
+                        jobs[fileName] = async(Dispatchers.IO) {
+                            val bytes = part.streamProvider().use { it.readBytes() }
+                            part.dispose()
+                            mediator.lagre(soknadsId, fileName, bytes)
+                        }
                     }
                     is PartData.BinaryItem -> part.dispose().also {
                         logger.warn { "binary item not supported" }
@@ -175,7 +178,7 @@ internal class FileUploadHandler(private val mediator: Mediator) {
                     }
                 }
             }
-            jobs.awaitAll()
+            jobs.mapValues { it.value.await() }
         }
     }
 }
