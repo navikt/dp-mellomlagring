@@ -72,6 +72,7 @@ internal class ApiTest {
     fun `Lagring av fil`() {
         val mediator = mockk<Mediator>(relaxed = true).also {
             coEvery { it.lagre("id", "file.csv", any()) } returns VedleggUrn("id/file.csv")
+            coEvery { it.lagre("id", "file2.csv", any()) } returns VedleggUrn("id/file2.csv")
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
@@ -83,6 +84,9 @@ internal class ApiTest {
                             append("hubba", "file.csv", ContentType.Text.CSV) {
                                 this.append("1")
                             }
+                            append("hubba", "file2.csv", ContentType.Text.CSV) {
+                                this.append("2")
+                            }
                         },
                         "boundary",
                         ContentType.MultiPart.FormData.withParameter("boundary", "boundary")
@@ -91,7 +95,7 @@ internal class ApiTest {
             }.let { response ->
                 response.status shouldBe HttpStatusCode.Created
                 //language=JSON
-                response.bodyAsText() shouldBe """{"urn":"urn:vedlegg:id/file.csv"}"""
+                response.bodyAsText() shouldBe """[{"urn":"urn:vedlegg:id/file.csv"},{"urn":"urn:vedlegg:id/file2.csv"}]"""
                 response.contentType().toString() shouldBe "application/json; charset=UTF-8"
 
                 coVerify(exactly = 1) {
@@ -99,6 +103,14 @@ internal class ApiTest {
                         soknadsId = "id",
                         filnavn = "file.csv",
                         filinnhold = "1".toByteArray()
+                    )
+                }
+
+                coVerify(exactly = 1) {
+                    mediator.lagre(
+                        soknadsId = "id",
+                        filnavn = "file2.csv",
+                        filinnhold = "2".toByteArray()
                     )
                 }
             }

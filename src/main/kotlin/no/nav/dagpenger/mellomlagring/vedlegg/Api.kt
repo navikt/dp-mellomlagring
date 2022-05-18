@@ -4,7 +4,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.MultiPartData
 import io.ktor.http.content.PartData
-import io.ktor.http.content.readAllParts
+import io.ktor.http.content.forEachPart
 import io.ktor.http.content.streamProvider
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
@@ -24,7 +24,11 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
@@ -144,12 +148,34 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
 }
 
 internal class FileUploadHandler(private val mediator: Mediator) {
-    suspend fun handleFileupload(multiPartData: MultiPartData, soknadsId: String): VedleggUrn {
-        return with(multiPartData.readAllParts().first { it is PartData.FileItem } as PartData.FileItem) {
-            val fileName = this.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
-            val bytes = this.streamProvider().use { it.readBytes() }
-            this.dispose()
-            mediator.lagre(soknadsId, fileName, bytes)
+    suspend fun handleFileupload(multiPartData: MultiPartData, soknadsId: String): List<VedleggUrn> {
+        return coroutineScope {
+            val jobs = mutableListOf<Deferred<VedleggUrn>>()
+            multiPartData.forEachPart { part ->
+                when (part) {
+                    is PartData.FileItem -> {
+                        jobs.add(
+                            async(Dispatchers.IO) {
+                                val fileName =
+                                    part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
+                                val bytes = part.streamProvider().use { it.readBytes() }
+                                part.dispose()
+                                mediator.lagre(soknadsId, fileName, bytes)
+                            }
+                        )
+                    }
+                    is PartData.BinaryItem -> part.dispose().also {
+                        logger.warn { "binary item not supported" }
+                    }
+                    is PartData.FormItem -> part.dispose().also {
+                        logger.warn { "form item not supported" }
+                    }
+                    is PartData.BinaryChannelItem -> part.dispose().also {
+                        logger.warn { "BinaryChannel itme not supported" }
+                    }
+                }
+            }
+            jobs.awaitAll()
         }
     }
 }
