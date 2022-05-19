@@ -162,8 +162,7 @@ internal class FileUploadHandler(private val mediator: Mediator) {
                     is PartData.FileItem -> {
                         val fileName = part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
                         jobs[fileName] = async(Dispatchers.IO) {
-                            val bytes = part.streamProvider().use { it.readBytes() }
-                            part.dispose()
+                            val bytes = part.streamProvider().readBytes()
                             mediator.lagre(soknadsId, fileName, bytes)
                         }
                     }
