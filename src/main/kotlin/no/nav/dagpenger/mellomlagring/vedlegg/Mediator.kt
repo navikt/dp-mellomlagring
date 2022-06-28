@@ -21,7 +21,7 @@ internal interface Mediator {
     }
 }
 
-internal sealed class FilValideringResultat(open val filnavn: String) {
+abstract class FilValideringResultat(open val filnavn: String) {
     data class Gyldig(override val filnavn: String) : FilValideringResultat(filnavn)
     data class Ugyldig(override val filnavn: String, val feilMelding: String) : FilValideringResultat(filnavn)
 }
