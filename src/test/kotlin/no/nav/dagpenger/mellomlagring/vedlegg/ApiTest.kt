@@ -10,6 +10,8 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.mockk.coEvery
@@ -20,6 +22,7 @@ import no.nav.dagpenger.mellomlagring.TestApplication.autentisert
 import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestApplication
 import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
+import no.nav.dagpenger.mellomlagring.test.fileAsByteArray
 import org.junit.jupiter.api.Test
 
 internal class ApiTest {
@@ -113,6 +116,45 @@ internal class ApiTest {
                         filinnhold = "2".toByteArray()
                     )
                 }
+            }
+        }
+    }
+
+    @Test
+    fun `bundling av filer`() {
+        val mediator = mockk<Mediator>(relaxed = true).also {
+            coEvery { it.lagre("id", "bundle.pdf", any()) } returns VedleggUrn("id/bundle.pdf")
+        }
+
+        withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
+            client.post("v1/obo/mellomlagring/bundle/id") {
+                autentisert()
+                setBody(
+                    MultiPartFormDataContent(
+                        formData {
+                            append(
+                                "image", "/fisk1.jpg".fileAsByteArray(),
+                                Headers.build {
+                                    append(HttpHeaders.ContentType, "image/jpeg")
+                                    append(HttpHeaders.ContentDisposition, "filename=\"fisk1.jpg\"")
+                                }
+                            )
+                            append(
+                                "image", "/fisk2.jpg".fileAsByteArray(),
+                                Headers.build {
+                                    append(HttpHeaders.ContentType, "image/jpeg")
+                                    append(HttpHeaders.ContentDisposition, "filename=\"fisk2.jpg\"")
+                                }
+                            )
+                            append("bundleFilnavn", "bundle.pdf")
+                        }
+                    )
+                )
+            }.let { response ->
+                response.status shouldBe HttpStatusCode.Created
+                //language=JSON
+                response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:id/bundle.pdf"}"""
+                response.contentType().toString() shouldBe "application/json; charset=UTF-8"
             }
         }
     }
