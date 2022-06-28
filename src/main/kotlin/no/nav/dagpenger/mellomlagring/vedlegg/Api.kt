@@ -188,7 +188,6 @@ internal class BundleFileUploadHandler(private val mediator: Mediator) {
                 .toList()
                 .let { PDFDocument.merge(it) }.use { pdf ->
                     pdf.save(BufferedOutputStream(os))
-                    pdf.save(BufferedOutputStream(FileOutputStream("build/tmp/hubba.pdf")))
                     mediator.lagre(soknadsId, filnavn, os.toByteArray())
                 }
         }.let {
