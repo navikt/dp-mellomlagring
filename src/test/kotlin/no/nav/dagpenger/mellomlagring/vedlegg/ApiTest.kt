@@ -1,6 +1,7 @@
 package no.nav.dagpenger.mellomlagring.vedlegg
 
 import io.kotest.matchers.shouldBe
+import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.append
@@ -128,26 +129,10 @@ internal class ApiTest {
 
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
             client.post("v1/obo/mellomlagring/bundle/id") {
-                autentisert()
-                setBody(
-                    MultiPartFormDataContent(
-                        formData {
-                            append(
-                                "image", "/fisk1.jpg".fileAsByteArray(),
-                                Headers.build {
-                                    append(HttpHeaders.ContentType, "image/jpeg")
-                                    append(HttpHeaders.ContentDisposition, "filename=\"fisk1.jpg\"")
-                                }
-                            )
-                            append(
-                                "image", "/fisk2.jpg".fileAsByteArray(),
-                                Headers.build {
-                                    append(HttpHeaders.ContentType, "image/jpeg")
-                                    append(HttpHeaders.ContentDisposition, "filename=\"fisk2.jpg\"")
-                                }
-                            )
-                            append("bundleFilnavn", "bundle.pdf")
-                        }
+                lagDataBundle(
+                    listOf(
+                        Fil(type = "image/jpeg", path = "/fisk1.jpg", navn = "fisk1.jpg"),
+                        Fil(type = "image/jpeg", path = "/fisk2.jpg", navn = "fisk2.jpg")
                     )
                 )
             }.let { response ->
@@ -155,6 +140,50 @@ internal class ApiTest {
                 //language=JSON
                 response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:id/bundle.pdf"}"""
                 response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+            }
+
+            client.post("v1/obo/mellomlagring/bundle/id") {
+                lagDataBundle(
+                    listOf(
+                        Fil(type = "image/jpeg", path = "/fisk1.jpg", navn = "fisk1.jpg")
+                    )
+                )
+            }.let { response ->
+                response.status shouldBe HttpStatusCode.Created
+                //language=JSON
+                response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:id/bundle.pdf"}"""
+                response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+            }
+
+            client.post("v1/obo/mellomlagring/bundle/id") {
+                lagDataBundle(
+                    listOf(
+                        Fil(type = "application/pdf", path = "/Arbeidsforhold.pdf", navn = "Arbeidsforhol")
+                    )
+                )
+            }.let { response ->
+                response.status shouldBe HttpStatusCode.Created
+                //language=JSON
+                response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:id/bundle.pdf"}"""
+                response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+            }
+
+            client.post("v1/obo/mellomlagring/bundle/id") {
+                lagDataBundle(listOf())
+            }.let { response ->
+                response.status shouldBe HttpStatusCode.BadRequest
+            }
+
+            client.post("v1/obo/mellomlagring/bundle/id") {
+                lagDataBundle(
+                    listOf(
+                        Fil(type = "application/pdf", path = "/Arbeidsforhold.pdf", navn = "Arbeidsforhold"),
+                        Fil(type = "text/plain", path = "/test.txt", navn = "test"),
+                        Fil(type = "image/jpeg", path = "/fisk1.jpg", navn = "fisk1.jpg")
+                    )
+                )
+            }.let { response ->
+                response.status shouldBe HttpStatusCode.BadRequest
             }
         }
     }
@@ -213,4 +242,26 @@ internal class ApiTest {
             client.get("v1/obo/mellomlagring/vedlegg/id/throwable") { autentisert() }.status shouldBe HttpStatusCode.InternalServerError
         }
     }
+
+    private fun HttpRequestBuilder.lagDataBundle(filer: List<Fil>) {
+        autentisert()
+        setBody(
+            MultiPartFormDataContent(
+                formData {
+                    filer.forEach {
+                        append(
+                            "image", it.path.fileAsByteArray(),
+                            Headers.build {
+                                append(HttpHeaders.ContentType, it.type)
+                                append(HttpHeaders.ContentDisposition, "filename=\"${it.navn}\"")
+                            }
+                        )
+                    }
+                    append("bundleFilnavn", "bundle.pdf")
+                }
+            )
+        )
+    }
+
+    private data class Fil(val type: String, val path: String, val navn: String)
 }

@@ -21,7 +21,9 @@ internal class BundleFileUploadHandler(private val mediator: Mediator) {
         val parts = multiPartData.readAllParts()
         val filnavn = parts.filterIsInstance<PartData.FormItem>().first { it.name == "bundleFilnavn" }.value
 
-        return parts.filterIsInstance<PartData.FileItem>()
+        val fileItems = parts.filterIsInstance<PartData.FileItem>()
+        if (fileItems.isEmpty()) throw IllegalArgumentException("Body mangler innhold")
+        return fileItems
             .map { it.streamProvider().readBytes() }
             .let { ByteArrayConverter.konverterOgMerge(it) }
             .let {
