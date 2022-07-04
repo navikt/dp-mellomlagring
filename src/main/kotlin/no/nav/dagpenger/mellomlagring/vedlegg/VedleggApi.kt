@@ -5,7 +5,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.MultiPartData
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
-import io.ktor.http.content.readAllParts
 import io.ktor.http.content.streamProvider
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
@@ -34,11 +33,6 @@ import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.api.HttpProblem
 import no.nav.dagpenger.mellomlagring.auth.jwt
-import no.nav.dagpenger.pdf.ImageConverter
-import no.nav.dagpenger.pdf.PDFDocument
-import java.io.BufferedOutputStream
-import java.io.ByteArrayOutputStream
-import java.io.FileOutputStream
 
 private val logger = KotlinLogging.logger { }
 
@@ -174,27 +168,6 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
 }
 
 private data class Respond(val filnavn: String, val urn: String)
-
-internal class BundleFileUploadHandler(private val mediator: Mediator) {
-
-    suspend fun handleFileupload(multiPartData: MultiPartData, soknadsId: String): Pair<String, VedleggUrn> {
-        val parts = multiPartData.readAllParts()
-
-        val filnavn = parts.filterIsInstance<PartData.FormItem>().first { it.name == "bundleFilnavn" }.value
-
-        return ByteArrayOutputStream().use { os ->
-            parts.filterIsInstance<PartData.FileItem>()
-                .map { ImageConverter.toPDF(it.streamProvider().readBytes()) }
-                .toList()
-                .let { PDFDocument.merge(it) }.use { pdf ->
-                    pdf.save(BufferedOutputStream(os))
-                    mediator.lagre(soknadsId, filnavn, os.toByteArray())
-                }
-        }.let {
-            Pair(filnavn, it)
-        }
-    }
-}
 
 internal class FileUploadHandler(private val mediator: Mediator) {
     suspend fun handleFileupload(multiPartData: MultiPartData, soknadsId: String): Map<String, VedleggUrn> {
