@@ -3,34 +3,48 @@ package no.nav.dagpenger.mellomlagring.lagring
 import com.google.crypto.tink.Aead
 import io.ktor.utils.io.core.toByteArray
 import mu.KotlinLogging
+import no.nav.dagpenger.mellomlagring.vedlegg.NotOwnerException
+import java.nio.charset.Charset
+import java.security.GeneralSecurityException
 
 private val sikkerlogg = KotlinLogging.logger("tjenestekall")
 
 internal class KryptertStore(private val fnr: String, private val store: Store, private val aead: Aead) : Store {
-
-    override fun hent(storageKey: StorageKey): Result<Klump?> {
-        require(store.hentKlumpInfo(storageKey).erEier())
-        return store.hent(storageKey).map { it?.decrypt(fnr) }
+    companion object {
+        private val charset = Charset.forName("ISO-8859-1")
     }
+
+    override fun hent(storageKey: StorageKey): Result<Klump?> =
+        requireEier(storageKey) {
+            store.hent(storageKey).map { it?.decrypt(fnr) }
+        }
 
     override fun lagre(klump: Klump): Result<Int> {
         return store.lagre(klump.encrypt(fnr))
     }
 
-    override fun slett(storageKey: StorageKey): Result<Boolean> {
-        require(store.hentKlumpInfo(storageKey).erEier())
-        return store.slett(storageKey)
-    }
+    override fun slett(storageKey: StorageKey): Result<Boolean> = requireEier(storageKey) { store.slett(storageKey) }
 
     override fun hentKlumpInfo(storageKey: StorageKey): Result<KlumpInfo?> {
-        return store.hentKlumpInfo(storageKey).also {
-            require(it.erEier())
+        val klumpInfo = store.hentKlumpInfo(storageKey)
+        return if (klumpInfo.erEier()) {
+            klumpInfo
+        } else {
+            Result.failure(NotOwnerException("Eier ikke $storageKey"))
         }
     }
 
     override fun listKlumpInfo(keyPrefix: StorageKey): Result<List<KlumpInfo>> {
         return store.listKlumpInfo(keyPrefix).map { klumpInfoList ->
             klumpInfoList.filter { it.erEier() }
+        }
+    }
+
+    private inline fun <T> requireEier(storageKey: StorageKey, resultSupplier: () -> Result<T>): Result<T> {
+        return if (!store.hentKlumpInfo(storageKey).erEier()) {
+            Result.failure(NotOwnerException("Ikke eier for $storageKey"))
+        } else {
+            resultSupplier()
         }
     }
 
@@ -42,7 +56,12 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
                 false
             }
             else -> {
-                kryptertEier.decrypt() == fnr
+                try {
+                    kryptertEier.decrypt() == fnr
+                } catch (e: GeneralSecurityException) {
+                    sikkerlogg.warn { "Fnr matcher ikke fødselsnummer på ressurs" }
+                    false
+                }
             }
         }
     }
@@ -79,6 +98,6 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
         return Klump(innhold = aead.decrypt(this.innhold, eier.toByteArray()), klumpInfo = this.klumpInfo)
     }
 
-    private fun String.encrypt() = aead.encrypt(this.toByteArray(), fnr.toByteArray()).toString()
-    private fun String.decrypt() = aead.decrypt(this.toByteArray(), fnr.toByteArray()).toString()
+    private fun String.encrypt() = aead.encrypt(this.toByteArray(charset), fnr.toByteArray()).toString(charset)
+    private fun String.decrypt() = aead.decrypt(this.toByteArray(charset), fnr.toByteArray()).toString(charset)
 }
