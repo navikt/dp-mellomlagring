@@ -108,7 +108,7 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
             val id =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
             val multiPartData = call.receiveMultipart()
-            val respond = bundelHandler.handleFileupload(multiPartData, id).let {
+            val respond = bundelHandler.handleFileupload(multiPartData, id, "eier").let {
                 Respond(
                     filnavn = it.first,
                     urn = it.second.urn
@@ -134,7 +134,7 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
         get {
             val soknadsId =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
-            val vedlegg = mediator.liste(soknadsId)
+            val vedlegg = mediator.liste(soknadsId, "eier")
             call.respond(HttpStatusCode.OK, vedlegg)
         }
         route("/{filnavn}") {
@@ -146,7 +146,7 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
 
             get {
                 val vedleggUrn = call.vedleggUrn()
-                mediator.hent(vedleggUrn)?.let {
+                mediator.hent(vedleggUrn, "eier")?.let {
                     call.respondOutputStream(ContentType.Application.OctetStream, HttpStatusCode.OK) {
                         withContext(Dispatchers.IO) {
                             this@respondOutputStream.write(it.innhold)
@@ -156,7 +156,7 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
             }
             delete {
                 val vedleggUrn = call.vedleggUrn()
-                mediator.slett(vedleggUrn).also {
+                mediator.slett(vedleggUrn, "eier").also {
                     when (it) {
                         true -> call.respond(HttpStatusCode.NoContent)
                         else -> call.respond(HttpStatusCode.NotFound)
@@ -179,7 +179,7 @@ internal class FileUploadHandler(private val mediator: Mediator) {
                         val fileName = part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
                         jobs[fileName] = async(Dispatchers.IO) {
                             val bytes = part.streamProvider().readBytes()
-                            mediator.lagre(soknadsId, fileName, bytes)
+                            mediator.lagre(soknadsId, fileName, bytes, "eier")
                         }
                     }
                     is PartData.BinaryItem -> part.dispose().also {

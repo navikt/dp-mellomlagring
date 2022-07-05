@@ -1,21 +1,23 @@
 package no.nav.dagpenger.mellomlagring.vedlegg
 
+import com.google.crypto.tink.Aead
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
+import no.nav.dagpenger.mellomlagring.lagring.KryptertStore
 import no.nav.dagpenger.mellomlagring.lagring.StorageKey
 import no.nav.dagpenger.mellomlagring.lagring.Store
 import no.nav.dagpenger.mellomlagring.lagring.StoreException
 
 internal interface Mediator {
 
-    suspend fun lagre(soknadsId: String, filnavn: String, filinnhold: ByteArray): VedleggUrn
-    suspend fun liste(soknadsId: String): List<VedleggUrn>
-    suspend fun hent(vedleggUrn: VedleggUrn): Klump?
-    suspend fun slett(vedleggUrn: VedleggUrn): Boolean
+    suspend fun lagre(soknadsId: String, filnavn: String, filinnhold: ByteArray, eier: String): VedleggUrn
+    suspend fun liste(soknadsId: String, eier: String): List<VedleggUrn>
+    suspend fun hent(vedleggUrn: VedleggUrn, eier: String): Klump?
+    suspend fun slett(vedleggUrn: VedleggUrn, eier: String): Boolean
     fun interface FilValidering {
         suspend fun valider(filnavn: String, filinnhold: ByteArray): FilValideringResultat
     }
@@ -27,6 +29,7 @@ abstract class FilValideringResultat(open val filnavn: String) {
 }
 
 internal class NotOwnerException(msg: String) : Throwable(msg)
+
 internal class UgyldigFilInnhold(filnavn: String, feilMeldinger: List<String>) : Throwable() {
     override val message: String = "$filnavn feilet følgende valideringer: ${feilMeldinger.joinToString(", ")}"
 }
@@ -35,17 +38,21 @@ private val logger = KotlinLogging.logger { }
 
 internal class MediatorImpl(
     private val store: Store,
+    private val aead: Aead,
     private val filValideringer: List<Mediator.FilValidering> = emptyList()
 ) : Mediator {
+
+    private fun kryptertStore(eier: String) = KryptertStore(eier, store, aead)
 
     override suspend fun lagre(
         soknadsId: String,
         filnavn: String,
-        filinnhold: ByteArray
+        filinnhold: ByteArray,
+        eier: String
     ): VedleggUrn {
         valider(filnavn, filinnhold)
         val navn = createStoreKey(soknadsId = soknadsId, fileName = filnavn)
-        return store.lagre(
+        return kryptertStore(eier).lagre(
             klump = Klump(
                 innhold = filinnhold,
                 klumpInfo = KlumpInfo(
@@ -56,26 +63,30 @@ internal class MediatorImpl(
         ).getOrThrow().let { VedleggUrn(navn) }
     }
 
-    override suspend fun liste(soknadsId: String): List<VedleggUrn> {
-        return store
+    override suspend fun liste(soknadsId: String, eier: String): List<VedleggUrn> {
+        return kryptertStore(eier)
             .listKlumpInfo(soknadsId)
             .getOrThrow()
             .map { VedleggUrn(it.navn) }
     }
 
-    override suspend fun hent(vedleggUrn: VedleggUrn): Klump? {
+    override suspend fun hent(vedleggUrn: VedleggUrn, eier: String): Klump? {
         return vedleggUrn.nss.let { klumpNavn ->
-            hvisFinnes(klumpNavn) {
-                store.hent(klumpNavn).getOrThrow()
+            kryptertStore(eier).let { s ->
+                s.hvisFinnes(klumpNavn) {
+                    s.hent(klumpNavn).getOrThrow()
+                }
             }
         }
     }
 
-    override suspend fun slett(vedleggUrn: VedleggUrn): Boolean {
+    override suspend fun slett(vedleggUrn: VedleggUrn, eier: String): Boolean {
         return vedleggUrn.nss.let { klumpnavn ->
-            hvisFinnes(klumpnavn) {
-                store.slett(klumpnavn).getOrThrow()
-            } ?: false
+            kryptertStore(eier).let { s ->
+                s.hvisFinnes(klumpnavn) {
+                    s.slett(klumpnavn).getOrThrow()
+                } ?: false
+            }
         }
     }
 
@@ -108,8 +119,8 @@ internal class MediatorImpl(
         }
     }
 
-    private inline fun <T> hvisFinnes(klumpNavn: String, block: () -> T?): T? {
-        return store.hentKlumpInfo(klumpNavn).getOrThrow()?.let { _ ->
+    private inline fun <T> Store.hvisFinnes(klumpNavn: String, block: () -> T?): T? {
+        return this.hentKlumpInfo(klumpNavn).getOrThrow()?.let { _ ->
             block.invoke()
         }
     }

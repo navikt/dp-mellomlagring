@@ -4,6 +4,10 @@ import com.google.cloud.NoCredentials
 import com.google.cloud.storage.BucketInfo
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
+import com.google.crypto.tink.Aead
+import com.google.crypto.tink.KeyTemplates
+import com.google.crypto.tink.KeysetHandle
+import com.google.crypto.tink.aead.AeadConfig
 import com.natpryce.konfig.Configuration
 import com.natpryce.konfig.ConfigurationMap
 import com.natpryce.konfig.ConfigurationProperties
@@ -71,6 +75,22 @@ internal object Config {
             Env.LOCAL -> localStorage(properties[Key("DP_MELLOMLAGRING_STORAGE_URL", stringType)], true)
             else -> StorageOptions.getDefaultInstance().service
         }
+    }
+
+    private val keysetHandle: KeysetHandle by lazy {
+        when (env) {
+            Env.LOCAL -> {
+                KeysetHandle.generateNew(KeyTemplates.get("AES128_GCM"))
+            }
+            else -> {
+                TODO("Integrate with key manager")
+            }
+        }
+    }
+
+    val aaed: Aead by lazy {
+        AeadConfig.register()
+        keysetHandle.getPrimitive<Aead>(Aead::class.java)
     }
 
     internal fun localStorage(storageUrl: String, createBucket: Boolean) = StorageOptions.newBuilder()

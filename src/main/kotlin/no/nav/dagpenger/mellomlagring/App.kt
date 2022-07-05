@@ -27,7 +27,8 @@ fun main() {
         vedleggApi(
             MediatorImpl(
                 store = S3Store(),
-                filValideringer = listOf(VirusValidering(clamAv()))
+                filValideringer = listOf(VirusValidering(clamAv())),
+                aead = Config.aaed
             )
         )
         metrics()
