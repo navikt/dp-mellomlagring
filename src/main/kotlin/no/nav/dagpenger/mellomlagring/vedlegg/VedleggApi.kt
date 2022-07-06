@@ -13,10 +13,8 @@ import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.authenticate
-import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
-import io.ktor.server.request.document
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondOutputStream
@@ -35,7 +33,6 @@ import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.api.HttpProblem
 import no.nav.dagpenger.mellomlagring.auth.jwt
-import org.slf4j.event.Level
 
 private val logger = KotlinLogging.logger { }
 
@@ -53,17 +50,6 @@ internal fun Application.vedleggApi(mediator: Mediator) {
 
         jwt(Config.TokenX.name, Config.TokenX.wellKnownUrl) {
             withAudience(Config.TokenX.audience)
-        }
-    }
-    install(CallLogging) {
-        level = Level.DEBUG
-        disableDefaultColors()
-        filter { call ->
-            !setOf(
-                "isalive",
-                "isready",
-                "metrics"
-            ).contains(call.request.document())
         }
     }
 
