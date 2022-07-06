@@ -33,7 +33,7 @@ internal class KryptertStoreTest {
                 createBucket = true
             ),
         )
-        val kryptertStore = KryptertStore(fnr = testFnr, store = s3store, aead = Config.aaed)
+        val kryptertStore = KryptertStore(fnr = testFnr, store = s3store, aead = Config.aead)
 
         val lagretHubbaUrn = "urn:vedlegg:id/hubba"
         kryptertStore.lagre(
@@ -59,7 +59,7 @@ internal class KryptertStoreTest {
         s3store.hent(lagretHubbaUrn).getOrThrow().also {
             require(it != null)
             it.innhold.toString() shouldNotBe "hubba"
-            Config.aaed.decrypt(it.innhold, testFnr.toByteArray()).toString(Charset.forName("ISO-8859-1")) shouldBe "hubba"
+            Config.aead.decrypt(it.innhold, testFnr.toByteArray()).toString(Charset.forName("ISO-8859-1")) shouldBe "hubba"
         }
         kryptertStore.listKlumpInfo("urn:vedlegg:id").getOrThrow().size shouldBe 2
 
@@ -92,7 +92,7 @@ internal class KryptertStoreTest {
                 createBucket = true
             ),
         )
-        KryptertStore(fnr = testFnr, store = s3store, aead = Config.aaed).also {
+        KryptertStore(fnr = testFnr, store = s3store, aead = Config.aead).also {
             require(
                 it.lagre(
                     Klump(
@@ -106,7 +106,7 @@ internal class KryptertStoreTest {
             )
         }
 
-        val annenEierStore = KryptertStore(fnr = testFnr2, store = s3store, aead = Config.aaed)
+        val annenEierStore = KryptertStore(fnr = testFnr2, store = s3store, aead = Config.aead)
         annenEierStore.hent("urn:vedlegg:id/hubba").also {
             it.exceptionOrNull() should beInstanceOf<NotOwnerException>()
         }

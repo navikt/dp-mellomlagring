@@ -28,7 +28,7 @@ fun main() {
             MediatorImpl(
                 store = S3Store(),
                 filValideringer = listOf(VirusValidering(clamAv())),
-                aead = Config.aaed
+                aead = Config.aead
             )
         )
         metrics()

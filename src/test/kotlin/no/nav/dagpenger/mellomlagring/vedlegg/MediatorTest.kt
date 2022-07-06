@@ -37,7 +37,7 @@ class MediatorTest {
                     coEvery { it.valider(any(), any()) } returns FilValideringResultat.Gyldig("filnavn")
                 }
             ),
-            aead = Config.aaed
+            aead = Config.aead
         )
     }
 
@@ -89,7 +89,7 @@ class MediatorTest {
                     coEvery { it.valider("OK", any()) } returns FilValideringResultat.Gyldig("gyldig")
                 }
             ),
-            aead = Config.aaed
+            aead = Config.aead
         )
 
         runBlocking {
@@ -117,7 +117,7 @@ class MediatorTest {
                 every { it.slett(any()) } returns Result.failure(Throwable("feil"))
                 every { it.listKlumpInfo(any()) } returns Result.failure(Throwable("feil"))
             },
-            Config.aaed
+            Config.aead
         )
         runBlocking() {
             shouldThrow<StoreException> {

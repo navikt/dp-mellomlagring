@@ -88,7 +88,7 @@ internal object Config {
         }
     }
 
-    val aaed: Aead by lazy {
+    val aead: Aead by lazy {
         AeadConfig.register()
         keysetHandle.getPrimitive<Aead>(Aead::class.java)
     }
