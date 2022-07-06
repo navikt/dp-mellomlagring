@@ -10,14 +10,13 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.mellomlagring.Config
+import no.nav.dagpenger.mellomlagring.Config.Crypto
 import no.nav.dagpenger.mellomlagring.GoogleCloudStorageTestcontainer
 import no.nav.dagpenger.mellomlagring.lagring.S3Store
 import no.nav.dagpenger.mellomlagring.lagring.Store
 import no.nav.dagpenger.mellomlagring.lagring.StoreException
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-
-private const val s = "eier"
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // Because we are using fixedPort testcontainer
 class MediatorTest {
@@ -37,7 +36,7 @@ class MediatorTest {
                     coEvery { it.valider(any(), any()) } returns FilValideringResultat.Gyldig("filnavn")
                 }
             ),
-            aead = Config.aead
+            aead = Crypto.aead
         )
     }
 
@@ -89,7 +88,7 @@ class MediatorTest {
                     coEvery { it.valider("OK", any()) } returns FilValideringResultat.Gyldig("gyldig")
                 }
             ),
-            aead = Config.aead
+            aead = Crypto.aead
         )
 
         runBlocking {
@@ -117,7 +116,7 @@ class MediatorTest {
                 every { it.slett(any()) } returns Result.failure(Throwable("feil"))
                 every { it.listKlumpInfo(any()) } returns Result.failure(Throwable("feil"))
             },
-            Config.aead
+            Crypto.aead
         )
         runBlocking() {
             shouldThrow<StoreException> {

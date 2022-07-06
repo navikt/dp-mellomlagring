@@ -87,6 +87,7 @@ dependencies {
     implementation(platform("com.google.cloud:libraries-bom:24.3.0"))
     implementation(platform(kotlin("bom")))
     implementation("com.google.crypto.tink:tink:1.6.1")
+    implementation("com.google.crypto.tink:tink-gcpkms:1.6.1")
 
     runtimeOnly("ch.qos.logback:logback-classic:1.3.0-alpha11")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.0.1") {

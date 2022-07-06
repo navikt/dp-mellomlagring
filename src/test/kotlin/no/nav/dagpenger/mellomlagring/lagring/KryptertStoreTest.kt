@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.beInstanceOf
 import no.nav.dagpenger.mellomlagring.Config
+import no.nav.dagpenger.mellomlagring.Config.Crypto
 import no.nav.dagpenger.mellomlagring.GoogleCloudStorageTestcontainer
 import no.nav.dagpenger.mellomlagring.vedlegg.NotFoundException
 import no.nav.dagpenger.mellomlagring.vedlegg.NotOwnerException
@@ -33,7 +34,7 @@ internal class KryptertStoreTest {
                 createBucket = true
             ),
         )
-        val kryptertStore = KryptertStore(fnr = testFnr, store = s3store, aead = Config.aead)
+        val kryptertStore = KryptertStore(fnr = testFnr, store = s3store, aead = Crypto.aead)
 
         val lagretHubbaUrn = "urn:vedlegg:id/hubba"
         kryptertStore.lagre(
@@ -59,7 +60,7 @@ internal class KryptertStoreTest {
         s3store.hent(lagretHubbaUrn).getOrThrow().also {
             require(it != null)
             it.innhold.toString() shouldNotBe "hubba"
-            Config.aead.decrypt(it.innhold, testFnr.toByteArray()).toString(Charset.forName("ISO-8859-1")) shouldBe "hubba"
+            Crypto.aead.decrypt(it.innhold, testFnr.toByteArray()).toString(Charset.forName("ISO-8859-1")) shouldBe "hubba"
         }
         kryptertStore.listKlumpInfo("urn:vedlegg:id").getOrThrow().size shouldBe 2
 
@@ -92,7 +93,7 @@ internal class KryptertStoreTest {
                 createBucket = true
             ),
         )
-        KryptertStore(fnr = testFnr, store = s3store, aead = Config.aead).also {
+        KryptertStore(fnr = testFnr, store = s3store, aead = Crypto.aead).also {
             require(
                 it.lagre(
                     Klump(
@@ -106,7 +107,7 @@ internal class KryptertStoreTest {
             )
         }
 
-        val annenEierStore = KryptertStore(fnr = testFnr2, store = s3store, aead = Config.aead)
+        val annenEierStore = KryptertStore(fnr = testFnr2, store = s3store, aead = Crypto.aead)
         annenEierStore.hent("urn:vedlegg:id/hubba").also {
             it.exceptionOrNull() should beInstanceOf<NotOwnerException>()
         }
