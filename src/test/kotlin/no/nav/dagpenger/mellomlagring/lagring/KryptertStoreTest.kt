@@ -6,6 +6,7 @@ import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.beInstanceOf
 import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.GoogleCloudStorageTestcontainer
+import no.nav.dagpenger.mellomlagring.vedlegg.NotFoundException
 import no.nav.dagpenger.mellomlagring.vedlegg.NotOwnerException
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -16,7 +17,7 @@ internal class KryptertStoreTest {
     companion object {
         val testFnr = "17659988198"
         val testFnr2 = "17659988196"
-        private const val FIXED_HOST_PORT = 44444
+        private const val FIXED_HOST_PORT = 44447
     }
 
     private val gcsFixedHost by lazy {
@@ -119,5 +120,9 @@ internal class KryptertStoreTest {
             it.exceptionOrNull() should beInstanceOf<NotOwnerException>()
         }
         annenEierStore.listKlumpInfo("urn:vedlegg:id/hubba").getOrThrow().size shouldBe 0
+
+        annenEierStore.hent("urn:vedlegg:id/hubbara").also {
+            it.exceptionOrNull() shouldBe beInstanceOf<NotFoundException>()
+        }
     }
 }

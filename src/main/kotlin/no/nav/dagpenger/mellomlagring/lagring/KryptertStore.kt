@@ -3,6 +3,7 @@ package no.nav.dagpenger.mellomlagring.lagring
 import com.google.crypto.tink.Aead
 import io.ktor.utils.io.core.toByteArray
 import mu.KotlinLogging
+import no.nav.dagpenger.mellomlagring.vedlegg.NotFoundException
 import no.nav.dagpenger.mellomlagring.vedlegg.NotOwnerException
 import java.nio.charset.Charset
 import java.security.GeneralSecurityException
@@ -27,11 +28,23 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
 
     override fun hentKlumpInfo(storageKey: StorageKey): Result<KlumpInfo?> {
         val klumpInfo = store.hentKlumpInfo(storageKey)
-        return if (klumpInfo.erEier()) {
-            klumpInfo
-        } else {
-            Result.failure(NotOwnerException("Eier ikke $storageKey"))
-        }
+        return klumpInfo.fold(
+            onSuccess = {
+                when (it) {
+                    null -> Result.failure(NotFoundException(storageKey))
+                    else -> {
+                        if (!it.erEier()) {
+                            Result.failure(NotOwnerException("Ikke eier for ressursnøkkel $storageKey"))
+                        } else {
+                            klumpInfo
+                        }
+                    }
+                }
+            },
+            onFailure = {
+                Result.failure(it)
+            }
+        )
     }
 
     override fun listKlumpInfo(keyPrefix: StorageKey): Result<List<KlumpInfo>> {
@@ -41,11 +54,23 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
     }
 
     private inline fun <T> requireEier(storageKey: StorageKey, resultSupplier: () -> Result<T>): Result<T> {
-        return if (!store.hentKlumpInfo(storageKey).erEier()) {
-            Result.failure(NotOwnerException("Ikke eier for $storageKey"))
-        } else {
-            resultSupplier()
-        }
+        return store.hentKlumpInfo(storageKey).fold(
+            onSuccess = {
+                when (it) {
+                    null -> Result.failure(NotFoundException(storageKey))
+                    else -> {
+                        if (!it.erEier()) {
+                            Result.failure(NotOwnerException("Ikke eier for ressursnøkkel $storageKey"))
+                        } else {
+                            resultSupplier()
+                        }
+                    }
+                }
+            },
+            onFailure = {
+                Result.failure(it)
+            }
+        )
     }
 
     private fun KlumpInfo?.erEier(): Boolean {

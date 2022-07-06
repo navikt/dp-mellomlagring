@@ -34,6 +34,10 @@ internal class UgyldigFilInnhold(filnavn: String, feilMeldinger: List<String>) :
     override val message: String = "$filnavn feilet følgende valideringer: ${feilMeldinger.joinToString(", ")}"
 }
 
+internal class NotFoundException(ressursNøkkel: String) : Throwable() {
+    override val message: String = "Fant ikke ressurse med nøkkel $ressursNøkkel"
+}
+
 private val logger = KotlinLogging.logger { }
 
 internal class MediatorImpl(
@@ -114,6 +118,7 @@ internal class MediatorImpl(
             when (it) {
                 is NotOwnerException -> throw it
                 is UgyldigFilInnhold -> throw it
+                is NotFoundException -> throw it
                 else -> throw StoreException(it.message ?: "Ukjent feil")
             }
         }

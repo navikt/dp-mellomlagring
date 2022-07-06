@@ -17,6 +17,8 @@ import no.nav.dagpenger.mellomlagring.lagring.StoreException
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
+private const val s = "eier"
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // Because we are using fixedPort testcontainer
 class MediatorTest {
     companion object {
@@ -35,7 +37,7 @@ class MediatorTest {
                     coEvery { it.valider(any(), any()) } returns FilValideringResultat.Gyldig("filnavn")
                 }
             ),
-            aead = mockk()
+            aead = Config.aaed
         )
     }
 
@@ -60,7 +62,7 @@ class MediatorTest {
             }
 
             mediator.slett(VedleggUrn("id/hubba"), "eier") shouldBe true
-            mediator.hent(VedleggUrn("id/hubba"), "eier") shouldBe null
+            shouldThrow<NotFoundException> { mediator.hent(VedleggUrn("id/hubba"), "eier") }
         }
     }
 
@@ -69,9 +71,8 @@ class MediatorTest {
         runBlocking {
             mediator.liste("finnesIkke", "eier") shouldBe emptyList()
 
-            mediator.hent(VedleggUrn("finnesIkke"), "eier") shouldBe null
-
-            mediator.slett(VedleggUrn("finnesIkke"), "eier") shouldBe false
+            shouldThrow<NotFoundException> { mediator.hent(VedleggUrn("finnesIkke"), "eier") }
+            shouldThrow<NotFoundException> { mediator.slett(VedleggUrn("finnesIkke"), "eier") }
         }
     }
 
@@ -88,7 +89,7 @@ class MediatorTest {
                     coEvery { it.valider("OK", any()) } returns FilValideringResultat.Gyldig("gyldig")
                 }
             ),
-            aead = mockk()
+            aead = Config.aaed
         )
 
         runBlocking {
@@ -116,7 +117,7 @@ class MediatorTest {
                 every { it.slett(any()) } returns Result.failure(Throwable("feil"))
                 every { it.listKlumpInfo(any()) } returns Result.failure(Throwable("feil"))
             },
-            mockk()
+            Config.aaed
         )
         runBlocking() {
             shouldThrow<StoreException> {
