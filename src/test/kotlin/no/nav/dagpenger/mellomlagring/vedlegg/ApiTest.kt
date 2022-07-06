@@ -20,6 +20,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import no.nav.dagpenger.mellomlagring.TestApplication
 import no.nav.dagpenger.mellomlagring.TestApplication.autentisert
+import no.nav.dagpenger.mellomlagring.TestApplication.defaultDummyFodselsnummer
 import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestApplication
 import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
@@ -55,7 +56,7 @@ internal class ApiTest {
             coEvery { it.liste("id", any()) } returns listOf(
                 VedleggUrn("id/fil1"), VedleggUrn("id/fil2")
             )
-            coEvery { it.liste("finnesikke", "eier") } returns emptyList()
+            coEvery { it.liste("finnesikke", defaultDummyFodselsnummer) } returns emptyList()
         }
         withMockAuthServerAndTestApplication({ vedleggApi(mediatorMock) }) {
             client.get("v1/obo/mellomlagring/vedlegg/id") { autentisert() }.let { response ->
@@ -107,7 +108,7 @@ internal class ApiTest {
                         soknadsId = "id",
                         filnavn = "file.csv",
                         filinnhold = "1".toByteArray(),
-                        "eier"
+                        defaultDummyFodselsnummer
                     )
                 }
 
@@ -116,7 +117,7 @@ internal class ApiTest {
                         soknadsId = "id",
                         filnavn = "file2.csv",
                         filinnhold = "2".toByteArray(),
-                        "eier"
+                        defaultDummyFodselsnummer
                     )
                 }
             }
@@ -193,7 +194,7 @@ internal class ApiTest {
     @Test
     fun `Hente vedlegg`() {
         val mockMediator = mockk<Mediator>().also {
-            coEvery { it.hent(VedleggUrn("id/filnavn.pdf"), "eier") } returns Klump(
+            coEvery { it.hent(VedleggUrn("id/filnavn.pdf"), defaultDummyFodselsnummer) } returns Klump(
                 innhold = "1".toByteArray(),
                 klumpInfo = KlumpInfo(
                     navn = "id/filnavn.pdf",
@@ -201,7 +202,7 @@ internal class ApiTest {
                 )
             )
 
-            coEvery { it.hent(VedleggUrn("id/finnesIkke.pdf"), "eier") } returns null
+            coEvery { it.hent(VedleggUrn("id/finnesIkke.pdf"), defaultDummyFodselsnummer) } throws NotFoundException("hjk")
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
@@ -218,8 +219,8 @@ internal class ApiTest {
     @Test
     fun `Slette vedlegg`() {
         val mockMediator = mockk<Mediator>().also {
-            coEvery { it.slett(VedleggUrn("id/filnavn.pdf"), "eier") } returns true
-            coEvery { it.slett(VedleggUrn("id/finnesIkke.pdf"), "eier") } returns false
+            coEvery { it.slett(VedleggUrn("id/filnavn.pdf"), defaultDummyFodselsnummer) } returns true
+            coEvery { it.slett(VedleggUrn("id/finnesIkke.pdf"), defaultDummyFodselsnummer) } throws NotFoundException("hjkhk")
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
@@ -235,6 +236,7 @@ internal class ApiTest {
             coEvery { it.hent(VedleggUrn("id/notOwner"), any()) } throws NotOwnerException("test")
             coEvery { it.hent(VedleggUrn("id/ugyldiginnhold"), any()) } throws UgyldigFilInnhold("test", listOf("test"))
             coEvery { it.hent(VedleggUrn("id/throwable"), any()) } throws Throwable("test")
+            coEvery { it.hent(VedleggUrn("id/notfound"), any()) } throws NotFoundException("test")
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
@@ -242,6 +244,7 @@ internal class ApiTest {
             client.get("v1/obo/mellomlagring/vedlegg/id/notOwner") { autentisert() }.status shouldBe HttpStatusCode.Forbidden
             client.get("v1/obo/mellomlagring/vedlegg/id/ugyldiginnhold") { autentisert() }.status shouldBe HttpStatusCode.BadRequest
             client.get("v1/obo/mellomlagring/vedlegg/id/throwable") { autentisert() }.status shouldBe HttpStatusCode.InternalServerError
+            client.get("v1/obo/mellomlagring/vedlegg/id/notfound") { autentisert() }.status shouldBe HttpStatusCode.NotFound
         }
     }
 

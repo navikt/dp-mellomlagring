@@ -13,6 +13,7 @@ import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.authentication
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.receiveMultipart
@@ -32,6 +33,7 @@ import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.api.HttpProblem
+import no.nav.dagpenger.mellomlagring.auth.fnr
 import no.nav.dagpenger.mellomlagring.auth.jwt
 
 private val logger = KotlinLogging.logger { }
@@ -76,6 +78,12 @@ internal fun Application.vedleggApi(mediator: Mediator) {
                         HttpProblem(title = "Fil er ugyldig", status = 400, detail = cause.message)
                     )
                 }
+                is NotFoundException -> {
+                    call.respond(
+                        HttpStatusCode.NotFound,
+                        HttpProblem(title = "Ressurs ikke funnet", status = 404, detail = cause.message)
+                    )
+                }
                 else -> {
                     call.respond(
                         HttpStatusCode.InternalServerError,
@@ -103,12 +111,13 @@ internal fun Application.vedleggApi(mediator: Mediator) {
 
 internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Mediator) {
     val bundelHandler = BundleFileUploadHandler(mediator)
+
     route("/mellomlagring/bundle/{id}") {
         post {
             val id =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
             val multiPartData = call.receiveMultipart()
-            val respond = bundelHandler.handleFileupload(multiPartData, id, "eier").let {
+            val respond = bundelHandler.handleFileupload(multiPartData, id, call.authentication.fnr()).let {
                 Respond(
                     filnavn = it.first,
                     urn = it.second.urn
@@ -123,7 +132,7 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
             val id =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
             val multiPartData = call.receiveMultipart()
-            val respond = fileUploadHandler.handleFileupload(multiPartData, id).map { e ->
+            val respond = fileUploadHandler.handleFileupload(multiPartData, id, call.authentication.fnr()).map { e ->
                 Respond(
                     filnavn = e.key,
                     urn = e.value.urn
@@ -134,7 +143,7 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
         get {
             val soknadsId =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
-            val vedlegg = mediator.liste(soknadsId, "eier")
+            val vedlegg = mediator.liste(soknadsId, call.authentication.fnr())
             call.respond(HttpStatusCode.OK, vedlegg)
         }
         route("/{filnavn}") {
@@ -146,7 +155,7 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
 
             get {
                 val vedleggUrn = call.vedleggUrn()
-                mediator.hent(vedleggUrn, "eier")?.let {
+                mediator.hent(vedleggUrn, call.authentication.fnr())?.let {
                     call.respondOutputStream(ContentType.Application.OctetStream, HttpStatusCode.OK) {
                         withContext(Dispatchers.IO) {
                             this@respondOutputStream.write(it.innhold)
@@ -156,7 +165,7 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
             }
             delete {
                 val vedleggUrn = call.vedleggUrn()
-                mediator.slett(vedleggUrn, "eier").also {
+                mediator.slett(vedleggUrn, call.authentication.fnr()).also {
                     when (it) {
                         true -> call.respond(HttpStatusCode.NoContent)
                         else -> call.respond(HttpStatusCode.NotFound)
@@ -170,7 +179,7 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
 private data class Respond(val filnavn: String, val urn: String)
 
 internal class FileUploadHandler(private val mediator: Mediator) {
-    suspend fun handleFileupload(multiPartData: MultiPartData, soknadsId: String): Map<String, VedleggUrn> {
+    suspend fun handleFileupload(multiPartData: MultiPartData, soknadsId: String, eier: String): Map<String, VedleggUrn> {
         return coroutineScope {
             val jobs = mutableMapOf<String, Deferred<VedleggUrn>>()
             multiPartData.forEachPart { part ->
@@ -179,7 +188,7 @@ internal class FileUploadHandler(private val mediator: Mediator) {
                         val fileName = part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
                         jobs[fileName] = async(Dispatchers.IO) {
                             val bytes = part.streamProvider().readBytes()
-                            mediator.lagre(soknadsId, fileName, bytes, "eier")
+                            mediator.lagre(soknadsId, fileName, bytes, eier)
                         }
                     }
                     is PartData.BinaryItem -> part.dispose().also {

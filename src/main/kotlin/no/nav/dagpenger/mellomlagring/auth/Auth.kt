@@ -10,6 +10,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.auth.AuthenticationConfig
+import io.ktor.server.auth.AuthenticationContext
 import io.ktor.server.auth.jwt.JWTConfigureFunction
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
@@ -17,11 +18,8 @@ import kotlinx.coroutines.runBlocking
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
-// internal fun AuthenticationContext.fnr(): String {
-//    val context = this.principal<TokenValidationContextPrincipal>()?.context
-//    val claims = context?.getClaims(Config.tokenxIssuerName) ?: context?.getClaims(Config.azureAdIssuerName)
-//    return claims?.subject ?: throw IllegalArgumentException("Fant ikke principal")
-// }
+internal fun AuthenticationContext.fnr(): String =
+    principal<JWTPrincipal>()?.subject ?: throw IllegalArgumentException("Fant ikke subject(fødselsnummer) i JWT")
 
 internal fun AuthenticationConfig.jwt(
     name: String,
