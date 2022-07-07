@@ -62,7 +62,7 @@ spec:
           apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
           kind: KMSCryptoKey
           name: /locations/europe-north1/keyRings/dp-mellomlagring/cryptoKeys/dp-mellomlagring
-          role: roles/cloudkms.cryptoKeyEncrypterDecrypter
+        role: roles/cloudkms.cryptoKeyEncrypterDecrypter
     buckets:
       - name: {{ bucketName }}
         retentionPeriodDays: 90
