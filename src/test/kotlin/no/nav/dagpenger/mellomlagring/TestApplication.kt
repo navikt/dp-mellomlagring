@@ -37,8 +37,7 @@ internal object TestApplication {
             issuerId = Config.AzureAd.name,
             claims = mapOf(
                 "aud" to Config.AzureAd.audience,
-//                "azp" to "clientId-til-tillatt-app-123"
-                "azp" to "asf"
+                "azp" to "clientId-til-tillatt-app-123"
             )
         ).serialize()
     }
@@ -58,8 +57,11 @@ internal object TestApplication {
         }
     }
 
-    internal fun HttpRequestBuilder.autentisert(token: String = tokenXToken) {
+    internal fun HttpRequestBuilder.autentisert(token: String = tokenXToken, xEier: String? = null) {
         this.header(HttpHeaders.Authorization, "Bearer $token")
+        xEier?.let {
+            this.header("X-Eier", xEier)
+        }
     }
 
     internal fun TestApplicationEngine.autentisert(

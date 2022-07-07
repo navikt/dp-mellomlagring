@@ -1,6 +1,7 @@
 package no.nav.dagpenger.mellomlagring.vedlegg
 
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.MultiPartFormDataContent
@@ -37,16 +38,24 @@ internal class ApiTest {
     }
 
     @Test
-    fun `Autorisert dersom tokenx finnes`() {
+    fun `Autentisert dersom tokenx eller azureAd finnes`() {
         withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
             client.get("v1/obo/mellomlagring/vedlegg/1") { autentisert(token = TestApplication.tokenXToken) }.status shouldBe HttpStatusCode.OK
+            client.get("v1/azuread/mellomlagring/vedlegg/1") {
+                autentisert(token = TestApplication.azureAd)
+            }.status shouldNotBe HttpStatusCode.Unauthorized
         }
     }
 
     @Test
-    fun `Autorisert dersom azureAd finnes`() {
+    fun `Bad request hvis xEier header ikke er satt på kall med azuread autentisering`() {
         withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
-            client.get("v1/azuread/mellomlagring/vedlegg/1") { autentisert(token = TestApplication.azureAd) }.status shouldBe HttpStatusCode.OK
+            client.get("v1/azuread/mellomlagring/vedlegg/1") {
+                autentisert(token = TestApplication.azureAd, xEier = defaultDummyFodselsnummer)
+            }.status shouldBe HttpStatusCode.OK
+            client.get("v1/azuread/mellomlagring/vedlegg/1") {
+                autentisert(token = TestApplication.azureAd)
+            }.status shouldBe HttpStatusCode.BadRequest
         }
     }
 
@@ -73,6 +82,12 @@ internal class ApiTest {
         }
     }
 
+    sealed class TestFixture {
+
+        data class TokenX() : TestFixture
+        data class AzureAd() : TestFixture
+    }
+
     @Test
     fun `Lagring av fil`() {
         val mediator = mockk<Mediator>(relaxed = true).also {
@@ -81,7 +96,10 @@ internal class ApiTest {
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
-            listOf(Pair("obo", TestApplication.tokenXToken), Pair("azuread", TestApplication.azureAd)).forEach { fixture ->
+            listOf(
+                Pair("obo", TestApplication.tokenXToken),
+                Pair("azuread", TestApplication.azureAd)
+            ).forEach { fixture ->
 
                 client.post("v1/${fixture.first}/mellomlagring/vedlegg/id") {
                     autentisert(token = fixture.second)
@@ -205,7 +223,12 @@ internal class ApiTest {
                 )
             )
 
-            coEvery { it.hent(VedleggUrn("id/finnesIkke.pdf"), defaultDummyFodselsnummer) } throws NotFoundException("hjk")
+            coEvery {
+                it.hent(
+                    VedleggUrn("id/finnesIkke.pdf"),
+                    defaultDummyFodselsnummer
+                )
+            } throws NotFoundException("hjk")
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
@@ -223,7 +246,12 @@ internal class ApiTest {
     fun `Slette vedlegg`() {
         val mockMediator = mockk<Mediator>().also {
             coEvery { it.slett(VedleggUrn("id/filnavn.pdf"), defaultDummyFodselsnummer) } returns true
-            coEvery { it.slett(VedleggUrn("id/finnesIkke.pdf"), defaultDummyFodselsnummer) } throws NotFoundException("hjkhk")
+            coEvery {
+                it.slett(
+                    VedleggUrn("id/finnesIkke.pdf"),
+                    defaultDummyFodselsnummer
+                )
+            } throws NotFoundException("hjkhk")
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
