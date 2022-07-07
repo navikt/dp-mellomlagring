@@ -1,0 +1,26 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "dp-mellomlagring",
+        "version": "1.0"
+    },
+    "paths": {
+        "/v1/azuread/mellomlagring/bundle/{id}": {
+            "post": {
+                "description": "Bundle en liste av dokumenter i én PDF",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "id til søknad eller innsending dokumentene er tilknyttet"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        }
+    }
+}
