@@ -59,7 +59,7 @@ spec:
   gcp:
     permissions:
       - resource:
-          apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+          apiVersion: kms.cnrm.cloud.google.com/v1beta1
           kind: KMSCryptoKey
           name: /locations/europe-north1/keyRings/dp-mellomlagring/cryptoKeys/dp-mellomlagring
         role: roles/cloudkms.cryptoKeyEncrypterDecrypter
