@@ -20,6 +20,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import no.nav.dagpenger.mellomlagring.TestApplication
 import no.nav.dagpenger.mellomlagring.TestApplication.autentisert
+import no.nav.dagpenger.mellomlagring.TestApplication.defaultDummyFodselsnummer
 import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestApplication
 import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
@@ -52,10 +53,10 @@ internal class ApiTest {
     @Test
     fun `Liste filer for en id`() {
         val mediatorMock = mockk<Mediator>().also {
-            coEvery { it.liste("id") } returns listOf(
+            coEvery { it.liste("id", any()) } returns listOf(
                 VedleggUrn("id/fil1"), VedleggUrn("id/fil2")
             )
-            coEvery { it.liste("finnesikke") } returns emptyList()
+            coEvery { it.liste("finnesikke", defaultDummyFodselsnummer) } returns emptyList()
         }
         withMockAuthServerAndTestApplication({ vedleggApi(mediatorMock) }) {
             client.get("v1/obo/mellomlagring/vedlegg/id") { autentisert() }.let { response ->
@@ -75,8 +76,8 @@ internal class ApiTest {
     @Test
     fun `Lagring av fil`() {
         val mediator = mockk<Mediator>(relaxed = true).also {
-            coEvery { it.lagre("id", "file.csv", any()) } returns VedleggUrn("id/file.csv")
-            coEvery { it.lagre("id", "file2.csv", any()) } returns VedleggUrn("id/file2.csv")
+            coEvery { it.lagre("id", "file.csv", any(), any()) } returns VedleggUrn("id/file.csv")
+            coEvery { it.lagre("id", "file2.csv", any(), any()) } returns VedleggUrn("id/file2.csv")
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
@@ -106,7 +107,8 @@ internal class ApiTest {
                     mediator.lagre(
                         soknadsId = "id",
                         filnavn = "file.csv",
-                        filinnhold = "1".toByteArray()
+                        filinnhold = "1".toByteArray(),
+                        defaultDummyFodselsnummer
                     )
                 }
 
@@ -114,7 +116,8 @@ internal class ApiTest {
                     mediator.lagre(
                         soknadsId = "id",
                         filnavn = "file2.csv",
-                        filinnhold = "2".toByteArray()
+                        filinnhold = "2".toByteArray(),
+                        defaultDummyFodselsnummer
                     )
                 }
             }
@@ -124,7 +127,7 @@ internal class ApiTest {
     @Test
     fun `bundling av filer`() {
         val mediator = mockk<Mediator>(relaxed = true).also {
-            coEvery { it.lagre("id", "bundle.pdf", any()) } returns VedleggUrn("id/bundle.pdf")
+            coEvery { it.lagre("id", "bundle.pdf", any(), any()) } returns VedleggUrn("id/bundle.pdf")
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
@@ -191,7 +194,7 @@ internal class ApiTest {
     @Test
     fun `Hente vedlegg`() {
         val mockMediator = mockk<Mediator>().also {
-            coEvery { it.hent(VedleggUrn("id/filnavn.pdf")) } returns Klump(
+            coEvery { it.hent(VedleggUrn("id/filnavn.pdf"), defaultDummyFodselsnummer) } returns Klump(
                 innhold = "1".toByteArray(),
                 klumpInfo = KlumpInfo(
                     navn = "id/filnavn.pdf",
@@ -199,7 +202,7 @@ internal class ApiTest {
                 )
             )
 
-            coEvery { it.hent(VedleggUrn("id/finnesIkke.pdf")) } returns null
+            coEvery { it.hent(VedleggUrn("id/finnesIkke.pdf"), defaultDummyFodselsnummer) } throws NotFoundException("hjk")
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
@@ -216,8 +219,8 @@ internal class ApiTest {
     @Test
     fun `Slette vedlegg`() {
         val mockMediator = mockk<Mediator>().also {
-            coEvery { it.slett(VedleggUrn("id/filnavn.pdf")) } returns true
-            coEvery { it.slett(VedleggUrn("id/finnesIkke.pdf")) } returns false
+            coEvery { it.slett(VedleggUrn("id/filnavn.pdf"), defaultDummyFodselsnummer) } returns true
+            coEvery { it.slett(VedleggUrn("id/finnesIkke.pdf"), defaultDummyFodselsnummer) } throws NotFoundException("hjkhk")
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
@@ -229,10 +232,11 @@ internal class ApiTest {
     @Test
     fun statusPages() {
         val mockMediator = mockk<Mediator>().also {
-            coEvery { it.hent(VedleggUrn("id/illegalargument")) } throws IllegalArgumentException("test")
-            coEvery { it.hent(VedleggUrn("id/notOwner")) } throws NotOwnerException("test")
-            coEvery { it.hent(VedleggUrn("id/ugyldiginnhold")) } throws UgyldigFilInnhold("test", listOf("test"))
-            coEvery { it.hent(VedleggUrn("id/throwable")) } throws Throwable("test")
+            coEvery { it.hent(VedleggUrn("id/illegalargument"), any()) } throws IllegalArgumentException("test")
+            coEvery { it.hent(VedleggUrn("id/notOwner"), any()) } throws NotOwnerException("test")
+            coEvery { it.hent(VedleggUrn("id/ugyldiginnhold"), any()) } throws UgyldigFilInnhold("test", listOf("test"))
+            coEvery { it.hent(VedleggUrn("id/throwable"), any()) } throws Throwable("test")
+            coEvery { it.hent(VedleggUrn("id/notfound"), any()) } throws NotFoundException("test")
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
@@ -240,6 +244,7 @@ internal class ApiTest {
             client.get("v1/obo/mellomlagring/vedlegg/id/notOwner") { autentisert() }.status shouldBe HttpStatusCode.Forbidden
             client.get("v1/obo/mellomlagring/vedlegg/id/ugyldiginnhold") { autentisert() }.status shouldBe HttpStatusCode.BadRequest
             client.get("v1/obo/mellomlagring/vedlegg/id/throwable") { autentisert() }.status shouldBe HttpStatusCode.InternalServerError
+            client.get("v1/obo/mellomlagring/vedlegg/id/notfound") { autentisert() }.status shouldBe HttpStatusCode.NotFound
         }
     }
 

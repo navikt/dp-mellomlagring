@@ -16,4 +16,5 @@ internal class Klump(
 )
 
 internal typealias StorageKey = String
+
 internal class StoreException(msg: String) : Throwable(msg)

@@ -10,6 +10,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.mellomlagring.Config
+import no.nav.dagpenger.mellomlagring.Config.Crypto
 import no.nav.dagpenger.mellomlagring.GoogleCloudStorageTestcontainer
 import no.nav.dagpenger.mellomlagring.lagring.S3Store
 import no.nav.dagpenger.mellomlagring.lagring.Store
@@ -34,7 +35,8 @@ class MediatorTest {
                 mockk<Mediator.FilValidering>().also {
                     coEvery { it.valider(any(), any()) } returns FilValideringResultat.Gyldig("filnavn")
                 }
-            )
+            ),
+            aead = Crypto.aead
         )
     }
 
@@ -42,15 +44,15 @@ class MediatorTest {
     fun `happy path lagre,listing, henting og sletting av filer`() {
 
         runBlocking {
-            mediator.lagre("id", "hubba", "hubba".toByteArray()).urn shouldBe "urn:vedlegg:id/hubba"
-            mediator.lagre("id", "bubba", "bubba".toByteArray()).urn shouldBe "urn:vedlegg:id/bubba"
+            mediator.lagre("id", "hubba", "hubba".toByteArray(), "eier").urn shouldBe "urn:vedlegg:id/hubba"
+            mediator.lagre("id", "bubba", "bubba".toByteArray(), "eier").urn shouldBe "urn:vedlegg:id/bubba"
 
-            mediator.liste("id") shouldContainExactlyInAnyOrder listOf(
+            mediator.liste("id", "eier") shouldContainExactlyInAnyOrder listOf(
                 VedleggUrn("id/hubba"),
                 VedleggUrn("id/bubba"),
             )
 
-            mediator.hent(VedleggUrn("id/hubba")).also {
+            mediator.hent(VedleggUrn("id/hubba"), "eier").also {
                 it shouldNotBe null
                 it?.let { klump ->
                     klump.klumpInfo.navn shouldBe "id/hubba"
@@ -58,19 +60,18 @@ class MediatorTest {
                 }
             }
 
-            mediator.slett(VedleggUrn("id/hubba")) shouldBe true
-            mediator.hent(VedleggUrn("id/hubba")) shouldBe null
+            mediator.slett(VedleggUrn("id/hubba"), "eier") shouldBe true
+            shouldThrow<NotFoundException> { mediator.hent(VedleggUrn("id/hubba"), "eier") }
         }
     }
 
     @Test
     fun `Hente, slette liste vedlegg som ikke finnes`() {
         runBlocking {
-            mediator.liste("finnesIkke") shouldBe emptyList()
+            mediator.liste("finnesIkke", "eier") shouldBe emptyList()
 
-            mediator.hent(VedleggUrn("finnesIkke")) shouldBe null
-
-            mediator.slett(VedleggUrn("finnesIkke")) shouldBe false
+            shouldThrow<NotFoundException> { mediator.hent(VedleggUrn("finnesIkke"), "eier") }
+            shouldThrow<NotFoundException> { mediator.slett(VedleggUrn("finnesIkke"), "eier") }
         }
     }
 
@@ -87,19 +88,20 @@ class MediatorTest {
                     coEvery { it.valider("OK", any()) } returns FilValideringResultat.Gyldig("gyldig")
                 }
             ),
+            aead = Crypto.aead
         )
 
         runBlocking {
             shouldNotThrow<Throwable> {
-                mockedMediator.lagre("id", "OK", "infisert".toByteArray())
+                mockedMediator.lagre("id", "OK", "infisert".toByteArray(), "eier")
             }
 
             shouldThrow<UgyldigFilInnhold> {
-                mockedMediator.lagre("id", "infisert", "infisert".toByteArray())
+                mockedMediator.lagre("id", "infisert", "infisert".toByteArray(), "eier")
             }
 
             shouldThrow<Throwable> {
-                mockedMediator.lagre("id", "exception", "infisert".toByteArray())
+                mockedMediator.lagre("id", "exception", "infisert".toByteArray(), "eier")
             }
         }
     }
@@ -114,22 +116,23 @@ class MediatorTest {
                 every { it.slett(any()) } returns Result.failure(Throwable("feil"))
                 every { it.listKlumpInfo(any()) } returns Result.failure(Throwable("feil"))
             },
+            Crypto.aead
         )
         runBlocking() {
             shouldThrow<StoreException> {
-                mockedMediator.hent(VedleggUrn("id"))
+                mockedMediator.hent(VedleggUrn("id"), "eier")
             }
 
             shouldThrow<StoreException> {
-                mockedMediator.liste("id")
+                mockedMediator.liste("id", "eier")
             }
 
             shouldThrow<StoreException> {
-                mockedMediator.lagre("id", "filnavn", "innhold".toByteArray())
+                mockedMediator.lagre("id", "filnavn", "innhold".toByteArray(), "eier")
             }
 
             shouldThrow<StoreException> {
-                mockedMediator.slett(VedleggUrn("nss"))
+                mockedMediator.slett(VedleggUrn("nss"), "eier")
             }
         }
     }

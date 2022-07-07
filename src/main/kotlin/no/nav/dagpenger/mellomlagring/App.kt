@@ -5,6 +5,7 @@ import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.request.path
+import no.nav.dagpenger.mellomlagring.Config.Crypto
 import no.nav.dagpenger.mellomlagring.api.health
 import no.nav.dagpenger.mellomlagring.av.clamAv
 import no.nav.dagpenger.mellomlagring.lagring.S3Store
@@ -27,7 +28,8 @@ fun main() {
         vedleggApi(
             MediatorImpl(
                 store = S3Store(),
-                filValideringer = listOf(VirusValidering(clamAv()))
+                filValideringer = listOf(VirusValidering(clamAv())),
+                aead = Crypto.aead
             )
         )
         metrics()

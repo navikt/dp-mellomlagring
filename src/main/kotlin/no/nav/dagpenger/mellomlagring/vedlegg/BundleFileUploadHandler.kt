@@ -17,7 +17,7 @@ import javax.imageio.ImageIO
 
 internal class BundleFileUploadHandler(private val mediator: Mediator) {
 
-    suspend fun handleFileupload(multiPartData: MultiPartData, soknadsId: String): Pair<String, VedleggUrn> {
+    suspend fun handleFileupload(multiPartData: MultiPartData, soknadsId: String, eier: String): Pair<String, VedleggUrn> {
         val parts = multiPartData.readAllParts()
         val filnavn = parts.filterIsInstance<PartData.FormItem>().first { it.name == "bundleFilnavn" }.value
 
@@ -27,7 +27,7 @@ internal class BundleFileUploadHandler(private val mediator: Mediator) {
             .map { it.streamProvider().readBytes() }
             .let { ByteArrayConverter.konverterOgMerge(it) }
             .let {
-                mediator.lagre(soknadsId, filnavn, it)
+                mediator.lagre(soknadsId, filnavn, it, eier)
             }.let {
                 Pair(filnavn, it)
             }
