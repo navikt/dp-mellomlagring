@@ -1,13 +1,13 @@
 package no.nav.dagpenger.mellomlagring.vedlegg
 
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.append
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -17,7 +17,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.mockk
 import no.nav.dagpenger.mellomlagring.TestApplication
 import no.nav.dagpenger.mellomlagring.TestApplication.autentisert
@@ -29,80 +28,77 @@ import no.nav.dagpenger.mellomlagring.test.fileAsByteArray
 import org.junit.jupiter.api.Test
 
 internal class ApiTest {
+
     @Test
     fun `Uautorisert dersom ingen token finnes`() {
         withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
-            client.get("v1/azuread/mellomlagring/vedlegg/1").status shouldBe HttpStatusCode.Unauthorized
-            client.get("v1/obo/mellomlagring/vedlegg/1").status shouldBe HttpStatusCode.Unauthorized
+            listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
+                client.get("${fixture.path}/vedlegg/1").status shouldBe HttpStatusCode.Unauthorized
+            }
         }
     }
 
     @Test
-    fun `Autentisert dersom tokenx eller azureAd finnes`() {
+    fun `Autentisert dersom token finnes`() {
         withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
-            client.get("v1/obo/mellomlagring/vedlegg/1") { autentisert(token = TestApplication.tokenXToken) }.status shouldBe HttpStatusCode.OK
-            client.get("v1/azuread/mellomlagring/vedlegg/1") {
-                autentisert(token = TestApplication.azureAd)
-            }.status shouldNotBe HttpStatusCode.Unauthorized
+            listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
+                client.get("${fixture.path}/vedlegg/1") { autentisert(fixture) }.status shouldBe HttpStatusCode.OK
+            }
         }
     }
 
     @Test
     fun `Bad request hvis xEier header ikke er satt på kall med azuread autentisering`() {
-        withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
-            client.get("v1/azuread/mellomlagring/vedlegg/1") {
-                autentisert(token = TestApplication.azureAd, xEier = defaultDummyFodselsnummer)
-            }.status shouldBe HttpStatusCode.OK
-            client.get("v1/azuread/mellomlagring/vedlegg/1") {
-                autentisert(token = TestApplication.azureAd)
-            }.status shouldBe HttpStatusCode.BadRequest
+        TestFixture.AzureAd().let { fixture ->
+            withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
+                client.get("${fixture.path}/vedlegg/1") {
+                    autentisert(
+                        token = TestApplication.azureAd,
+                        xEier = defaultDummyFodselsnummer
+                    )
+                }.status shouldBe HttpStatusCode.OK
+
+                client.get("${fixture.path}/vedlegg/1") { autentisert(token = TestApplication.azureAd) }.status shouldBe HttpStatusCode.BadRequest
+            }
         }
     }
 
     @Test
     fun `Liste filer for en id`() {
-        val mediatorMock = mockk<Mediator>().also {
+        val mediator = mockk<Mediator>().also {
             coEvery { it.liste("id", any()) } returns listOf(
                 VedleggUrn("id/fil1"), VedleggUrn("id/fil2")
             )
             coEvery { it.liste("finnesikke", defaultDummyFodselsnummer) } returns emptyList()
         }
-        withMockAuthServerAndTestApplication({ vedleggApi(mediatorMock) }) {
-            client.get("v1/obo/mellomlagring/vedlegg/id") { autentisert() }.let { response ->
-                response.status shouldBe HttpStatusCode.OK
-                response.contentType().toString() shouldBe "application/json; charset=UTF-8"
-                response.bodyAsText() shouldBe """[{"urn":"urn:vedlegg:id/fil1"},{"urn":"urn:vedlegg:id/fil2"}]"""
-            }
+        withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
+            listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
+                client.get("${fixture.path}/vedlegg/id") { autentisert(fixture) }.let { response ->
+                    response.status shouldBe HttpStatusCode.OK
+                    response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+                    response.bodyAsText() shouldBe """[{"urn":"urn:vedlegg:id/fil1"},{"urn":"urn:vedlegg:id/fil2"}]"""
+                }
 
-            client.get("v1/obo/mellomlagring/vedlegg/finnesikke") { autentisert() }.let { response ->
-                response.status shouldBe HttpStatusCode.OK
-                response.contentType().toString() shouldBe "application/json; charset=UTF-8"
-                response.bodyAsText() shouldBe """[]"""
+                client.get("${fixture.path}/vedlegg/finnesikke") { autentisert(fixture) }.let { response ->
+                    response.status shouldBe HttpStatusCode.OK
+                    response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+                    response.bodyAsText() shouldBe """[]"""
+                }
             }
         }
-    }
-
-    sealed class TestFixture {
-
-        data class TokenX() : TestFixture
-        data class AzureAd() : TestFixture
     }
 
     @Test
     fun `Lagring av fil`() {
-        val mediator = mockk<Mediator>(relaxed = true).also {
-            coEvery { it.lagre("id", "file.csv", any(), any()) } returns VedleggUrn("id/file.csv")
-            coEvery { it.lagre("id", "file2.csv", any(), any()) } returns VedleggUrn("id/file2.csv")
+        val mediator = mockk<Mediator>().also {
+            coEvery { it.lagre("id", "file.csv", any(), defaultDummyFodselsnummer) } returns VedleggUrn("id/file.csv")
+            coEvery { it.lagre("id", "file2.csv", any(), defaultDummyFodselsnummer) } returns VedleggUrn("id/file2.csv")
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
-            listOf(
-                Pair("obo", TestApplication.tokenXToken),
-                Pair("azuread", TestApplication.azureAd)
-            ).forEach { fixture ->
-
-                client.post("v1/${fixture.first}/mellomlagring/vedlegg/id") {
-                    autentisert(token = fixture.second)
+            listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
+                client.post("${fixture.path}/vedlegg/id") {
+                    autentisert(fixture)
                     setBody(
                         MultiPartFormDataContent(
                             formData {
@@ -122,24 +118,6 @@ internal class ApiTest {
                     //language=JSON
                     response.bodyAsText() shouldBe """[{"filnavn":"file.csv","urn":"urn:vedlegg:id/file.csv"},{"filnavn":"file2.csv","urn":"urn:vedlegg:id/file2.csv"}]"""
                     response.contentType().toString() shouldBe "application/json; charset=UTF-8"
-
-                    coVerify(exactly = 1) {
-                        mediator.lagre(
-                            soknadsId = "id",
-                            filnavn = "file.csv",
-                            filinnhold = "1".toByteArray(),
-                            defaultDummyFodselsnummer
-                        )
-                    }
-
-                    coVerify(exactly = 1) {
-                        mediator.lagre(
-                            soknadsId = "id",
-                            filnavn = "file2.csv",
-                            filinnhold = "2".toByteArray(),
-                            defaultDummyFodselsnummer
-                        )
-                    }
                 }
             }
         }
@@ -222,7 +200,6 @@ internal class ApiTest {
                     metadata = mapOf()
                 )
             )
-
             coEvery {
                 it.hent(
                     VedleggUrn("id/finnesIkke.pdf"),
@@ -232,13 +209,15 @@ internal class ApiTest {
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
-            client.get("v1/obo/mellomlagring/vedlegg/id/filnavn.pdf") { autentisert() }.let { response ->
-                response.status shouldBe HttpStatusCode.OK
-                response.contentType() shouldBe ContentType.Application.OctetStream
-                response.bodyAsText() shouldBe "1"
-            }
+            listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
+                client.get("${fixture.path}/vedlegg/id/filnavn.pdf") { autentisert(fixture) }.let { response ->
+                    response.status shouldBe HttpStatusCode.OK
+                    response.contentType() shouldBe ContentType.Application.OctetStream
+                    response.bodyAsText() shouldBe "1"
+                }
 
-            client.get("v1/obo/mellomlagring/vedlegg/id/finnesIkke.pdf") { autentisert() }.status shouldBe HttpStatusCode.NotFound
+                client.get("${fixture.path}/vedlegg/id/finnesIkke.pdf") { autentisert(fixture) }.status shouldBe HttpStatusCode.NotFound
+            }
         }
     }
 
@@ -255,8 +234,10 @@ internal class ApiTest {
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
-            client.delete("v1/obo/mellomlagring/vedlegg/id/filnavn.pdf") { autentisert() }.status shouldBe HttpStatusCode.NoContent
-            client.delete("v1/obo/mellomlagring/vedlegg/id/finnesIkke.pdf") { autentisert() }.status shouldBe HttpStatusCode.NotFound
+            listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
+                client.delete("${fixture.path}/vedlegg/id/filnavn.pdf") { autentisert(fixture) }.status shouldBe HttpStatusCode.NoContent
+                client.delete("${fixture.path}/vedlegg/id/finnesIkke.pdf") { autentisert(fixture) }.status shouldBe HttpStatusCode.NotFound
+            }
         }
     }
 
@@ -276,6 +257,21 @@ internal class ApiTest {
             client.get("v1/obo/mellomlagring/vedlegg/id/ugyldiginnhold") { autentisert() }.status shouldBe HttpStatusCode.BadRequest
             client.get("v1/obo/mellomlagring/vedlegg/id/throwable") { autentisert() }.status shouldBe HttpStatusCode.InternalServerError
             client.get("v1/obo/mellomlagring/vedlegg/id/notfound") { autentisert() }.status shouldBe HttpStatusCode.NotFound
+        }
+    }
+
+    private sealed class TestFixture(val path: String, val token: String) {
+        class TokenX() : TestFixture("v1/obo/mellomlagring/", TestApplication.tokenXToken)
+
+        data class AzureAd(val eier: String = defaultDummyFodselsnummer) :
+            TestFixture("v1/azuread/mellomlagring/", TestApplication.azureAd)
+    }
+
+    private fun HttpRequestBuilder.autentisert(fixture: TestFixture) {
+        this.header(HttpHeaders.Authorization, "Bearer ${fixture.token}")
+        when (fixture) {
+            is TestFixture.AzureAd -> this.header("X-Eier", fixture.eier)
+            else -> {}
         }
     }
 

@@ -25,20 +25,15 @@ internal object TestApplication {
     internal val tokenXToken: String by lazy {
         mockOAuth2Server.issueToken(
             issuerId = Config.TokenX.name,
-            claims = mapOf(
-                "sub" to defaultDummyFodselsnummer,
-                "aud" to Config.TokenX.audience
-            )
+            audience = Config.TokenX.audience,
+            subject = defaultDummyFodselsnummer
         ).serialize()
     }
 
     internal val azureAd: String by lazy {
         mockOAuth2Server.issueToken(
             issuerId = Config.AzureAd.name,
-            claims = mapOf(
-                "aud" to Config.AzureAd.audience,
-                "azp" to "clientId-til-tillatt-app-123"
-            )
+            audience = Config.AzureAd.audience,
         ).serialize()
     }
 
