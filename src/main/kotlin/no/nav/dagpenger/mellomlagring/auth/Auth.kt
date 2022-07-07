@@ -20,11 +20,8 @@ import kotlinx.coroutines.runBlocking
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
-fun ApplicationCall.azureAdEier(): String {
-    this.principal<JWTPrincipal>().let { principal ->
-        return this.request.header("X-Eier") ?: throw IllegalArgumentException("Request mangler X-Eier header")
-    }
-}
+fun ApplicationCall.azureAdEier(): String =
+    this.request.header("X-Eier") ?: throw IllegalArgumentException("Request mangler X-Eier header")
 
 fun ApplicationCall.oboEier(): String =
     this.principal<JWTPrincipal>()?.subject ?: throw IllegalArgumentException("Fant ikke eier i jwt")
