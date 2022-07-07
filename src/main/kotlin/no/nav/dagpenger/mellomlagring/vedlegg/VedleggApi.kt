@@ -13,7 +13,6 @@ import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.authenticate
-import io.ktor.server.auth.authentication
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.receiveMultipart
@@ -117,7 +116,7 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
             val id =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
             val multiPartData = call.receiveMultipart()
-            val respond = bundelHandler.handleFileupload(multiPartData, id, call.authentication.fnr()).let {
+            val respond = bundelHandler.handleFileupload(multiPartData, id, call.fnr()).let {
                 Respond(
                     filnavn = it.first,
                     urn = it.second.urn
@@ -132,7 +131,7 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
             val id =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
             val multiPartData = call.receiveMultipart()
-            val respond = fileUploadHandler.handleFileupload(multiPartData, id, call.authentication.fnr()).map { e ->
+            val respond = fileUploadHandler.handleFileupload(multiPartData, id, call.fnr()).map { e ->
                 Respond(
                     filnavn = e.key,
                     urn = e.value.urn
@@ -143,7 +142,7 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
         get {
             val soknadsId =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
-            val vedlegg = mediator.liste(soknadsId, call.authentication.fnr())
+            val vedlegg = mediator.liste(soknadsId, call.fnr())
             call.respond(HttpStatusCode.OK, vedlegg)
         }
         route("/{filnavn}") {
@@ -155,7 +154,7 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
 
             get {
                 val vedleggUrn = call.vedleggUrn()
-                mediator.hent(vedleggUrn, call.authentication.fnr())?.let {
+                mediator.hent(vedleggUrn, call.fnr())?.let {
                     call.respondOutputStream(ContentType.Application.OctetStream, HttpStatusCode.OK) {
                         withContext(Dispatchers.IO) {
                             this@respondOutputStream.write(it.innhold)
@@ -165,7 +164,7 @@ internal fun Route.vedlegg(fileUploadHandler: FileUploadHandler, mediator: Media
             }
             delete {
                 val vedleggUrn = call.vedleggUrn()
-                mediator.slett(vedleggUrn, call.authentication.fnr()).also {
+                mediator.slett(vedleggUrn, call.fnr()).also {
                     when (it) {
                         true -> call.respond(HttpStatusCode.NoContent)
                         else -> call.respond(HttpStatusCode.NotFound)

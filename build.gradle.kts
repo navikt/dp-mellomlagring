@@ -97,6 +97,7 @@ dependencies {
     testImplementation("no.nav.security:mock-oauth2-server:0.4.5")
     testImplementation("org.testcontainers:testcontainers:${TestContainers.version}")
     testImplementation(Junit5.api)
+    testImplementation(Junit5.params)
     testImplementation(KoTest.assertions)
     testImplementation(Ktor2.Server.library("test-host"))
     testImplementation(Ktor2.Client.library("mock"))

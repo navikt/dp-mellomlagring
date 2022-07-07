@@ -36,7 +36,9 @@ internal object TestApplication {
         mockOAuth2Server.issueToken(
             issuerId = Config.AzureAd.name,
             claims = mapOf(
-                "aud" to Config.AzureAd.audience
+                "aud" to Config.AzureAd.audience,
+//                "azp" to "clientId-til-tillatt-app-123"
+                "azp" to "asf"
             )
         ).serialize()
     }

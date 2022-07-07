@@ -9,17 +9,32 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.serialization.jackson.jackson
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.auth.AuthenticationConfig
-import io.ktor.server.auth.AuthenticationContext
+import io.ktor.server.auth.authentication
 import io.ktor.server.auth.jwt.JWTConfigureFunction
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
+import io.ktor.server.request.header
 import kotlinx.coroutines.runBlocking
+import no.nav.dagpenger.mellomlagring.Config
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
-internal fun AuthenticationContext.fnr(): String =
-    principal<JWTPrincipal>()?.subject ?: throw IllegalArgumentException("Fant ikke subject(fødselsnummer) i JWT")
+//internal fun ApplicationCall.fnr(): String {
+//    this.authentication.principal<JWTPrincipal>()?.let { principal ->
+//        val clientId = principal["azp"]
+//        if (clientId != null) {
+//            if (Config.AzureAd.preAuthorizedApps.map { it.clientId }.contains(clientId)) {
+//                this.request.header("X-Eier") ?: throw IllegalArgumentException("tood")
+//            } else throw IllegalArgumentException("Fant ikke subject i JWT eller header")
+//        } else principal.subject
+//    } ?: throw IllegalArgumentException("")
+//
+//    return ""
+//
+//}
+
 
 internal fun AuthenticationConfig.jwt(
     name: String,

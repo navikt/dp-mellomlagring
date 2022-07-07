@@ -1,5 +1,7 @@
 package no.nav.dagpenger.mellomlagring
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.cloud.NoCredentials
 import com.google.cloud.storage.BucketInfo
 import com.google.cloud.storage.Storage
@@ -38,6 +40,9 @@ internal object Config {
             "AZURE_APP_CLIENT_ID" to "azureClientId",
             "TOKEN_X_WELL_KNOWN_URL" to "http://localhost:4443",
             "TOKEN_X_CLIENT_ID" to "tokenxClientId",
+            "AZURE_APP_PRE_AUTHORIZED_APPS" to
+                //language=JSON
+                """ [ { "name": "EnApp", "clientId": "clientId-til-tillatt-app-123" } ]"""
         )
     )
 
@@ -46,9 +51,16 @@ internal object Config {
             ConfigurationProperties.systemProperties() overriding EnvironmentVariables() overriding defaultProperties
 
     object AzureAd {
+        internal data class PreAuthorizedApp(val name: String, val clientId: String) {
+            companion object {
+                fun from(data: String): List<PreAuthorizedApp> = jacksonObjectMapper().readValue(data)
+            }
+        }
+
         const val name = "azureAd"
         val audience = properties[Key("AZURE_APP_CLIENT_ID", stringType)]
         val wellKnownUrl = properties[Key("AZURE_APP_WELL_KNOWN_URL", stringType)]
+        val preAuthorizedApps = PreAuthorizedApp.from(properties[Key("AZURE_APP_PRE_AUTHORIZED_APPS", stringType)])
     }
 
     object TokenX {

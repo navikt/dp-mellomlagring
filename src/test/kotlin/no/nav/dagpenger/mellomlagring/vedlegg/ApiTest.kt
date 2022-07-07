@@ -81,44 +81,47 @@ internal class ApiTest {
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
-            client.post("v1/obo/mellomlagring/vedlegg/id") {
-                autentisert()
-                setBody(
-                    MultiPartFormDataContent(
-                        formData {
-                            append("hubba", "file.csv", ContentType.Text.CSV) {
-                                this.append("1")
-                            }
-                            append("hubba", "file2.csv", ContentType.Text.CSV) {
-                                this.append("2")
-                            }
-                        },
-                        "boundary",
-                        ContentType.MultiPart.FormData.withParameter("boundary", "boundary")
-                    )
-                )
-            }.let { response ->
-                response.status shouldBe HttpStatusCode.Created
-                //language=JSON
-                response.bodyAsText() shouldBe """[{"filnavn":"file.csv","urn":"urn:vedlegg:id/file.csv"},{"filnavn":"file2.csv","urn":"urn:vedlegg:id/file2.csv"}]"""
-                response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+            listOf(Pair("obo", TestApplication.tokenXToken), Pair("azuread", TestApplication.azureAd)).forEach { fixture ->
 
-                coVerify(exactly = 1) {
-                    mediator.lagre(
-                        soknadsId = "id",
-                        filnavn = "file.csv",
-                        filinnhold = "1".toByteArray(),
-                        defaultDummyFodselsnummer
+                client.post("v1/${fixture.first}/mellomlagring/vedlegg/id") {
+                    autentisert(token = fixture.second)
+                    setBody(
+                        MultiPartFormDataContent(
+                            formData {
+                                append("hubba", "file.csv", ContentType.Text.CSV) {
+                                    this.append("1")
+                                }
+                                append("hubba", "file2.csv", ContentType.Text.CSV) {
+                                    this.append("2")
+                                }
+                            },
+                            "boundary",
+                            ContentType.MultiPart.FormData.withParameter("boundary", "boundary")
+                        )
                     )
-                }
+                }.let { response ->
+                    response.status shouldBe HttpStatusCode.Created
+                    //language=JSON
+                    response.bodyAsText() shouldBe """[{"filnavn":"file.csv","urn":"urn:vedlegg:id/file.csv"},{"filnavn":"file2.csv","urn":"urn:vedlegg:id/file2.csv"}]"""
+                    response.contentType().toString() shouldBe "application/json; charset=UTF-8"
 
-                coVerify(exactly = 1) {
-                    mediator.lagre(
-                        soknadsId = "id",
-                        filnavn = "file2.csv",
-                        filinnhold = "2".toByteArray(),
-                        defaultDummyFodselsnummer
-                    )
+                    coVerify(exactly = 1) {
+                        mediator.lagre(
+                            soknadsId = "id",
+                            filnavn = "file.csv",
+                            filinnhold = "1".toByteArray(),
+                            defaultDummyFodselsnummer
+                        )
+                    }
+
+                    coVerify(exactly = 1) {
+                        mediator.lagre(
+                            soknadsId = "id",
+                            filnavn = "file2.csv",
+                            filinnhold = "2".toByteArray(),
+                            defaultDummyFodselsnummer
+                        )
+                    }
                 }
             }
         }
