@@ -70,7 +70,7 @@ internal object Config {
     object Crypto {
         val aead: Aead by lazy {
             AeadConfig.register()
-            Crypto.keysetHandle.getPrimitive(Aead::class.java)
+            keysetHandle.getPrimitive(Aead::class.java)
         }
         private val keysetHandle: KeysetHandle by lazy {
             KeysetHandle.generateNew(keyTemplate)
@@ -94,7 +94,7 @@ internal object Config {
                 }
                 else -> {
                     // ServiceAccount kommer fra en json fil på path GOOGLE_APPLICATION_CREDENTIALS i env
-                    GcpKmsClient.register(Optional.of(kekUri), Optional.empty()) // TODO Optional.empty()
+                    GcpKmsClient.register(Optional.of(kekUri), Optional.empty())
                     KmsEnvelopeAeadKeyManager.createKeyTemplate(kekUri, KeyTemplates.get("AES128_GCM"))
                 }
             }
