@@ -26,7 +26,9 @@ internal object TestApplication {
         mockOAuth2Server.issueToken(
             issuerId = Config.TokenX.name,
             audience = Config.TokenX.audience,
-            subject = defaultDummyFodselsnummer
+            claims = mapOf<String, Any>(
+                "pid" to defaultDummyFodselsnummer
+            )
         ).serialize()
     }
 

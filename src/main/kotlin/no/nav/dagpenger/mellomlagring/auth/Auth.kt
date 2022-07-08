@@ -31,11 +31,9 @@ fun ApplicationCall.azureAdEier(): String =
     } ?: throw IllegalArgumentException("Request mangler X-Eier header")
 
 fun ApplicationCall.oboEier(): String =
-    this.principal<JWTPrincipal>()?.subject.also { subject ->
-        subject?.let {
-            sikkerlogg.info { "Subject: $subject" }
-        }
-    } ?: throw IllegalArgumentException("Fant ikke eier i jwt")
+    this.principal<JWTPrincipal>()?.let {
+        it["pid"].also { pid -> pid?.let { sikkerlogg.info { "Subject(pid): $pid" } } }
+    } ?: throw IllegalArgumentException("Fant ikke pid i jwt")
 
 internal fun AuthenticationConfig.jwt(
     name: String,
@@ -54,7 +52,7 @@ internal fun AuthenticationConfig.jwt(
         validate {
             val subject = it.payload.claims["pid"]?.asString() ?: it.payload.claims["sub"]?.asString()
             requireNotNull(subject) {
-                "Token må inneholde pid eller sub"
+                "Token må inneholde pid"
             }
             JWTPrincipal(it.payload)
         }
