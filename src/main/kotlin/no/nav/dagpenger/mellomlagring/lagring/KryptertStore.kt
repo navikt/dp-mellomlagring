@@ -8,7 +8,7 @@ import no.nav.dagpenger.mellomlagring.vedlegg.NotOwnerException
 import java.nio.charset.Charset
 import java.security.GeneralSecurityException
 
-private val sikkerlogg = KotlinLogging.logger("tjenestekall")
+private val sikkerlogg = KotlinLogging.logger(tjenestekall")
 
 internal class KryptertStore(private val fnr: String, private val store: Store, private val aead: Aead) : Store {
     companion object {
