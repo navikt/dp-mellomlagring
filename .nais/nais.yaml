@@ -31,7 +31,7 @@ spec:
   envFrom:
     - secret: dp-mellomlagring-config
   secureLogs:
-    enabled: false
+    enabled: true
   ingresses:
     {{#each ingresses as |url|}}
      - {{url}}
