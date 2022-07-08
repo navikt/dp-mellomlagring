@@ -34,7 +34,7 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
                     null -> Result.failure(NotFoundException(storageKey))
                     else -> {
                         if (!it.erEier()) {
-                            Result.failure(NotOwnerException("Ikke eier for ressursnøkkel $storageKey"))
+                            Result.failure(NotOwnerException("Ikke eier for klump info ressursnøkkel $storageKey"))
                         } else {
                             klumpInfo
                         }
