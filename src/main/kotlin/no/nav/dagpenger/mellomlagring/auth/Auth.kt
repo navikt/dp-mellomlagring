@@ -31,7 +31,11 @@ fun ApplicationCall.azureAdEier(): String =
     } ?: throw IllegalArgumentException("Request mangler X-Eier header")
 
 fun ApplicationCall.oboEier(): String =
-    this.principal<JWTPrincipal>()?.subject ?: throw IllegalArgumentException("Fant ikke eier i jwt")
+    this.principal<JWTPrincipal>()?.subject.also { subject ->
+        subject?.let {
+            sikkerlogg.info { "Subject: $subject" }
+        }
+    } ?: throw IllegalArgumentException("Fant ikke eier i jwt")
 
 internal fun AuthenticationConfig.jwt(
     name: String,
