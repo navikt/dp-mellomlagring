@@ -21,16 +21,14 @@ import mu.KotlinLogging
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
-
 private val sikkerlogg = KotlinLogging.logger("tjenestekall")
 
 fun ApplicationCall.azureAdEier(): String =
-    this.request.header("X-Eier").also {  eier ->
+    this.request.header("X-Eier").also { eier ->
         eier?.let {
             sikkerlogg.info { "X-Eier: $eier" }
         }
     } ?: throw IllegalArgumentException("Request mangler X-Eier header")
-
 
 fun ApplicationCall.oboEier(): String =
     this.principal<JWTPrincipal>()?.subject ?: throw IllegalArgumentException("Fant ikke eier i jwt")
