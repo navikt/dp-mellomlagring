@@ -69,14 +69,14 @@ object GradleWrapper {
 }
 
 object Jackson {
-    const val version = "2.12.3"
+    const val version = "2.13.3"
     const val core = "com.fasterxml.jackson.core:jackson-core:$version"
     const val kotlin = "com.fasterxml.jackson.module:jackson-module-kotlin:$version"
     const val jsr310 = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$version"
 }
 
 object Junit5 {
-    const val version = "5.7.2"
+    const val version = "5.8.2"
     const val api = "org.junit.jupiter:junit-jupiter-api:$version"
     const val params = "org.junit.jupiter:junit-jupiter-params:$version"
     const val engine = "org.junit.jupiter:junit-jupiter-engine:$version"
@@ -118,7 +118,7 @@ object Konfig {
 }
 
 object Kotlin {
-    const val version = "1.7.0"
+    const val version = "1.7.10"
     const val stdlib = "org.jetbrains.kotlin:kotlin-stdlib:$version"
 
     object Coroutines {
@@ -127,13 +127,13 @@ object Kotlin {
     }
 
     object Logging {
-        const val version = "2.1.21"
+        const val version = "2.1.23"
         const val kotlinLogging = "io.github.microutils:kotlin-logging:$version"
     }
 }
 
 object KoTest {
-    const val version = "4.6.0"
+    const val version = "5.3.0"
 
     // for kotest framework
     const val runner = "io.kotest:kotest-runner-junit5-jvm:$version"
@@ -165,7 +165,7 @@ object Ktor {
 }
 
 object Ktor2 {
-    const val version = "2.0.2"
+    const val version = "2.0.3"
     object Client {
         fun library(name: String) = "io.ktor:ktor-client-$name:$version"
     }
@@ -189,7 +189,7 @@ object Log4j2 {
 }
 
 object Micrometer {
-    const val version = "1.7.0"
+    const val version = "1.9.1"
     const val prometheusRegistry = "io.micrometer:micrometer-registry-prometheus:$version"
 }
 
@@ -250,7 +250,7 @@ object Shadow {
 }
 
 object TestContainers {
-    const val version = "1.17.1"
+    const val version = "1.17.3"
     const val postgresql = "org.testcontainers:postgresql:$version"
     const val kafka = "org.testcontainers:kafka:$version"
 }

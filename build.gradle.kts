@@ -84,17 +84,17 @@ dependencies {
     implementation("com.github.navikt.dp-biblioteker:image-utils:2022.06.27-11.37.720934709949")
     implementation(Micrometer.prometheusRegistry)
     implementation(kotlin("stdlib"))
-    implementation(platform("com.google.cloud:libraries-bom:24.3.0"))
+    implementation(platform("com.google.cloud:libraries-bom:26.0.0"))
     implementation(platform(kotlin("bom")))
     implementation("com.google.crypto.tink:tink:1.6.1")
     implementation("com.google.crypto.tink:tink-gcpkms:1.6.1")
 
     runtimeOnly("ch.qos.logback:logback-classic:1.3.0-alpha11")
-    runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.0.1") {
+    runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.2") {
         exclude("com.fasterxml.jackson.core")
     }
 
-    testImplementation("no.nav.security:mock-oauth2-server:0.4.5")
+    testImplementation("no.nav.security:mock-oauth2-server:0.5.1")
     testImplementation("org.testcontainers:testcontainers:${TestContainers.version}")
     testImplementation(Junit5.api)
     testImplementation(Junit5.params)
