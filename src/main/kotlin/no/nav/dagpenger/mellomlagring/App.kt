@@ -7,7 +7,6 @@ import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
-import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
@@ -21,7 +20,10 @@ import no.nav.dagpenger.mellomlagring.auth.jwt
 import no.nav.dagpenger.mellomlagring.av.clamAv
 import no.nav.dagpenger.mellomlagring.lagring.S3Store
 import no.nav.dagpenger.mellomlagring.monitoring.metrics
+import no.nav.dagpenger.mellomlagring.pdf.BundleMediator
+import no.nav.dagpenger.mellomlagring.pdf.pdfApi
 import no.nav.dagpenger.mellomlagring.vedlegg.MediatorImpl
+import no.nav.dagpenger.mellomlagring.vedlegg.NotFoundException
 import no.nav.dagpenger.mellomlagring.vedlegg.NotOwnerException
 import no.nav.dagpenger.mellomlagring.vedlegg.UgyldigFilInnhold
 import no.nav.dagpenger.mellomlagring.vedlegg.VirusValidering
@@ -31,16 +33,16 @@ import org.slf4j.event.Level
 private val logger = KotlinLogging.logger { }
 
 fun main() {
+    val mediator = MediatorImpl(
+        store = S3Store(),
+        filValideringer = listOf(VirusValidering(clamAv())),
+        aead = Crypto.aead
+    )
     embeddedServer(CIO, port = 8080) {
         ktorFeatures()
         health()
-        vedleggApi(
-            MediatorImpl(
-                store = S3Store(),
-                filValideringer = listOf(VirusValidering(clamAv())),
-                aead = Crypto.aead
-            )
-        )
+        vedleggApi(mediator)
+        pdfApi(BundleMediator(mediator))
         metrics()
     }.start(wait = true)
 }
@@ -101,6 +103,7 @@ internal fun Application.ktorFeatures() {
         }
     }
     install(ContentNegotiation) {
-        jackson()
+        jackson {
+        }
     }
 }

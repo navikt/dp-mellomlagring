@@ -8,15 +8,10 @@ internal class VedleggUrn(@JsonIgnore val nss: String) {
         const val VEDLEGG_NAMESPACE_IDENTIFIER = "vedlegg"
     }
 
-    val urn: String = "urn:$VEDLEGG_NAMESPACE_IDENTIFIER:$nss"
-
-    init {
-        kotlin.runCatching {
-            URN.rfc8141().parse(urn)
-        }.onFailure {
-            throw IllegalArgumentException(it)
-        }
-    }
+    val urn: String = kotlin.runCatching { URN.rfc8141().parse("urn:$VEDLEGG_NAMESPACE_IDENTIFIER:$nss") }
+        .map { it.toString() }
+        .onFailure { t -> throw IllegalArgumentException(t) }
+        .getOrThrow()
 
     override fun equals(other: Any?): Boolean {
         return other != null && other is VedleggUrn && this.urn == other.urn

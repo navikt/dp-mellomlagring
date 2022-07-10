@@ -54,23 +54,6 @@ internal fun Route.vedlegg(
     mediator: Mediator,
     eierResolver: ApplicationCall.() -> String
 ) {
-    val bundelHandler = BundleFileUploadHandler(mediator)
-
-    route("/mellomlagring/bundle/{id}") {
-        post {
-            val id =
-                call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
-            val multiPartData = call.receiveMultipart()
-            val respond = bundelHandler.handleFileupload(multiPartData, id, call.eierResolver()).let {
-                Respond(
-                    filnavn = it.first,
-                    urn = it.second.urn
-                )
-            }
-            call.respond(HttpStatusCode.Created, respond)
-        }
-    }
-
     route("/mellomlagring/vedlegg/{id}") {
         post {
             val id =
