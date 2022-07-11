@@ -13,13 +13,14 @@ internal object BundleRequestDeserializer : JsonDeserializer<BundleRequest>() {
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext): BundleRequest {
         return kotlin.runCatching {
             p.readValueAsTree<JsonNode>().let { node ->
-                logg.info { "jsonparser node: ${node.toPrettyString()}" }
+                logg.info { "jsonparser node: $node" }
                 BundleRequest(node.soknadId(), node.bundleNavn(), node.urns())
             }
         }.fold(
             onSuccess = { it },
             onFailure = { t ->
-                throw IllegalArgumentException(t) }
+                throw IllegalArgumentException(t)
+            }
         )
     }
 
@@ -28,4 +29,7 @@ internal object BundleRequestDeserializer : JsonDeserializer<BundleRequest>() {
     private fun JsonNode.urns(): Set<URN> = this.get("filer").map { urnNode ->
         URN.rfc8141().parse(urnNode.get("urn").asText())
     }.toSet()
+}
+
+fun main() {
 }
