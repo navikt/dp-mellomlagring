@@ -106,9 +106,9 @@ internal class E2E {
     @Disabled
     fun e2e() {
         // todo fixme to run test
-        val soknadId = ""
-        val eier = ""
-        val selvbetjeningsIdToken = ""
+        val soknadId = "51818700273"
+        val eier = "373bf525-ed7b-4307-ad0c-f34981cc3f07"
+        val selvbetjeningsIdToken = "eyJraWQiOiJ2UHBaZW9HOGRkTHpmdHMxLWxnc3VnOHNyYVd3bW04dHhJaGJ3Y1h3R01JIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJOTm13dDAwY2EyZldxN2ZXdS1TYVRwUDZEbUNYS0g2VTVsV3hINjhkLU9VPSIsImlzcyI6Imh0dHBzOlwvXC9vaWRjLXZlcjIuZGlmaS5ub1wvaWRwb3J0ZW4tb2lkYy1wcm92aWRlclwvIiwiY2xpZW50X2FtciI6ImNsaWVudF9zZWNyZXRfcG9zdCIsInBpZCI6IjUxODE4NzAwMjczIiwidG9rZW5fdHlwZSI6IkJlYXJlciIsImNsaWVudF9pZCI6ImQ4Mjk3MjQwLTIzYzgtNDBjOC1iMWM4LWEyOTNhZjczNjk3MiIsImF1ZCI6Imh0dHBzOlwvXC9uYXYubm8iLCJhY3IiOiJMZXZlbDQiLCJzY29wZSI6Im9wZW5pZCIsImV4cCI6MTY1NzUzNDMzOCwiaWF0IjoxNjU3NTMwNzM4LCJjbGllbnRfb3Jnbm8iOiI4ODk2NDA3ODIiLCJqdGkiOiJzbTBPMDllZ0twMXU2VDlFYUZxZ0VITTNOVDhIdy1GWjZ3NVZVelp6Wl9ZIiwiY29uc3VtZXIiOnsiYXV0aG9yaXR5IjoiaXNvNjUyMy1hY3RvcmlkLXVwaXMiLCJJRCI6IjAxOTI6ODg5NjQwNzgyIn19.ZLPIQlFRjSie4eDvVPnHcbIgMeaj_06NeTwLgwh_reiAtW6So-iXZELovOkSpBzuy6CB0SDdvUt24CO6vi9Cm0XAw-1b6h3qac3iYy_txQ-2Id-zYpSdOz-XXkKKtzot81AZqUlGXdiMpE6_L6zbs70PdQisrsAVcm81ltfE3sn4qTSIWNcP0NN_8ioydbjs7DEBmGzYRbKNyqkLO86D-LuimxuxJfp_hHF38nNgOq2EhJdkLXFO-1fm14Ni9S661wqHLtvRgtZk4dsW7WL68ZrhMez1ZX3OJ8fUzn9ItSUHqT_u5rwc0l6nzuIqe0LeWyPlUGxtnu2j119gtFU6tg"
 
         runBlocking {
             val oboToken = getOboToken(

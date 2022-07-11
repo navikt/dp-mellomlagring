@@ -5,17 +5,21 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import de.slub.urn.URN
+import mu.KotlinLogging
 
+val logg = KotlinLogging.logger("tjenestekall")
 internal object BundleRequestDeserializer : JsonDeserializer<BundleRequest>() {
 
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext): BundleRequest {
         return kotlin.runCatching {
             p.readValueAsTree<JsonNode>().let { node ->
+                logg.info { "jsonparser node: ${node.toPrettyString()}" }
                 BundleRequest(node.soknadId(), node.bundleNavn(), node.urns())
             }
         }.fold(
             onSuccess = { it },
-            onFailure = { t -> throw IllegalArgumentException(t) }
+            onFailure = { t ->
+                throw IllegalArgumentException(t) }
         )
     }
 
