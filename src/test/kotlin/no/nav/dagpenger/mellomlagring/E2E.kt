@@ -140,10 +140,9 @@ internal class E2E {
             }.also { println(it.bodyAsText()) }
 
             // List alle filer
-            val urns =
-                httpClient.get("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId") {
-                    this.header("Authorization", "Bearer $oboToken")
-                }.also { println("GET ${it.bodyAsText()}") }
+            httpClient.get("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId") {
+                this.header("Authorization", "Bearer $oboToken")
+            }.also { println("GET ${it.bodyAsText()}") }
 
             // Hent en fil
             httpClient.get("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/smallimg.jpg") {

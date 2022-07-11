@@ -129,7 +129,7 @@ internal class FileUploadHandler(private val mediator: Mediator) {
                         logger.warn { "form item not supported" }
                     }
                     is PartData.BinaryChannelItem -> part.dispose().also {
-                        logger.warn { "BinaryChannel itme not supported" }
+                        logger.warn { "BinaryChannel item not supported" }
                     }
                 }
             }

@@ -12,7 +12,6 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
-import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -24,7 +23,6 @@ import no.nav.dagpenger.mellomlagring.TestApplication.defaultDummyFodselsnummer
 import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestApplication
 import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
-import no.nav.dagpenger.mellomlagring.test.fileAsByteArray
 import org.junit.jupiter.api.Test
 
 internal class ApiTest {
@@ -206,26 +204,6 @@ internal class ApiTest {
             is TestFixture.AzureAd -> this.header("X-Eier", fixture.eier)
             else -> {}
         }
-    }
-
-    private fun HttpRequestBuilder.lagDataBundle(filer: List<Fil>) {
-        autentisert()
-        setBody(
-            MultiPartFormDataContent(
-                formData {
-                    filer.forEach {
-                        append(
-                            "image", it.path.fileAsByteArray(),
-                            Headers.build {
-                                append(HttpHeaders.ContentType, it.type)
-                                append(HttpHeaders.ContentDisposition, "filename=\"${it.navn}\"")
-                            }
-                        )
-                    }
-                    append("bundleFilnavn", "bundle.pdf")
-                }
-            )
-        )
     }
 
     private data class Fil(val type: String, val path: String, val navn: String)
