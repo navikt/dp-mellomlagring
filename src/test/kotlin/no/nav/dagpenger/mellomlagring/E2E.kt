@@ -103,10 +103,10 @@ val httpClient = HttpClient {
 
 @Disabled
 internal class E2E {
-
-    // todo fixme to run test
-    val soknadId = "f48b82fc-face-4479-af52-3ff8bc6a2f72"
     val eier = "51818700273"
+    // må erstattes om en skal sende inn filer på nytt
+    val soknadId = "f48b82fc-face-4479-af52-3ff8bc6a2f72"
+    // selvbetjeningstoken er tidsbegrenset, så det må erstattes med jevne mellomrom, logg inn med eier 51818700273
     val selvbetjeningsIdToken =
         "eyJraWQiOiJ2UHBaZW9HOGRkTHpmdHMxLWxnc3VnOHNyYVd3bW04dHhJaGJ3Y1h3R01JIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJOTm13dDAwY2EyZldxN2ZXdS1TYVRwUDZEbUNYS0g2VTVsV3hINjhkLU9VPSIsImlzcyI6Imh0dHBzOlwvXC9vaWRjLXZlcjIuZGlmaS5ub1wvaWRwb3J0ZW4tb2lkYy1wcm92aWRlclwvIiwiY2xpZW50X2FtciI6ImNsaWVudF9zZWNyZXRfcG9zdCIsInBpZCI6IjUxODE4NzAwMjczIiwidG9rZW5fdHlwZSI6IkJlYXJlciIsImNsaWVudF9pZCI6ImQ4Mjk3MjQwLTIzYzgtNDBjOC1iMWM4LWEyOTNhZjczNjk3MiIsImF1ZCI6Imh0dHBzOlwvXC9uYXYubm8iLCJhY3IiOiJMZXZlbDQiLCJzY29wZSI6Im9wZW5pZCIsImV4cCI6MTY1NzUzODE2MCwiaWF0IjoxNjU3NTM0NTYwLCJjbGllbnRfb3Jnbm8iOiI4ODk2NDA3ODIiLCJqdGkiOiJwbWJKenpnZEVKUVZBeHd1NlZEMnZaNHJTaWtFRnpmVnRxS0dScGZxbzE0IiwiY29uc3VtZXIiOnsiYXV0aG9yaXR5IjoiaXNvNjUyMy1hY3RvcmlkLXVwaXMiLCJJRCI6IjAxOTI6ODg5NjQwNzgyIn19.NsavyRxTReKZPSzcTwGfJP8Fw_MX7pZMm_q52TZqbAQWkecw623Kffq9QW40fPAdBjDUGGydwaKhBY_lYzVnJXwqFFp4kKSvDR238LZ7sPjpM3DTXS-eyfIydec0XGB99hAMu2LUl5iFByOXSHT8dV8tm3xFfhW1h4YbN5-aUZrr3pB28peyTuuDoy1l0m9jxmwAdCTTpSWTaNNvmK45LJiwa1RWayI42BUPrS6j7D1OqJtbBdUtySYZzZJaEKsY1kOvbwP6jLs-eW6m7ha4vSl3QgbaMMOl2cqY4WVdxynnJf2F_y-cDAHB9CDxnN6Dz1kmGv2Uer2jiaF6mE4HXQ"
 
@@ -221,7 +221,7 @@ internal class E2E {
                     setBody(
                         """
                       { 
-                        "bundleNavn": "bundle.pdf",
+                        "bundleNavn": "bundle1.pdf",
                         "soknadId": $soknadId,
                         "filer": [
                           {"urn": "urn:vedlegg:$soknadId/smallimg.jpg"},
