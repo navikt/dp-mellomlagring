@@ -1,11 +1,8 @@
 package no.nav.dagpenger.mellomlagring
 
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.DeserializationFeature
 import io.kotest.matchers.shouldBe
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
@@ -16,7 +13,6 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.serialization.jackson.jackson
 import io.kubernetes.client.openapi.ApiClient
 import io.kubernetes.client.openapi.Configuration
 import io.kubernetes.client.openapi.apis.CoreV1Api
@@ -33,6 +29,7 @@ import org.junit.jupiter.api.Test
 import java.io.File
 import java.io.FileReader
 import java.time.OffsetDateTime
+import java.util.UUID
 
 // Hente azuread eller tokenx secret for  app
 // jwker.nais.io -> tokenx,  azurerator.nais.io -> azuread
@@ -92,22 +89,16 @@ fun getAzureAdToken(app: String): String {
     }
 }
 
-val httpClient = HttpClient {
-    install(ContentNegotiation) {
-        jackson {
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            setSerializationInclusion(JsonInclude.Include.NON_NULL)
-        }
-    }
-}
+val httpClient = HttpClient { }
 
 internal class E2E {
     val eier = "51818700273"
+
     // må erstattes om en skal sende inn filer på nytt
-    val soknadId = "f48b82fc-face-4479-af52-3ff8bc6a2f72"
+    val soknadId = UUID.randomUUID().toString()
+
     // selvbetjeningstoken er tidsbegrenset, så det må erstattes med jevne mellomrom, logg inn med eier 51818700273
-    val selvbetjeningsIdToken =
-        "eyJraWQiOiJ2UHBaZW9HOGRkTHpmdHMxLWxnc3VnOHNyYVd3bW04dHhJaGJ3Y1h3R01JIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJOTm13dDAwY2EyZldxN2ZXdS1TYVRwUDZEbUNYS0g2VTVsV3hINjhkLU9VPSIsImlzcyI6Imh0dHBzOlwvXC9vaWRjLXZlcjIuZGlmaS5ub1wvaWRwb3J0ZW4tb2lkYy1wcm92aWRlclwvIiwiY2xpZW50X2FtciI6ImNsaWVudF9zZWNyZXRfcG9zdCIsInBpZCI6IjUxODE4NzAwMjczIiwidG9rZW5fdHlwZSI6IkJlYXJlciIsImNsaWVudF9pZCI6ImQ4Mjk3MjQwLTIzYzgtNDBjOC1iMWM4LWEyOTNhZjczNjk3MiIsImF1ZCI6Imh0dHBzOlwvXC9uYXYubm8iLCJhY3IiOiJMZXZlbDQiLCJzY29wZSI6Im9wZW5pZCIsImV4cCI6MTY1NzUzODE2MCwiaWF0IjoxNjU3NTM0NTYwLCJjbGllbnRfb3Jnbm8iOiI4ODk2NDA3ODIiLCJqdGkiOiJwbWJKenpnZEVKUVZBeHd1NlZEMnZaNHJTaWtFRnpmVnRxS0dScGZxbzE0IiwiY29uc3VtZXIiOnsiYXV0aG9yaXR5IjoiaXNvNjUyMy1hY3RvcmlkLXVwaXMiLCJJRCI6IjAxOTI6ODg5NjQwNzgyIn19.NsavyRxTReKZPSzcTwGfJP8Fw_MX7pZMm_q52TZqbAQWkecw623Kffq9QW40fPAdBjDUGGydwaKhBY_lYzVnJXwqFFp4kKSvDR238LZ7sPjpM3DTXS-eyfIydec0XGB99hAMu2LUl5iFByOXSHT8dV8tm3xFfhW1h4YbN5-aUZrr3pB28peyTuuDoy1l0m9jxmwAdCTTpSWTaNNvmK45LJiwa1RWayI42BUPrS6j7D1OqJtbBdUtySYZzZJaEKsY1kOvbwP6jLs-eW6m7ha4vSl3QgbaMMOl2cqY4WVdxynnJf2F_y-cDAHB9CDxnN6Dz1kmGv2Uer2jiaF6mE4HXQ"
+    val selvbetjeningsIdToken = ""
 
     @Disabled
     @Test
@@ -174,7 +165,7 @@ internal class E2E {
                         """
                       { 
                         "bundleNavn": "bundle.pdf",
-                        "soknadId": $soknadId,
+                        "soknadId": "$soknadId",
                         "filer": [
                           {"urn": "urn:vedlegg:$soknadId/smallimg.jpg"},
                           {"urn": "urn:vedlegg:$soknadId/Arbeidsforhold.pdf"}
@@ -182,9 +173,17 @@ internal class E2E {
                       }
                     """
                     )
-                }.also { println(it) }
-
+                }.also { println(it.bodyAsText()) }
             bundleResponse.status shouldBe HttpStatusCode.Created
+
+            // hente bundle
+            httpClient.get("https://dp-mellomlagring.dev.intern.nav.no/v1/azuread/mellomlagring/vedlegg/$soknadId/bundle.pdf") {
+                this.header("Authorization", "Bearer $azureadToken")
+                this.header("X-Eier", value = eier)
+            }.also { response ->
+                println(response)
+                File("build/tmp/bundle.pdf").appendBytes(response.body())
+            }
         }
     }
 
@@ -219,7 +218,7 @@ internal class E2E {
                         """
                       { 
                         "bundleNavn": "bundle1.pdf",
-                        "soknadId": $soknadId,
+                        "soknadId": "$soknadId",
                         "filer": [
                           {"urn": "urn:vedlegg:$soknadId/smallimg.jpg"},
                           {"urn": "urn:vedlegg:$soknadId/Arbeidsforhold.pdf"}
