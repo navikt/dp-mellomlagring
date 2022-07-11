@@ -12,7 +12,6 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
-import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -24,7 +23,6 @@ import no.nav.dagpenger.mellomlagring.TestApplication.defaultDummyFodselsnummer
 import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestApplication
 import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
-import no.nav.dagpenger.mellomlagring.test.fileAsByteArray
 import org.junit.jupiter.api.Test
 
 internal class ApiTest {
@@ -124,73 +122,6 @@ internal class ApiTest {
     }
 
     @Test
-    fun `bundling av filer`() {
-        val mediator = mockk<Mediator>(relaxed = true).also {
-            coEvery { it.lagre("id", "bundle.pdf", any(), any()) } returns VedleggUrn("id/bundle.pdf")
-        }
-
-        withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
-            client.post("v1/obo/mellomlagring/bundle/id") {
-                lagDataBundle(
-                    listOf(
-                        Fil(type = "image/jpeg", path = "/fisk1.jpg", navn = "fisk1.jpg"),
-                        Fil(type = "image/jpeg", path = "/fisk2.jpg", navn = "fisk2.jpg")
-                    )
-                )
-            }.let { response ->
-                response.status shouldBe HttpStatusCode.Created
-                //language=JSON
-                response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:id/bundle.pdf"}"""
-                response.contentType().toString() shouldBe "application/json; charset=UTF-8"
-            }
-
-            client.post("v1/obo/mellomlagring/bundle/id") {
-                lagDataBundle(
-                    listOf(
-                        Fil(type = "image/jpeg", path = "/fisk1.jpg", navn = "fisk1.jpg")
-                    )
-                )
-            }.let { response ->
-                response.status shouldBe HttpStatusCode.Created
-                //language=JSON
-                response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:id/bundle.pdf"}"""
-                response.contentType().toString() shouldBe "application/json; charset=UTF-8"
-            }
-
-            client.post("v1/obo/mellomlagring/bundle/id") {
-                lagDataBundle(
-                    listOf(
-                        Fil(type = "application/pdf", path = "/Arbeidsforhold.pdf", navn = "Arbeidsforhol")
-                    )
-                )
-            }.let { response ->
-                response.status shouldBe HttpStatusCode.Created
-                //language=JSON
-                response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:id/bundle.pdf"}"""
-                response.contentType().toString() shouldBe "application/json; charset=UTF-8"
-            }
-
-            client.post("v1/obo/mellomlagring/bundle/id") {
-                lagDataBundle(listOf())
-            }.let { response ->
-                response.status shouldBe HttpStatusCode.BadRequest
-            }
-
-            client.post("v1/obo/mellomlagring/bundle/id") {
-                lagDataBundle(
-                    listOf(
-                        Fil(type = "application/pdf", path = "/Arbeidsforhold.pdf", navn = "Arbeidsforhold"),
-                        Fil(type = "text/plain", path = "/test.txt", navn = "test"),
-                        Fil(type = "image/jpeg", path = "/fisk1.jpg", navn = "fisk1.jpg")
-                    )
-                )
-            }.let { response ->
-                response.status shouldBe HttpStatusCode.BadRequest
-            }
-        }
-    }
-
-    @Test
     fun `Hente vedlegg`() {
         val mockMediator = mockk<Mediator>().also {
             coEvery { it.hent(VedleggUrn("id/filnavn.pdf"), defaultDummyFodselsnummer) } returns Klump(
@@ -273,26 +204,6 @@ internal class ApiTest {
             is TestFixture.AzureAd -> this.header("X-Eier", fixture.eier)
             else -> {}
         }
-    }
-
-    private fun HttpRequestBuilder.lagDataBundle(filer: List<Fil>) {
-        autentisert()
-        setBody(
-            MultiPartFormDataContent(
-                formData {
-                    filer.forEach {
-                        append(
-                            "image", it.path.fileAsByteArray(),
-                            Headers.build {
-                                append(HttpHeaders.ContentType, it.type)
-                                append(HttpHeaders.ContentDisposition, "filename=\"${it.navn}\"")
-                            }
-                        )
-                    }
-                    append("bundleFilnavn", "bundle.pdf")
-                }
-            )
-        )
     }
 
     private data class Fil(val type: String, val path: String, val navn: String)

@@ -103,5 +103,9 @@ dependencies {
     testImplementation(Ktor2.Client.library("mock"))
     testImplementation(Mockk.mockk)
 
+    // For E2E
+    testImplementation("io.kubernetes:client-java:16.0.0")
+    testImplementation("com.github.navikt.dp-biblioteker:oauth2-klient:2022.06.27-11.37.720934709949")
+
     testRuntimeOnly(Junit5.engine)
 }
