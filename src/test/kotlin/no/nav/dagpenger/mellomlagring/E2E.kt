@@ -102,13 +102,13 @@ val httpClient = HttpClient {
 }
 
 internal class E2E {
-    @Test
     @Disabled
+    @Test
     fun e2e() {
         // todo fixme to run test
-        val soknadId = ""
-        val eier = ""
-        val selvbetjeningsIdToken = ""
+        val soknadId = "f48b82fc-face-4479-af52-3ff8bc6a2f72"
+        val eier = "51818700273"
+        val selvbetjeningsIdToken = "eyJraWQiOiJ2UHBaZW9HOGRkTHpmdHMxLWxnc3VnOHNyYVd3bW04dHhJaGJ3Y1h3R01JIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJOTm13dDAwY2EyZldxN2ZXdS1TYVRwUDZEbUNYS0g2VTVsV3hINjhkLU9VPSIsImlzcyI6Imh0dHBzOlwvXC9vaWRjLXZlcjIuZGlmaS5ub1wvaWRwb3J0ZW4tb2lkYy1wcm92aWRlclwvIiwiY2xpZW50X2FtciI6ImNsaWVudF9zZWNyZXRfcG9zdCIsInBpZCI6IjUxODE4NzAwMjczIiwidG9rZW5fdHlwZSI6IkJlYXJlciIsImNsaWVudF9pZCI6ImQ4Mjk3MjQwLTIzYzgtNDBjOC1iMWM4LWEyOTNhZjczNjk3MiIsImF1ZCI6Imh0dHBzOlwvXC9uYXYubm8iLCJhY3IiOiJMZXZlbDQiLCJzY29wZSI6Im9wZW5pZCIsImV4cCI6MTY1NzUzMDcxNSwiaWF0IjoxNjU3NTI3MTE1LCJjbGllbnRfb3Jnbm8iOiI4ODk2NDA3ODIiLCJqdGkiOiJTZGd0WXlGWk9HdFZ5WnVsaXlzRnFya05qQXpianFxR29mMjgwYWNTMWswIiwiY29uc3VtZXIiOnsiYXV0aG9yaXR5IjoiaXNvNjUyMy1hY3RvcmlkLXVwaXMiLCJJRCI6IjAxOTI6ODg5NjQwNzgyIn19.s1NNer7qIBTcQuUIe66CCEuUmgCpA8lBw5qFuFnMVxey7jwMzWPzaD_UjAZ19oBXyasQpmDRMiBOqBRBq62FhnsqvgOOW7v_ORJQC4jtunyYqmwCwEvvTMYbD4sCWlzAeQAHDDjnXv1DC00YT-rJojWgqxPtNYdEARfKSFuP1_bfa2BtvIqdqysFjb55lXGwXy09TdD7kWjUPI28zVIO3EeBFEjqUcI_Fov85qXCUr5F1yL9_dVwi79xcwsmTd6uuqS5yTdaub2MPAvn2t6-3tiGlrklz1z1UexjzBar_m7jtizeNUIzMpaXldSqr6Cwy0WZYllvDl_w-v5j9dXr1w"
 
         runBlocking {
             val oboToken = getOboToken(
@@ -182,6 +182,7 @@ internal class E2E {
                     )
                 }.also { println(it) }
 
+            println(bundleResponse.bodyAsText())
             bundleResponse.status shouldBe HttpStatusCode.Created
         }
     }
