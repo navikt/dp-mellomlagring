@@ -54,9 +54,9 @@ internal class OpenApiSpec(var paths: List<Path>) {
             throw PathAssertionError("Expected openapi spec to contain ${application.paths.size} paths, actual number of paths was ${this.paths.size}")
     }
 
-    internal fun addMissingRoutes(application: ApplicationSpec) {
-        val pathsToBeAdded = application.paths.filterNot { !this.paths.contains(it) }
-        val pathsToBeRemoved = paths.filterNot { !application.paths.contains(it) }
+    internal fun update(application: ApplicationSpec) {
+        val pathsToBeAdded = application.paths.filterNot { this.paths.contains(it) }
+        val pathsToBeRemoved = paths.filterNot { application.paths.contains(it) }
         this.paths = this.paths - pathsToBeRemoved + pathsToBeAdded
     }
 
@@ -85,7 +85,7 @@ internal class AssertionSpecRecovery(
     private var pathAssertionRecovered = false
     private var methodAssertRecovered = false
     fun pathAssertionError() {
-        openApiSpec.addMissingRoutes(application)
+        openApiSpec.update(application)
     }
 
     fun writeToFile() {
