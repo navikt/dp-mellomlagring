@@ -97,7 +97,8 @@ internal class E2E {
     // må erstattes om en skal sende inn filer på nytt
     val soknadId = UUID.randomUUID().toString()
 
-    // selvbetjeningstoken er tidsbegrenset, så det må erstattes med jevne mellomrom, logg inn med eier 51818700273
+    // selvbetjeningstoken er tidsbegrenset, så det må erstattes med jevne mellomrom,
+    // logg inn på søknaden i dev med eier 51818700273 og kopier selvbetjening-token fra devtools ->Appilcation->Storage
     val selvbetjeningsIdToken = ""
 
     @Disabled
@@ -195,7 +196,7 @@ internal class E2E {
             }
 
             // Kan slette filer med riktig eier.
-            //azure
+            // azure
             httpClient.delete("https://dp-mellomlagring.dev.intern.nav.no/v1/azuread/mellomlagring/vedlegg/$soknadId/bundle.pdf") {
                 this.header("Authorization", "Bearer $azureadToken")
                 this.header("X-Eier", value = eier)
@@ -203,7 +204,7 @@ internal class E2E {
                 it.status shouldBe HttpStatusCode.NoContent
             }
 
-            //azure
+            // azure
             httpClient.delete("https://dp-mellomlagring.dev.intern.nav.no/v1/azuread/mellomlagring/vedlegg/$soknadId/smallimg.jpg") {
                 this.header("Authorization", "Bearer $azureadToken")
                 this.header("X-Eier", value = eier)
@@ -211,7 +212,7 @@ internal class E2E {
                 it.status shouldBe HttpStatusCode.NoContent
             }
 
-            //obo
+            // obo
             httpClient.delete("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/Arbeidsforhold.pdf") {
                 this.header("Authorization", "Bearer $oboToken")
             }.let {
