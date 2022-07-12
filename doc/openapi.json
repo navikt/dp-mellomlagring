@@ -21,6 +21,23 @@
                     }
                 }
             }
+        },
+        "/v1/tadda/mellomlagring/vedlegg/{id}": {
+            "post": {
+                "description": "hent dokument",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "description": "id til dokument"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
         }
     }
 }
