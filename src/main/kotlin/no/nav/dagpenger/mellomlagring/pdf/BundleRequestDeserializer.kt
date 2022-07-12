@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import de.slub.urn.URN
+import mu.KotlinLogging
+
+private val sikkerlogg = KotlinLogging.logger("tjenestekall")
 
 internal object BundleRequestDeserializer : JsonDeserializer<BundleRequest>() {
 
@@ -16,6 +19,7 @@ internal object BundleRequestDeserializer : JsonDeserializer<BundleRequest>() {
         }.fold(
             onSuccess = { it },
             onFailure = { t ->
+                sikkerlogg.error("Kunne ikke deserialisere bundlerequest: " + t.cause)
                 throw IllegalArgumentException(t)
             }
         )

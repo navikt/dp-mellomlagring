@@ -10,7 +10,7 @@ private val sikkerlogg = KotlinLogging.logger("tjenestekall")
 
 internal class BundleMediator(private val mediator: Mediator) {
     suspend fun bundle(request: BundleRequest, eier: String): VedleggUrn {
-        sikkerlogg.info { "Starter bundling av ${request.filer} med bundlenavn ${request.bundleNavn}" }
+        sikkerlogg.info { "Starter bundling av ${request.filer} med bundlenavn ${request.bundleNavn} og eier $eier" }
         val pdf: ByteArray = request.filer
             .map { hent(VedleggUrn(it.namespaceSpecificString().toString()), eier) }
             .map { it.getOrThrow().innhold }
@@ -25,6 +25,10 @@ internal class BundleMediator(private val mediator: Mediator) {
             mediator.hent(urn, eier)
         }.mapCatching {
             it ?: throw NotFoundException("Fant ikke $urn")
+        }.also {
+            if (it.isFailure) {
+                sikkerlogg.info { "Henting av vedlegg $urn feilet for eier $eier" }
+            }
         }
     }
 }
