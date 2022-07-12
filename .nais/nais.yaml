@@ -63,8 +63,3 @@ spec:
         role: roles/cloudkms.cryptoKeyEncrypterDecrypter
     buckets:
       - name: {{ bucketName }}
-        retentionPeriodDays: 90
-        lifecycleCondition:
-          age: 7
-          numNewerVersions: 2
-          withState: ANY
