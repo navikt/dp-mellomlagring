@@ -5,19 +5,19 @@
         "version": "1.0"
     },
     "paths": {
-        "/v1/azuread/mellomlagring/bundle/{id}": {
+        "/v1/azuread/mellomlagring/vedlegg/{id}": {
             "post": {
-                "description": "Bundle en liste av dokumenter i én PDF",
+                "description": "hent dokument",
                 "parameters": [
                     {
                         "in": "path",
                         "name": "id",
-                        "description": "id til søknad eller innsending dokumentene er tilknyttet"
+                        "description": "id til dokument"
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created"
+                    "200": {
+                        "description": "OK"
                     }
                 }
             }
