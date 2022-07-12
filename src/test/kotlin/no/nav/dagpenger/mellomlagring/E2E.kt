@@ -3,6 +3,7 @@ package no.nav.dagpenger.mellomlagring
 import io.kotest.matchers.shouldBe
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
@@ -70,7 +71,7 @@ suspend fun getOboToken(app: String, selvbetjeningsIdToken: String): String {
         // 51818700273 -
         token = selvbetjeningsIdToken,
         audience = "dev-gcp:teamdagpenger:dp-mellomlagring"
-    ).accessToken.also { println(it) }
+    ).accessToken
 }
 
 fun getAzureAdToken(app: String): String {
@@ -84,15 +85,14 @@ fun getAzureAdToken(app: String): String {
         )
     }
 
-    return tokenAzureAdClient.clientCredentials("api://dev-gcp.teamdagpenger.dp-mellomlagring/.default").accessToken.also {
-        println(it)
-    }
+    return tokenAzureAdClient.clientCredentials("api://dev-gcp.teamdagpenger.dp-mellomlagring/.default").accessToken
 }
 
 val httpClient = HttpClient { }
 
 internal class E2E {
     val eier = "51818700273"
+    val eier2 = "12345678910"
 
     // må erstattes om en skal sende inn filer på nytt
     val soknadId = UUID.randomUUID().toString()
@@ -104,6 +104,7 @@ internal class E2E {
     @Test
     fun e2e() {
         runBlocking {
+            println("Running test with id: $soknadId and eier $eier")
             val oboToken = getOboToken(
                 "dp-soknadsdialog",
                 selvbetjeningsIdToken
@@ -183,6 +184,38 @@ internal class E2E {
             }.also { response ->
                 println(response)
                 File("build/tmp/bundle.pdf").appendBytes(response.body())
+            }
+
+            // Kan ikke slette bundle dersom man ikke eier fil
+            httpClient.delete("https://dp-mellomlagring.dev.intern.nav.no/v1/azuread/mellomlagring/vedlegg/$soknadId/bundle.pdf") {
+                this.header("Authorization", "Bearer $azureadToken")
+                this.header("X-Eier", value = eier2)
+            }.let { response ->
+                response.status shouldBe HttpStatusCode.Forbidden
+            }
+
+            // Kan slette filer med riktig eier.
+            //azure
+            httpClient.delete("https://dp-mellomlagring.dev.intern.nav.no/v1/azuread/mellomlagring/vedlegg/$soknadId/bundle.pdf") {
+                this.header("Authorization", "Bearer $azureadToken")
+                this.header("X-Eier", value = eier)
+            }.let {
+                it.status shouldBe HttpStatusCode.NoContent
+            }
+
+            //azure
+            httpClient.delete("https://dp-mellomlagring.dev.intern.nav.no/v1/azuread/mellomlagring/vedlegg/$soknadId/smallimg.jpg") {
+                this.header("Authorization", "Bearer $azureadToken")
+                this.header("X-Eier", value = eier)
+            }.let {
+                it.status shouldBe HttpStatusCode.NoContent
+            }
+
+            //obo
+            httpClient.delete("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/Arbeidsforhold.pdf") {
+                this.header("Authorization", "Bearer $oboToken")
+            }.let {
+                it.status shouldBe HttpStatusCode.NoContent
             }
         }
     }
