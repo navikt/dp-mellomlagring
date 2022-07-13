@@ -21,7 +21,7 @@ private fun allRoutes(root: Route): List<Route> {
     return listOf(root) + root.children.flatMap { allRoutes(it) }
 }
 
-internal class ApplicationSpec(val paths: List<Path.ApplicationPath>) {
+internal class ApplicationSpec(private val paths: List<Path.ApplicationPath>) {
     companion object {
         internal fun pathFromRoute(route: Map.Entry<Route?, List<Route>>): Pair<String, MutableList<Method>> {
             val methods = mutableListOf<Method>()
@@ -33,59 +33,11 @@ internal class ApplicationSpec(val paths: List<Path.ApplicationPath>) {
             return Pair(path, methods)
         }
     }
+    fun missingPaths(other: List<Path>) = this.paths.filterNot { other.contains(it) }
+    fun superfluousPaths(other: List<Path>): List<Path> = other.filterNot { this.paths.contains(it) }
 }
 
 internal class OpenApiSpec(var paths: List<Path>, private val serDer: OpenApiSerDer) {
-    infix fun `should contain the same paths as`(application: ApplicationSpec) {
-        when {
-            application.paths.any { !this.paths.contains(it) } -> throw PathAssertionError(
-                "Openapi spec is missing ${
-                missingPathsInSpec(
-                    application
-                ).size
-                } paths"
-            )
-            this.paths.any { !application.paths.contains(it) } -> throw PathAssertionError(
-                "Openapi spec contains ${
-                pathsNotInApplication(
-                    application
-                ).size
-                } path(s) that is not present in the application API"
-            )
-        }
-    }
-
-    infix fun `paths should have the same methods as`(application: ApplicationSpec) {
-        // gå igjennom hver path of sammenligne method, returnere metoder som må legges til (som pair?)
-        // gå igjennom hver path of sammenligne method, returnere metoder som må fjernes (som pair?)
-        // kaste excpetions hvis ikke begge listene er tomme
-        pathsInBothSpecAndApplication(application).map {
-            it?.let {
-            }
-        }
-    }
-
-    private fun pathsInBothSpecAndApplication(application: ApplicationSpec) =
-        this.paths.map { specPath ->
-            application.paths.find { it == specPath }?.let { applicationPath ->
-                Pair(specPath, applicationPath)
-            }
-        }
-
-    internal fun updatePaths(application: ApplicationSpec) {
-        val pathsToBeAdded = missingPathsInSpec(application)
-        val pathsToBeRemoved = pathsNotInApplication(application)
-        this.paths = this.paths - pathsToBeRemoved + pathsToBeAdded
-    }
-
-    private fun missingPathsInSpec(application: ApplicationSpec): List<Path> =
-        application.paths.filterNot { this.paths.contains(it) }
-
-    private fun pathsNotInApplication(application: ApplicationSpec): List<Path> =
-        paths.filterNot { application.paths.contains(it) }
-
-    fun toJson(): ByteArray = serDer.generateNewSpecFile(this).toByteArray()
-
     companion object {
         fun fromJson(openapiFilePath: String): OpenApiSpec {
             return OpenApiSerDer.fromFile(openapiFilePath).let {
@@ -101,6 +53,28 @@ internal class OpenApiSpec(var paths: List<Path>, private val serDer: OpenApiSer
             }
         }
     }
+
+    infix fun `should contain the same paths as`(application: ApplicationSpec) {
+        val pathAssertionError = PathAssertionError()
+        application.missingPaths(this.paths).let {
+            pathAssertionError.addMissingPaths(it)
+        }
+        application.superfluousPaths(this.paths).let {
+            pathAssertionError.addsuperfluousPaths(it)
+        }
+        pathAssertionError.evaluate()
+    }
+
+    infix fun `paths should have the same methods as`(application: ApplicationSpec) {
+    }
+
+    internal fun updatePaths(application: ApplicationSpec) {
+        val pathsToBeAdded = application.missingPaths(this.paths)
+        val pathsToBeRemoved = application.superfluousPaths(this.paths)
+        this.paths = this.paths - pathsToBeRemoved + pathsToBeAdded
+    }
+
+    internal fun toJson(): ByteArray = serDer.generateNewSpecFile(this).toByteArray()
 }
 
 abstract class Path(val value: String, val methods: List<Method>) {
@@ -115,10 +89,9 @@ abstract class Path(val value: String, val methods: List<Method>) {
         return result
     }
 
-    class ApplicationPath(value: String, methods: List<Method>) : Path(value, methods)
-    class OpenApiSpecPath(value: String, methods: List<Method>) : Path(value, methods)
+    internal class ApplicationPath(value: String, methods: List<Method>) : Path(value, methods)
+    internal class OpenApiSpecPath(value: String, methods: List<Method>) : Path(value, methods)
 }
-
 data class Method(val operation: String)
 
 internal class SpecAssertionRecovery(
@@ -145,7 +118,28 @@ internal class SpecAssertionRecovery(
     }
 }
 
-internal class PathAssertionError(message: String) : AssertionError(message)
+internal class PathAssertionError {
+    private val missingPaths: MutableList<Path> = mutableListOf()
+    private val superfluousPaths: MutableList<Path> = mutableListOf()
+
+    fun evaluate() {
+        if (missingPaths.isNotEmpty() || superfluousPaths.isNotEmpty()) {
+            throw AssertionError("Incorrect paths in apidoc\n${missingPathToString()}\n${superfluousPathsToString()} ")
+        }
+    }
+
+    fun addMissingPaths(it: List<Path>) {
+        missingPaths.addAll(it)
+    }
+
+    fun addsuperfluousPaths(it: List<Path>) {
+        superfluousPaths.addAll(it)
+    }
+    private fun missingPathToString(): String = "${missingPaths.size} are missing: ${missingPaths.names()}"
+    private fun superfluousPathsToString(): String = "${superfluousPaths.size} are superfluous: ${superfluousPaths.names()}"
+
+    private fun MutableList<Path>.names() = this.map { it.value }
+}
 internal class MethodAssertionError(message: String) : AssertionError(message)
 internal class MissingSpecContentError(filelocation: String) :
     AssertionError("Updated spec was written to $filelocation, but requires additional information")
