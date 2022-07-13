@@ -17,9 +17,9 @@ class OpenapiValidator {
                 val application = plugin(Routing).routesInApplication()
                 val openApiSpec = OpenApiSpec.fromJson(System.getProperty("user.dir") + "/doc/openapi.json")
                 val recovery = SpecAssertionRecovery(openApiSpec, application)
-                withRecovery(recovery) {
+             /*   withRecovery(recovery) {
                     openApiSpec `should contain the same paths as` application
-                }
+                }*/
                 openApiSpec `should contain the same paths as` application
             }
         }

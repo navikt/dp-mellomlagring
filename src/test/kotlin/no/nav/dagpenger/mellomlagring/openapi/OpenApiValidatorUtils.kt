@@ -4,7 +4,6 @@ import io.ktor.server.routing.HttpMethodRouteSelector
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.Routing
 import io.mockk.InternalPlatformDsl.toStr
-import no.nav.dagpenger.mellomlagring.openapi.ApplicationSpec.Companion.pathfromRoute
 import java.io.File
 
 internal fun Routing.routesInApplication(): ApplicationSpec {
@@ -12,13 +11,7 @@ internal fun Routing.routesInApplication(): ApplicationSpec {
     allRoutes(this).filter { it.selector is HttpMethodRouteSelector }
         .groupBy { it.parent }
         .forEach { route ->
-            pathfromRoute(route)
-            val methods = mutableListOf<String>()
-            val path = route.key
-                .toStr()
-                .split("/(authenticate azureAd)", "/(authenticate tokenX)")
-                .let { it.first() + it.last() }
-            route.value.forEach { methods.add((it.selector as HttpMethodRouteSelector).method.value.lowercase()) }
+            val (path, methods) = ApplicationSpec.pathFromRoute(route)
             newPaths.add(Path(path, methods))
         }
     return ApplicationSpec(newPaths)
@@ -30,12 +23,14 @@ private fun allRoutes(root: Route): List<Route> {
 
 internal class ApplicationSpec(val paths: List<Path>) {
     companion object {
-        fun pathfromRoute(route: Map.Entry<Route?, List<Route>>): Path {
+        internal fun pathFromRoute(route: Map.Entry<Route?, List<Route>>): Pair<String, MutableList<String>> {
             val methods = mutableListOf<String>()
-            val path = route.key.toStr().split("/(authenticate azureAd)", "/(authenticate tokenX)")
-                .let { it.first() + it.last() + ":" }
+            val path = route.key
+                .toStr()
+                .split("/(authenticate azureAd)", "/(authenticate tokenX)")
+                .let { it.first() + it.last() }
             route.value.forEach { methods.add((it.selector as HttpMethodRouteSelector).method.value.lowercase()) }
-            return Path(path, methods)
+            return Pair(path, methods)
         }
     }
 }
@@ -43,7 +38,13 @@ internal class ApplicationSpec(val paths: List<Path>) {
 internal class OpenApiSpec(var paths: List<Path>, private val serDer: OpenApiSerDer) {
     infix fun `should contain the same paths as`(application: ApplicationSpec) {
         when {
-            // application.paths.any { !this.paths.contains(it) } -> throw PathAssertionError("Openapi spec is missing ${missingPaths(application).size} paths")
+            application.paths.any { !this.paths.contains(it) } -> throw PathAssertionError(
+                "Openapi spec is missing ${
+                missingPaths(
+                    application
+                ).size
+                } paths"
+            )
             this.paths.any { !application.paths.contains(it) } -> throw PathAssertionError(
                 "Openapi spec contains ${
                 notPresentPaths(
