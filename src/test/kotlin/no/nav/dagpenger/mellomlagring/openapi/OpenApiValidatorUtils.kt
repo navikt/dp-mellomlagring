@@ -5,7 +5,6 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.Routing
 import io.mockk.InternalPlatformDsl.toStr
 import no.nav.dagpenger.mellomlagring.openapi.ApplicationSpec.Companion.pathfromRoute
-import no.nav.security.mock.oauth2.http.objectMapper
 import java.io.File
 
 internal fun Routing.routesInApplication(): ApplicationSpec {
@@ -29,13 +28,6 @@ private fun allRoutes(root: Route): List<Route> {
     return listOf(root) + root.children.flatMap { allRoutes(it) }
 }
 
-data class Path(val value: String, val methods: List<String>) {
-    override fun equals(other: Any?): Boolean {
-        require(other is Path)
-        return this.value.compareTo(other.value) == 0
-    }
-}
-
 internal class ApplicationSpec(val paths: List<Path>) {
     companion object {
         fun pathfromRoute(route: Map.Entry<Route?, List<Route>>): Path {
@@ -48,11 +40,17 @@ internal class ApplicationSpec(val paths: List<Path>) {
     }
 }
 
-internal class OpenApiSpec(var paths: List<Path>) {
+internal class OpenApiSpec(var paths: List<Path>, private val serDer: OpenApiSerDer) {
     infix fun `should contain the same paths as`(application: ApplicationSpec) {
         when {
             // application.paths.any { !this.paths.contains(it) } -> throw PathAssertionError("Openapi spec is missing ${missingPaths(application).size} paths")
-            this.paths.any { !application.paths.contains(it) } -> throw PathAssertionError("Openapi spec contains ${notPresentPaths(application).size} path(s) that is not present in the application API")
+            this.paths.any { !application.paths.contains(it) } -> throw PathAssertionError(
+                "Openapi spec contains ${
+                notPresentPaths(
+                    application
+                ).size
+                } path(s) that is not present in the application API"
+            )
         }
     }
 
@@ -62,27 +60,39 @@ internal class OpenApiSpec(var paths: List<Path>) {
         this.paths = this.paths - pathsToBeRemoved + pathsToBeAdded
     }
 
-    private fun missingPaths(application: ApplicationSpec): List<Path> = application.paths.filterNot { this.paths.contains(it) }
-    private fun notPresentPaths(application: ApplicationSpec): List<Path> = paths.filterNot { application.paths.contains(it) }
+    private fun missingPaths(application: ApplicationSpec): List<Path> =
+        application.paths.filterNot { this.paths.contains(it) }
+
+    private fun notPresentPaths(application: ApplicationSpec): List<Path> =
+        paths.filterNot { application.paths.contains(it) }
+
+    fun toJson(): ByteArray = serDer.generateNewSpecFile(this).toByteArray()
 
     companion object {
         fun fromJson(openapiFilePath: String): OpenApiSpec {
-            val paths = mutableListOf<Path>()
-            objectMapper.readTree(File(openapiFilePath)).let {
-                it["paths"].fields().forEachRemaining {
-                    val methods = mutableListOf<String>()
-                    it.value.fields().forEachRemaining {
-                        methods.add(it.key)
-                    }
-                    paths.add(Path(it.key, methods))
-                }
+            return OpenApiSerDer.fromFile(openapiFilePath).let {
+                OpenApiSpec(
+                    paths = it.paths.map { path ->
+                        Path(
+                            value = path.key,
+                            methods = path.value.map { method -> method.key }
+                        )
+                    },
+                    serDer = it
+                )
             }
-            return OpenApiSpec(paths)
         }
     }
 }
 
-internal class AssertionSpecRecovery(
+data class Path(val value: String, val methods: List<String>) {
+    override fun equals(other: Any?): Boolean {
+        require(other is Path)
+        return this.value.compareTo(other.value) == 0
+    }
+}
+
+internal class SpecAssertionRecovery(
     val openApiSpec: OpenApiSpec,
     val application: ApplicationSpec,
     private val recoveryFilePath: String = "build/tmp/openapi.json"
@@ -93,6 +103,7 @@ internal class AssertionSpecRecovery(
         openApiSpec.updatePaths(application)
         pathAssertionRecovered = true
     }
+
     fun metohdAssertionError() {
         methodAssertionRecovered = true
     }
@@ -100,7 +111,7 @@ internal class AssertionSpecRecovery(
     fun writeToFile() {
         if (pathAssertionRecovered && methodAssertionRecovered) {
             println("skriv til fil $recoveryFilePath")
-            File(recoveryFilePath).writeBytes("slks".toByteArray())
+            File(recoveryFilePath).writeBytes(openApiSpec.toJson())
             throw MissingSpecContentError(recoveryFilePath)
         }
     }
@@ -108,4 +119,5 @@ internal class AssertionSpecRecovery(
 
 internal class PathAssertionError(message: String) : AssertionError(message)
 internal class MethodAssertionError(message: String) : AssertionError(message)
-internal class MissingSpecContentError(filelocation: String) : AssertionError("Updated spec was written to $filelocation, but requires additional information")
+internal class MissingSpecContentError(filelocation: String) :
+    AssertionError("Updated spec was written to $filelocation, but requires additional information")
