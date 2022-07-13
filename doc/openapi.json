@@ -1,43 +1,45 @@
 {
-    "openapi": "3.0.1",
-    "info": {
-        "title": "dp-mellomlagring",
-        "version": "1.0"
+  "openapi": "3.0.1",
+  "info": {
+    "title": "dp-mellomlagring",
+    "version": "1.0"
+  },
+  "paths": {
+    "/v1/azuread/mellomlagring/vedlegg/{id}": {
+      "post": {
+        "description": null,
+        "parameters": []
+      }
     },
-    "paths": {
-        "/v1/azuread/mellomlagring/vedlegg/{id}": {
-            "post": {
-                "description": "hent dokument",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "id",
-                        "description": "id til dokument"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
-        "/v1/tadda/mellomlagring/vedlegg/{id}": {
-            "post": {
-                "description": "hent dokument",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "id",
-                        "description": "id til dokument"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        }
+    "/v1/azuread/mellomlagring/vedlegg/{id}/{filnavn}": {
+      "get": {
+        "description": null,
+        "parameters": []
+      },
+      "delete": {
+        "description": null,
+        "parameters": []
+      }
+    },
+    "/v1/obo/mellomlagring/vedlegg/{id}": {
+      "post": {
+        "description": null,
+        "parameters": []
+      },
+      "get": {
+        "description": null,
+        "parameters": []
+      }
+    },
+    "/v1/obo/mellomlagring/vedlegg/{id}/{filnavn}": {
+      "get": {
+        "description": null,
+        "parameters": []
+      },
+      "delete": {
+        "description": null,
+        "parameters": []
+      }
     }
+  }
 }
