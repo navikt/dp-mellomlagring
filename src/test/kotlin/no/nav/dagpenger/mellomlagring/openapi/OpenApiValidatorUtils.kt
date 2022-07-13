@@ -4,22 +4,6 @@ import io.ktor.server.routing.HttpMethodRouteSelector
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.Routing
 import io.mockk.InternalPlatformDsl.toStr
-import java.io.File
-
-internal fun Routing.routesInApplication(): ApplicationSpec {
-    val newPaths = mutableListOf<Path.ApplicationPath>()
-    allRoutes(this).filter { it.selector is HttpMethodRouteSelector }
-        .groupBy { it.parent }
-        .forEach { route ->
-            val (path, methods) = ApplicationSpec.pathFromRoute(route)
-            newPaths.add(Path.ApplicationPath(path, methods))
-        }
-    return ApplicationSpec(newPaths)
-}
-
-private fun allRoutes(root: Route): List<Route> {
-    return listOf(root) + root.children.flatMap { allRoutes(it) }
-}
 
 internal class ApplicationSpec(private val paths: List<Path.ApplicationPath>) {
     companion object {
@@ -94,52 +78,15 @@ abstract class Path(val value: String, val methods: List<Method>) {
 }
 data class Method(val operation: String)
 
-internal class SpecAssertionRecovery(
-    val openApiSpec: OpenApiSpec,
-    val application: ApplicationSpec,
-    private val recoveryFilePath: String = "build/tmp/openapi.json"
-) {
-    private var pathAssertionRecovered = false
-    private var methodAssertionRecovered = false
-    fun pathAssertionError() {
-        openApiSpec.updatePaths(application)
-        pathAssertionRecovered = true
-    }
-
-    fun metohdAssertionError() {
-        methodAssertionRecovered = true
-    }
-
-    fun writeToFile() {
-        if (pathAssertionRecovered && methodAssertionRecovered) {
-            File(recoveryFilePath).writeBytes(openApiSpec.toJson())
-            throw MissingSpecContentError(recoveryFilePath)
+internal fun Routing.routesInApplication(): ApplicationSpec {
+    val newPaths = mutableListOf<Path.ApplicationPath>()
+    allRoutes(this).filter { it.selector is HttpMethodRouteSelector }
+        .groupBy { it.parent }
+        .forEach { route ->
+            val (path, methods) = ApplicationSpec.pathFromRoute(route)
+            newPaths.add(Path.ApplicationPath(path, methods))
         }
-    }
+    return ApplicationSpec(newPaths)
 }
 
-internal class PathAssertionError {
-    private val missingPaths: MutableList<Path> = mutableListOf()
-    private val superfluousPaths: MutableList<Path> = mutableListOf()
-
-    fun evaluate() {
-        if (missingPaths.isNotEmpty() || superfluousPaths.isNotEmpty()) {
-            throw AssertionError("Incorrect paths in apidoc\n${missingPathToString()}\n${superfluousPathsToString()} ")
-        }
-    }
-
-    fun addMissingPaths(it: List<Path>) {
-        missingPaths.addAll(it)
-    }
-
-    fun addsuperfluousPaths(it: List<Path>) {
-        superfluousPaths.addAll(it)
-    }
-    private fun missingPathToString(): String = "${missingPaths.size} are missing: ${missingPaths.names()}"
-    private fun superfluousPathsToString(): String = "${superfluousPaths.size} are superfluous: ${superfluousPaths.names()}"
-
-    private fun MutableList<Path>.names() = this.map { it.value }
-}
-internal class MethodAssertionError(message: String) : AssertionError(message)
-internal class MissingSpecContentError(filelocation: String) :
-    AssertionError("Updated spec was written to $filelocation, but requires additional information")
+private fun allRoutes(root: Route): List<Route> = listOf(root) + root.children.flatMap { allRoutes(it) }

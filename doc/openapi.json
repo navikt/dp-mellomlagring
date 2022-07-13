@@ -31,7 +31,7 @@
         "parameters": []
       }
     },
-    "/v1/obo/mellomlagring/vedlegg/{id}/{filnavn}": {
+    "/v1/neitakk/mellomlagring/vedlegg/{id}/{filnavn}": {
       "get": {
         "description": null,
         "parameters": []

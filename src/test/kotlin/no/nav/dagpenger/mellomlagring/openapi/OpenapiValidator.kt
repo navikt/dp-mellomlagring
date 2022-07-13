@@ -17,24 +17,11 @@ class OpenapiValidator {
                 val application = plugin(Routing).routesInApplication()
                 val openApiSpec = OpenApiSpec.fromJson(System.getProperty("user.dir") + "/doc/openapi.json")
                 val recovery = SpecAssertionRecovery(openApiSpec, application)
-                withRecovery(recovery) {
-                    openApiSpec `should contain the same paths as` application
-                }
+//                withRecovery(recovery) {
+                openApiSpec `should contain the same paths as` application
+//                }
                 // openApiSpec `paths should have the same methods as` application
-                //  openApiSpec `should contain the same paths as` application
             }
-        }
-    }
-
-    private fun withRecovery(recovery: SpecAssertionRecovery, function: () -> Unit) {
-        try {
-            function()
-        } catch (pathAssertionError: AssertionError) {
-            recovery.pathAssertionError()
-        } finally {
-            // TODO
-            recovery.metohdAssertionError()
-            recovery.writeToFile()
         }
     }
 }
