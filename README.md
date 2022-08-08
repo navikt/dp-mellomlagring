@@ -14,3 +14,6 @@ Filoperasjoner mot gs er ikke alltid mulig å gjøre lokalt. Tester mot dev kan 
 * Liste innhold i bucket 
 ```gcloud alpha storage ls --recursive <bucket-navn>``` 
 * For operasjoner på bucketobjekter se [gs-util](https://cloud.google.com/storage/docs/gsutil/)
+
+* Hente ut kryptert fil
+Se [eksempel](src/test/kotlin/no/nav/dagpenger/mellomlagring/HentKryptertFilEksempel.kt)
