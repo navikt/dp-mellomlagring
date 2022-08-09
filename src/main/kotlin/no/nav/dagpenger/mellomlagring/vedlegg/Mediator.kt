@@ -11,11 +11,12 @@ import no.nav.dagpenger.mellomlagring.lagring.KryptertStore
 import no.nav.dagpenger.mellomlagring.lagring.StorageKey
 import no.nav.dagpenger.mellomlagring.lagring.Store
 import no.nav.dagpenger.mellomlagring.lagring.StoreException
+import java.util.UUID
 
 internal interface Mediator {
 
-    suspend fun lagre(soknadsId: String, filnavn: String, filinnhold: ByteArray, eier: String): VedleggUrn
-    suspend fun liste(soknadsId: String, eier: String): List<VedleggUrn>
+    suspend fun lagre(soknadsId: String, filnavn: String, filinnhold: ByteArray, eier: String): KlumpInfo
+    suspend fun liste2(soknadsId: String, eier: String): List<KlumpInfo>
     suspend fun hent(vedleggUrn: VedleggUrn, eier: String): Klump?
     suspend fun slett(vedleggUrn: VedleggUrn, eier: String): Boolean
     fun interface FilValidering {
@@ -43,35 +44,30 @@ private val logger = KotlinLogging.logger { }
 internal class MediatorImpl(
     private val store: Store,
     private val aead: Aead,
-    private val filValideringer: List<Mediator.FilValidering> = emptyList()
+    private val filValideringer: List<Mediator.FilValidering> = emptyList(),
+    private val uuidGenerator: () -> UUID = UUID::randomUUID
 ) : Mediator {
 
     private fun kryptertStore(eier: String) = KryptertStore(eier, store, aead)
 
-    override suspend fun lagre(
-        soknadsId: String,
-        filnavn: String,
-        filinnhold: ByteArray,
-        eier: String
-    ): VedleggUrn {
+    override suspend fun lagre(soknadsId: String, filnavn: String, filinnhold: ByteArray, eier: String): KlumpInfo {
         valider(filnavn, filinnhold)
-        val navn = createStoreKey(soknadsId = soknadsId, fileName = filnavn)
+        val klumpInfo = KlumpInfo(
+            objektNavn = createStoreKey(soknadsId = soknadsId),
+            metadata = mapOf("filnavn" to filnavn)
+        )
         return kryptertStore(eier).lagre(
             klump = Klump(
                 innhold = filinnhold,
-                klumpInfo = KlumpInfo(
-                    navn = navn,
-                    metadata = emptyMap()
-                )
+                klumpInfo = klumpInfo
             )
-        ).getOrThrow().let { VedleggUrn(navn) }
+        ).getOrThrow().let { klumpInfo }
     }
 
-    override suspend fun liste(soknadsId: String, eier: String): List<VedleggUrn> {
+    override suspend fun liste2(soknadsId: String, eier: String): List<KlumpInfo> {
         return kryptertStore(eier)
             .listKlumpInfo(soknadsId)
             .getOrThrow()
-            .map { VedleggUrn(it.navn) }
     }
 
     override suspend fun hent(vedleggUrn: VedleggUrn, eier: String): Klump? {
@@ -109,8 +105,8 @@ internal class MediatorImpl(
         }
     }
 
-    private fun createStoreKey(soknadsId: String, fileName: String): StorageKey {
-        return "$soknadsId/$fileName"
+    private fun createStoreKey(soknadsId: String): StorageKey {
+        return "$soknadsId/${uuidGenerator()}"
     }
 
     private fun <T> Result<T>.getOrThrow(): T {

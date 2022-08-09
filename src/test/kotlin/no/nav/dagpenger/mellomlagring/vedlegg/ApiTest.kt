@@ -64,17 +64,18 @@ internal class ApiTest {
     @Test
     fun `Liste filer for en id`() {
         val mediator = mockk<Mediator>().also {
-            coEvery { it.liste("id", any()) } returns listOf(
-                VedleggUrn("id/fil1"), VedleggUrn("id/fil2")
+            coEvery { it.liste2("id", any()) } returns listOf(
+                KlumpInfo("id/fil1", mapOf("filnavn" to "fil1")), KlumpInfo("id/fil2", mapOf("filnavn" to "a b c"))
             )
-            coEvery { it.liste("finnesikke", defaultDummyFodselsnummer) } returns emptyList()
+            coEvery { it.liste2("finnesikke", defaultDummyFodselsnummer) } returns emptyList()
         }
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
             listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
                 client.get("${fixture.path}/vedlegg/id") { autentisert(fixture) }.let { response ->
                     response.status shouldBe HttpStatusCode.OK
                     response.contentType().toString() shouldBe "application/json; charset=UTF-8"
-                    response.bodyAsText() shouldBe """[{"urn":"urn:vedlegg:id/fil1"},{"urn":"urn:vedlegg:id/fil2"}]"""
+                    //language=JSON
+                    response.bodyAsText() shouldBe """[{"filnavn":"fil1","urn":"urn:vedlegg:id/fil1"},{"filnavn":"a b c","urn":"urn:vedlegg:id/fil2"}]"""
                 }
 
                 client.get("${fixture.path}/vedlegg/finnesikke") { autentisert(fixture) }.let { response ->
@@ -89,8 +90,12 @@ internal class ApiTest {
     @Test
     fun `Lagring av fil`() {
         val mediator = mockk<Mediator>().also {
-            coEvery { it.lagre("id", "file.csv", any(), defaultDummyFodselsnummer) } returns VedleggUrn("id/file.csv")
-            coEvery { it.lagre("id", "file2.csv", any(), defaultDummyFodselsnummer) } returns VedleggUrn("id/file2.csv")
+            coEvery { it.lagre("id", "file.csv", any(), defaultDummyFodselsnummer) } returns KlumpInfo("id/file.csv")
+            coEvery { it.lagre("id", "file2.csv", any(), defaultDummyFodselsnummer) } returns KlumpInfo("id/file2.csv")
+            coEvery { it.lagre("id", "fil med space", any(), defaultDummyFodselsnummer) } returns KlumpInfo(
+                "id/uuid",
+                mapOf("filnavn" to "fil med space")
+            )
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
@@ -106,6 +111,9 @@ internal class ApiTest {
                                 append("hubba", "file2.csv", ContentType.Text.CSV) {
                                     this.append("2")
                                 }
+                                append("hubba", "fil med space", ContentType.Text.CSV) {
+                                    this.append("3")
+                                }
                             },
                             "boundary",
                             ContentType.MultiPart.FormData.withParameter("boundary", "boundary")
@@ -114,7 +122,7 @@ internal class ApiTest {
                 }.let { response ->
                     response.status shouldBe HttpStatusCode.Created
                     //language=JSON
-                    response.bodyAsText() shouldBe """[{"filnavn":"file.csv","urn":"urn:vedlegg:id/file.csv"},{"filnavn":"file2.csv","urn":"urn:vedlegg:id/file2.csv"}]"""
+                    response.bodyAsText() shouldBe """[{"filnavn":"id/file.csv","urn":"urn:vedlegg:id/file.csv"},{"filnavn":"id/file2.csv","urn":"urn:vedlegg:id/file2.csv"},{"filnavn":"fil med space","urn":"urn:vedlegg:id/uuid"}]"""
                     response.contentType().toString() shouldBe "application/json; charset=UTF-8"
                 }
             }
@@ -127,7 +135,7 @@ internal class ApiTest {
             coEvery { it.hent(VedleggUrn("id/filnavn.pdf"), defaultDummyFodselsnummer) } returns Klump(
                 innhold = "1".toByteArray(),
                 klumpInfo = KlumpInfo(
-                    navn = "id/filnavn.pdf",
+                    objektNavn = "id/filnavn.pdf",
                     metadata = mapOf()
                 )
             )

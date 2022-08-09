@@ -2,7 +2,6 @@ package no.nav.dagpenger.mellomlagring.vedlegg
 
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.coEvery
@@ -17,6 +16,7 @@ import no.nav.dagpenger.mellomlagring.lagring.Store
 import no.nav.dagpenger.mellomlagring.lagring.StoreException
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import java.util.UUID
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // Because we are using fixedPort testcontainer
 class MediatorTest {
@@ -36,39 +36,69 @@ class MediatorTest {
                     coEvery { it.valider(any(), any()) } returns FilValideringResultat.Gyldig("filnavn")
                 }
             ),
-            aead = Crypto.aead
+            aead = Crypto.aead,
+            uuidGenerator = fixedUUIDGenerator()
         )
+    }
+
+    private val fixedUUIDGenerator: () -> () -> UUID = {
+        val iterator = listOf<UUID>(
+            UUID.fromString("f9ece50c-e833-43c6-996e-aa70ddbc9870"),
+            UUID.fromString("7170c6c2-17ca-11ed-861d-0242ac120002")
+        ).iterator();
+        { iterator.next() }
     }
 
     @Test
     fun `happy path lagre,listing, henting og sletting av filer`() {
 
         runBlocking {
-            mediator.lagre("id", "hubba", "hubba".toByteArray(), "eier").urn shouldBe "urn:vedlegg:id/hubba"
-            mediator.lagre("id", "bubba", "bubba".toByteArray(), "eier").urn shouldBe "urn:vedlegg:id/bubba"
+            mediator.lagre("id", "hubba", "hubba".toByteArray(), "eier").let { klumpinfo ->
+                klumpinfo.objektNavn shouldBe "id/f9ece50c-e833-43c6-996e-aa70ddbc9870"
+                klumpinfo.originalFilnavn shouldBe "hubba"
+            }
+            mediator.lagre("id", "hubba bubba", "hubba bubba".toByteArray(), "eier").let { klumpinfo ->
+                klumpinfo.objektNavn shouldBe "id/7170c6c2-17ca-11ed-861d-0242ac120002"
+                klumpinfo.originalFilnavn shouldBe "hubba bubba"
+            }
 
-            mediator.liste("id", "eier") shouldContainExactlyInAnyOrder listOf(
-                VedleggUrn("id/hubba"),
-                VedleggUrn("id/bubba"),
-            )
+            mediator.liste2("id", "eier").let { klumpInfos ->
+                klumpInfos.size shouldBe 2
 
-            mediator.hent(VedleggUrn("id/hubba"), "eier").also {
+                klumpInfos.find { it.objektNavn == "id/f9ece50c-e833-43c6-996e-aa70ddbc9870" }.let {
+                    it shouldNotBe null
+                    it!!.originalFilnavn shouldBe "hubba"
+                }
+
+                klumpInfos.find { it.objektNavn == "id/7170c6c2-17ca-11ed-861d-0242ac120002" }.let {
+                    it shouldNotBe null
+                    it!!.originalFilnavn shouldBe "hubba bubba"
+                }
+            }
+
+            mediator.hent(VedleggUrn("id/f9ece50c-e833-43c6-996e-aa70ddbc9870"), "eier").also {
                 it shouldNotBe null
                 it?.let { klump ->
-                    klump.klumpInfo.navn shouldBe "id/hubba"
+                    klump.klumpInfo.objektNavn shouldBe "id/f9ece50c-e833-43c6-996e-aa70ddbc9870"
+                    klump.klumpInfo.originalFilnavn shouldBe "hubba"
                     String(klump.innhold) shouldBe "hubba"
                 }
             }
 
-            mediator.slett(VedleggUrn("id/hubba"), "eier") shouldBe true
-            shouldThrow<NotFoundException> { mediator.hent(VedleggUrn("id/hubba"), "eier") }
+            mediator.slett(VedleggUrn("id/f9ece50c-e833-43c6-996e-aa70ddbc9870"), "eier") shouldBe true
+            shouldThrow<NotFoundException> {
+                mediator.hent(
+                    VedleggUrn("id/f9ece50c-e833-43c6-996e-aa70ddbc9870"),
+                    "eier"
+                )
+            }
         }
     }
 
     @Test
     fun `Hente, slette liste vedlegg som ikke finnes`() {
         runBlocking {
-            mediator.liste("finnesIkke", "eier") shouldBe emptyList()
+            mediator.liste2("finnesIkke", "eier") shouldBe emptyList()
 
             shouldThrow<NotFoundException> { mediator.hent(VedleggUrn("finnesIkke"), "eier") }
             shouldThrow<NotFoundException> { mediator.slett(VedleggUrn("finnesIkke"), "eier") }
@@ -124,13 +154,12 @@ class MediatorTest {
             }
 
             shouldThrow<StoreException> {
-                mockedMediator.liste("id", "eier")
+                mockedMediator.liste2("id", "eier")
             }
 
             shouldThrow<StoreException> {
                 mockedMediator.lagre("id", "filnavn", "innhold".toByteArray(), "eier")
             }
-
             shouldThrow<StoreException> {
                 mockedMediator.slett(VedleggUrn("nss"), "eier")
             }

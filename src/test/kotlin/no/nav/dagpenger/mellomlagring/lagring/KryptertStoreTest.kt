@@ -41,7 +41,7 @@ internal class KryptertStoreTest {
             Klump(
                 innhold = "hubba".toByteArray(),
                 klumpInfo = KlumpInfo(
-                    navn = lagretHubbaUrn,
+                    objektNavn = lagretHubbaUrn,
                     metadata = mapOf("meta" to "value")
                 )
             )
@@ -51,7 +51,7 @@ internal class KryptertStoreTest {
             Klump(
                 innhold = "hubba".toByteArray(),
                 klumpInfo = KlumpInfo(
-                    navn = "urn:vedlegg:id/bubba",
+                    objektNavn = "urn:vedlegg:id/bubba",
                     metadata = mapOf("meta" to "value")
                 )
             )
@@ -67,7 +67,7 @@ internal class KryptertStoreTest {
         kryptertStore.hent(lagretHubbaUrn).getOrNull().also {
             it shouldNotBe null
             it?.let { klump ->
-                klump.klumpInfo.navn shouldBe lagretHubbaUrn
+                klump.klumpInfo.objektNavn shouldBe lagretHubbaUrn
                 String(klump.innhold) shouldBe "hubba"
             }
         }
@@ -75,7 +75,7 @@ internal class KryptertStoreTest {
         kryptertStore.hentKlumpInfo(lagretHubbaUrn).getOrThrow().also {
             it shouldNotBe null
             it?.let { klumpInfo ->
-                klumpInfo.navn shouldBe lagretHubbaUrn
+                klumpInfo.objektNavn shouldBe lagretHubbaUrn
             }
         }
 
@@ -99,7 +99,7 @@ internal class KryptertStoreTest {
                     Klump(
                         innhold = "hubba".toByteArray(),
                         klumpInfo = KlumpInfo(
-                            navn = "urn:vedlegg:id/hubba",
+                            objektNavn = "urn:vedlegg:id/hubba",
                             metadata = mapOf("meta" to "value")
                         )
                     )

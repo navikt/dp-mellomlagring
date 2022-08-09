@@ -32,7 +32,7 @@ internal class S3Store(
                 Klump(
                     innhold = blob.getContent(),
                     klumpInfo = KlumpInfo(
-                        navn = blob.name,
+                        objektNavn = blob.name,
                         metadata = blob.metadata ?: emptyMap()
                     )
                 )
@@ -44,7 +44,7 @@ internal class S3Store(
 
     override fun lagre(klump: Klump): Result<Int> {
         val blobInfo =
-            BlobInfo.newBuilder(BlobId.of(bucketName, klump.klumpInfo.navn))
+            BlobInfo.newBuilder(BlobId.of(bucketName, klump.klumpInfo.objektNavn))
                 .setContentType("application/octet-stream")
                 .setMetadata(klump.klumpInfo.metadata)
                 .build() // todo contentType?
@@ -75,7 +75,7 @@ internal class S3Store(
             gcpStorage.get(BlobId.of(bucketName, storageKey))
                 ?.let {
                     KlumpInfo(
-                        navn = it.name,
+                        objektNavn = it.name,
                         metadata = it.metadata ?: emptyMap()
                     )
                 }
@@ -90,7 +90,7 @@ internal class S3Store(
         return kotlin.runCatching {
             gcpStorage.list(bucketName, Storage.BlobListOption.prefix(keyPrefix))
                 ?.values
-                ?.map { KlumpInfo(navn = it.name, metadata = it.metadata ?: emptyMap()) }
+                ?.map { KlumpInfo(objektNavn = it.name, metadata = it.metadata ?: emptyMap()) }
                 ?: emptyList()
         }.onSuccess {
             logger.debug { "Listet klumpinfo for path: $keyPrefix" }

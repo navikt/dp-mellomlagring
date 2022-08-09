@@ -9,7 +9,10 @@ internal interface Store {
     fun listKlumpInfo(keyPrefix: StorageKey /* = kotlin.String */): Result<List<KlumpInfo>>
 }
 
-internal data class KlumpInfo(val navn: String, val metadata: Map<String, String>)
+internal data class KlumpInfo(val objektNavn: String, val metadata: Map<String, String> = emptyMap()) {
+    val originalFilnavn: String = metadata["filnavn"] ?: objektNavn
+}
+
 internal class Klump(
     val innhold: ByteArray,
     val klumpInfo: KlumpInfo

@@ -68,7 +68,7 @@ internal class S3StoreTest {
             Klump(
                 innhold = "hubba".toByteArray(),
                 klumpInfo = KlumpInfo(
-                    navn = "urn:vedlegg:id/hubba",
+                    objektNavn = "urn:vedlegg:id/hubba",
                     metadata = mapOf("meta" to "value")
                 )
             )
@@ -78,7 +78,7 @@ internal class S3StoreTest {
             Klump(
                 innhold = "hubba".toByteArray(),
                 klumpInfo = KlumpInfo(
-                    navn = "urn:vedlegg:id/bubba",
+                    objektNavn = "urn:vedlegg:id/bubba",
                     metadata = mapOf("meta" to "value")
                 )
             )
@@ -92,7 +92,7 @@ internal class S3StoreTest {
         store.hent("urn:vedlegg:id/hubba").getOrNull().also {
             it shouldNotBe null
             it?.let { klump ->
-                klump.klumpInfo.navn shouldBe "urn:vedlegg:id/hubba"
+                klump.klumpInfo.objektNavn shouldBe "urn:vedlegg:id/hubba"
                 String(klump.innhold) shouldBe "hubba"
                 klump.klumpInfo.metadata shouldBe mapOf("meta" to "value")
             }
@@ -101,7 +101,7 @@ internal class S3StoreTest {
         store.hentKlumpInfo("urn:vedlegg:id/hubba").getOrThrow().also {
             it shouldNotBe null
             it?.let { klumpInfo ->
-                klumpInfo.navn shouldBe "urn:vedlegg:id/hubba"
+                klumpInfo.objektNavn shouldBe "urn:vedlegg:id/hubba"
                 klumpInfo.metadata shouldBe mapOf("meta" to "value")
             }
         }

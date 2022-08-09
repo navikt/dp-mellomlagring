@@ -14,6 +14,7 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.auth.azureAdEier
+import no.nav.dagpenger.mellomlagring.vedlegg.VedleggUrn
 
 internal fun Application.pdfApi(mediator: BundleMediator) {
     routing {
@@ -28,10 +29,14 @@ internal fun Application.pdfApi(mediator: BundleMediator) {
 private fun Route.bundle(mediator: BundleMediator) {
     route("/bundle") {
         post {
-            call.respond(HttpStatusCode.Created, mediator.bundle(call.receive(), call.azureAdEier()))
+            val request = call.receive<BundleRequest>()
+            val klumpInfo = mediator.bundle(request, call.azureAdEier())
+            call.respond(HttpStatusCode.Created, BundleResponse(klumpInfo.originalFilnavn, VedleggUrn(klumpInfo.objektNavn)))
         }
     }
 }
+
+private data class BundleResponse(val filnavn: String, val urn: VedleggUrn)
 
 @JsonDeserialize(using = BundleRequestDeserializer::class)
 internal data class BundleRequest(

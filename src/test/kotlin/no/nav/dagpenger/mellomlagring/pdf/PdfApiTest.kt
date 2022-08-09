@@ -5,15 +5,17 @@ import io.kotest.matchers.shouldNotBe
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.dagpenger.mellomlagring.TestApplication.autentisert
 import no.nav.dagpenger.mellomlagring.TestApplication.azureAd
 import no.nav.dagpenger.mellomlagring.TestApplication.tokenXToken
 import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestApplication
-import no.nav.dagpenger.mellomlagring.vedlegg.VedleggUrn
+import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
 import org.junit.jupiter.api.Test
 
 internal class PdfApiTest {
@@ -57,7 +59,7 @@ internal class PdfApiTest {
         withMockAuthServerAndTestApplication({
             pdfApi(
                 mockk<BundleMediator>(relaxed = true).also {
-                    coEvery { it.bundle(any(), "123") } returns VedleggUrn("bundle.pdf")
+                    coEvery { it.bundle(any(), "123") } returns KlumpInfo("bundle.pdf", emptyMap())
                 }
             )
         }) {
@@ -76,8 +78,11 @@ internal class PdfApiTest {
                       }
                     """
                 )
-            }.let {
-                it.status shouldBe HttpStatusCode.Created
+            }.let { response ->
+                response.status shouldBe HttpStatusCode.Created
+                response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+                //language=JSON
+                response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":{"urn":"urn:vedlegg:bundle.pdf"}}"""
             }
         }
     }

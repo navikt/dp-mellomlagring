@@ -22,12 +22,14 @@ import io.ktor.server.routing.routing
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.auth.azureAdEier
 import no.nav.dagpenger.mellomlagring.auth.oboEier
+import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
 
 private val logger = KotlinLogging.logger { }
 
@@ -59,10 +61,10 @@ internal fun Route.vedlegg(
             val id =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
             val multiPartData = call.receiveMultipart()
-            val respond = fileUploadHandler.handleFileupload(multiPartData, id, call.eierResolver()).map { e ->
+            val respond = fileUploadHandler.handleFileupload(multiPartData, id, call.eierResolver()).map { klumpInfo ->
                 Respond(
-                    filnavn = e.key,
-                    urn = e.value.urn
+                    filnavn = klumpInfo.originalFilnavn,
+                    urn = VedleggUrn(klumpInfo.objektNavn).urn
                 )
             }
             call.respond(HttpStatusCode.Created, respond)
@@ -70,7 +72,12 @@ internal fun Route.vedlegg(
         get {
             val soknadsId =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
-            val vedlegg = mediator.liste(soknadsId, call.eierResolver())
+            val vedlegg = mediator.liste2(soknadsId, call.eierResolver()).map { klumpinfo ->
+                Respond(
+                    filnavn = klumpinfo.originalFilnavn,
+                    urn = VedleggUrn(klumpinfo.objektNavn).urn
+                )
+            }
             call.respond(HttpStatusCode.OK, vedlegg)
         }
         route("/{filnavn}") {
@@ -110,17 +117,19 @@ internal class FileUploadHandler(private val mediator: Mediator) {
         multiPartData: MultiPartData,
         soknadsId: String,
         eier: String
-    ): Map<String, VedleggUrn> {
+    ): List<KlumpInfo> {
         return coroutineScope {
-            val jobs = mutableMapOf<String, Deferred<VedleggUrn>>()
+            val jobs = mutableListOf<Deferred<KlumpInfo>>()
             multiPartData.forEachPart { part ->
                 when (part) {
                     is PartData.FileItem -> {
                         val fileName = part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
-                        jobs[fileName] = async(Dispatchers.IO) {
-                            val bytes = part.streamProvider().readBytes()
-                            mediator.lagre(soknadsId, fileName, bytes, eier)
-                        }
+                        jobs.add(
+                            async(Dispatchers.IO) {
+                                val bytes = part.streamProvider().readBytes()
+                                mediator.lagre(soknadsId, fileName, bytes, eier)
+                            }
+                        )
                     }
                     is PartData.BinaryItem -> part.dispose().also {
                         logger.warn { "binary item not supported" }
@@ -133,7 +142,7 @@ internal class FileUploadHandler(private val mediator: Mediator) {
                     }
                 }
             }
-            jobs.mapValues { it.value.await() }
+            jobs.awaitAll()
         }
     }
 }
