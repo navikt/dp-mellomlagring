@@ -64,10 +64,10 @@ internal class ApiTest {
     @Test
     fun `Liste filer for en id`() {
         val mediator = mockk<Mediator>().also {
-            coEvery { it.liste2("id", any()) } returns listOf(
+            coEvery { it.liste("id", any()) } returns listOf(
                 KlumpInfo("id/fil1", mapOf("filnavn" to "fil1")), KlumpInfo("id/fil2", mapOf("filnavn" to "a b c"))
             )
-            coEvery { it.liste2("finnesikke", defaultDummyFodselsnummer) } returns emptyList()
+            coEvery { it.liste("finnesikke", defaultDummyFodselsnummer) } returns emptyList()
         }
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
             listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->

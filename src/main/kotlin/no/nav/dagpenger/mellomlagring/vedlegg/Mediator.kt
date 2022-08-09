@@ -16,7 +16,7 @@ import java.util.UUID
 internal interface Mediator {
 
     suspend fun lagre(soknadsId: String, filnavn: String, filinnhold: ByteArray, eier: String): KlumpInfo
-    suspend fun liste2(soknadsId: String, eier: String): List<KlumpInfo>
+    suspend fun liste(soknadsId: String, eier: String): List<KlumpInfo>
     suspend fun hent(vedleggUrn: VedleggUrn, eier: String): Klump?
     suspend fun slett(vedleggUrn: VedleggUrn, eier: String): Boolean
     fun interface FilValidering {
@@ -64,7 +64,7 @@ internal class MediatorImpl(
         ).getOrThrow().let { klumpInfo }
     }
 
-    override suspend fun liste2(soknadsId: String, eier: String): List<KlumpInfo> {
+    override suspend fun liste(soknadsId: String, eier: String): List<KlumpInfo> {
         return kryptertStore(eier)
             .listKlumpInfo(soknadsId)
             .getOrThrow()

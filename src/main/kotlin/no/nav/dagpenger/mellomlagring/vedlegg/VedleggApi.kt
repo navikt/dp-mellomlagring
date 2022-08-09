@@ -72,7 +72,7 @@ internal fun Route.vedlegg(
         get {
             val soknadsId =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
-            val vedlegg = mediator.liste2(soknadsId, call.eierResolver()).map { klumpinfo ->
+            val vedlegg = mediator.liste(soknadsId, call.eierResolver()).map { klumpinfo ->
                 Respond(
                     filnavn = klumpinfo.originalFilnavn,
                     urn = VedleggUrn(klumpinfo.objektNavn).urn

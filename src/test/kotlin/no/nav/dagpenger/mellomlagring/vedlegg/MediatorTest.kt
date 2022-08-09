@@ -62,7 +62,7 @@ class MediatorTest {
                 klumpinfo.originalFilnavn shouldBe "hubba bubba"
             }
 
-            mediator.liste2("id", "eier").let { klumpInfos ->
+            mediator.liste("id", "eier").let { klumpInfos ->
                 klumpInfos.size shouldBe 2
 
                 klumpInfos.find { it.objektNavn == "id/f9ece50c-e833-43c6-996e-aa70ddbc9870" }.let {
@@ -98,7 +98,7 @@ class MediatorTest {
     @Test
     fun `Hente, slette liste vedlegg som ikke finnes`() {
         runBlocking {
-            mediator.liste2("finnesIkke", "eier") shouldBe emptyList()
+            mediator.liste("finnesIkke", "eier") shouldBe emptyList()
 
             shouldThrow<NotFoundException> { mediator.hent(VedleggUrn("finnesIkke"), "eier") }
             shouldThrow<NotFoundException> { mediator.slett(VedleggUrn("finnesIkke"), "eier") }
@@ -154,7 +154,7 @@ class MediatorTest {
             }
 
             shouldThrow<StoreException> {
-                mockedMediator.liste2("id", "eier")
+                mockedMediator.liste("id", "eier")
             }
 
             shouldThrow<StoreException> {
