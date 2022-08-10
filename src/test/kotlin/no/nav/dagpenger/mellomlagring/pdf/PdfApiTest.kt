@@ -59,7 +59,7 @@ internal class PdfApiTest {
         withMockAuthServerAndTestApplication({
             pdfApi(
                 mockk<BundleMediator>(relaxed = true).also {
-                    coEvery { it.bundle(any(), "123") } returns KlumpInfo("bundle.pdf", emptyMap())
+                    coEvery { it.bundle(any(), "123") } returns KlumpInfo("objektnavn", mapOf("filnavn" to "bundle.pdf"))
                 }
             )
         }) {
@@ -82,7 +82,7 @@ internal class PdfApiTest {
                 response.status shouldBe HttpStatusCode.Created
                 response.contentType().toString() shouldBe "application/json; charset=UTF-8"
                 //language=JSON
-                response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":{"urn":"urn:vedlegg:bundle.pdf"}}"""
+                response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:objektnavn"}"""
             }
         }
     }

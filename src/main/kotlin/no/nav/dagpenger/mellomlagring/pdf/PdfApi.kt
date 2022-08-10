@@ -31,12 +31,15 @@ private fun Route.bundle(mediator: BundleMediator) {
         post {
             val request = call.receive<BundleRequest>()
             val klumpInfo = mediator.bundle(request, call.azureAdEier())
-            call.respond(HttpStatusCode.Created, BundleResponse(klumpInfo.originalFilnavn, VedleggUrn(klumpInfo.objektNavn)))
+            call.respond(
+                HttpStatusCode.Created,
+                BundleResponse(klumpInfo.originalFilnavn, VedleggUrn(klumpInfo.objektNavn).urn)
+            )
         }
     }
 }
 
-private data class BundleResponse(val filnavn: String, val urn: VedleggUrn)
+private data class BundleResponse(val filnavn: String, val urn: String)
 
 @JsonDeserialize(using = BundleRequestDeserializer::class)
 internal data class BundleRequest(
