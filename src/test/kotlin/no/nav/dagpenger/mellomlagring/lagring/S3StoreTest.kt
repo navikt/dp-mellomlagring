@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
+import java.time.LocalDateTime
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class S3StoreTest {
@@ -39,6 +40,8 @@ internal class S3StoreTest {
                 container.start()
             }
     }
+
+    private val TODAY = LocalDateTime.now()
 
     @Test
     fun `Exception hvis ikke bucket finnes`() {
@@ -71,7 +74,8 @@ internal class S3StoreTest {
                     objektNavn = "urn:vedlegg:id/hubba",
                     originalFilnavn = "hubba",
                     storrelse = 10,
-                    eier = "hubba eier"
+                    eier = "hubba eier",
+                    tidspunkt = TODAY
                 )
             )
         ).isSuccess shouldBe true
@@ -84,14 +88,15 @@ internal class S3StoreTest {
                     originalFilnavn = "bubba",
                     storrelse = 0,
                     eier = null,
+                    tidspunkt = TODAY
                 )
             )
         ).isSuccess shouldBe true
 
         val orThrow = store.listKlumpInfo("urn:vedlegg:id").getOrThrow()
         orThrow shouldContainExactlyInAnyOrder listOf(
-            KlumpInfo(objektNavn = "urn:vedlegg:id/bubba", originalFilnavn = "bubba", storrelse = 0, eier = null),
-            KlumpInfo(objektNavn = "urn:vedlegg:id/hubba", originalFilnavn = "hubba", storrelse = 10, eier = "hubba eier"),
+            KlumpInfo(objektNavn = "urn:vedlegg:id/bubba", originalFilnavn = "bubba", storrelse = 0, eier = null, tidspunkt = TODAY),
+            KlumpInfo(objektNavn = "urn:vedlegg:id/hubba", originalFilnavn = "hubba", storrelse = 10, eier = "hubba eier", tidspunkt = TODAY),
         )
 
         store.hent("urn:vedlegg:id/hubba").getOrNull().also {
@@ -102,6 +107,7 @@ internal class S3StoreTest {
                 klump.klumpInfo.eier shouldBe "hubba eier"
                 klump.klumpInfo.storrelse shouldBe 10
                 String(klump.innhold) shouldBe "hubba"
+                klump.klumpInfo.tidspunkt shouldBe TODAY
             }
         }
 

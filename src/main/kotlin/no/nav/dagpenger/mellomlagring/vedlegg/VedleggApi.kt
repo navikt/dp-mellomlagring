@@ -30,6 +30,7 @@ import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.auth.azureAdEier
 import no.nav.dagpenger.mellomlagring.auth.oboEier
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
+import java.time.LocalDateTime
 
 private val logger = KotlinLogging.logger { }
 
@@ -61,25 +62,15 @@ internal fun Route.vedlegg(
             val id =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
             val multiPartData = call.receiveMultipart()
-            val respond = fileUploadHandler.handleFileupload(multiPartData, id, call.eierResolver()).map { klumpInfo ->
-                Respond(
-                    filnavn = klumpInfo.originalFilnavn,
-                    urn = VedleggUrn(klumpInfo.objektNavn).urn,
-                    storrelse = klumpInfo.storrelse
-
-                )
-            }
+            val respond =
+                fileUploadHandler.handleFileupload(multiPartData, id, call.eierResolver()).map(KlumpInfo::toRespond)
             call.respond(HttpStatusCode.Created, respond)
         }
         get {
             val soknadsId =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
             val vedlegg = mediator.liste(soknadsId, call.eierResolver()).map { klumpinfo ->
-                Respond(
-                    filnavn = klumpinfo.originalFilnavn,
-                    urn = VedleggUrn(klumpinfo.objektNavn).urn,
-                    storrelse = klumpinfo.storrelse
-                )
+                klumpinfo.toRespond()
             }
             call.respond(HttpStatusCode.OK, vedlegg)
         }
@@ -113,7 +104,14 @@ internal fun Route.vedlegg(
     }
 }
 
-private data class Respond(val filnavn: String, val urn: String, val storrelse: Long)
+private fun KlumpInfo.toRespond() = Respond(
+    filnavn = this.originalFilnavn,
+    urn = VedleggUrn(this.objektNavn).urn,
+    storrelse = this.storrelse,
+    tidspunkt = this.tidspunkt
+)
+
+private data class Respond(val filnavn: String, val urn: String, val storrelse: Long, val tidspunkt: LocalDateTime)
 
 internal class FileUploadHandler(private val mediator: Mediator) {
     suspend fun handleFileupload(

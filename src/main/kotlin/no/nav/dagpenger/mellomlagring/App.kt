@@ -1,5 +1,7 @@
 package no.nav.dagpenger.mellomlagring
 
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
@@ -104,6 +106,8 @@ internal fun Application.ktorFeatures() {
     }
     install(ContentNegotiation) {
         jackson {
+            registerModule(JavaTimeModule())
+            disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
         }
     }
 }
