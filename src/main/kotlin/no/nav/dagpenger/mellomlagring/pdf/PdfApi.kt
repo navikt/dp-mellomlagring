@@ -15,6 +15,7 @@ import io.ktor.server.routing.routing
 import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.auth.azureAdEier
 import no.nav.dagpenger.mellomlagring.vedlegg.VedleggUrn
+import java.time.LocalDateTime
 
 internal fun Application.pdfApi(mediator: BundleMediator) {
     routing {
@@ -33,13 +34,18 @@ private fun Route.bundle(mediator: BundleMediator) {
             val klumpInfo = mediator.bundle(request, call.azureAdEier())
             call.respond(
                 HttpStatusCode.Created,
-                BundleResponse(klumpInfo.originalFilnavn, VedleggUrn(klumpInfo.objektNavn).urn)
+                BundleResponse(
+                    filnavn = klumpInfo.originalFilnavn,
+                    urn = VedleggUrn(klumpInfo.objektNavn).urn,
+                    storrelse = klumpInfo.storrelse,
+                    tidspunkt = klumpInfo.tidspunkt
+                )
             )
         }
     }
 }
 
-private data class BundleResponse(val filnavn: String, val urn: String)
+private data class BundleResponse(val filnavn: String, val urn: String, val storrelse: Long, val tidspunkt: LocalDateTime)
 
 @JsonDeserialize(using = BundleRequestDeserializer::class)
 internal data class BundleRequest(

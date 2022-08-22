@@ -63,14 +63,14 @@ internal fun Route.vedlegg(
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
             val multiPartData = call.receiveMultipart()
             val respond =
-                fileUploadHandler.handleFileupload(multiPartData, id, call.eierResolver()).map(KlumpInfo::toRespond)
+                fileUploadHandler.handleFileupload(multiPartData, id, call.eierResolver()).map(KlumpInfo::toResponse)
             call.respond(HttpStatusCode.Created, respond)
         }
         get {
             val soknadsId =
                 call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
             val vedlegg = mediator.liste(soknadsId, call.eierResolver()).map { klumpinfo ->
-                klumpinfo.toRespond()
+                klumpinfo.toResponse()
             }
             call.respond(HttpStatusCode.OK, vedlegg)
         }
@@ -104,14 +104,14 @@ internal fun Route.vedlegg(
     }
 }
 
-private fun KlumpInfo.toRespond() = Respond(
+private fun KlumpInfo.toResponse() = Response(
     filnavn = this.originalFilnavn,
     urn = VedleggUrn(this.objektNavn).urn,
     storrelse = this.storrelse,
     tidspunkt = this.tidspunkt
 )
 
-private data class Respond(val filnavn: String, val urn: String, val storrelse: Long, val tidspunkt: LocalDateTime)
+private data class Response(val filnavn: String, val urn: String, val storrelse: Long, val tidspunkt: LocalDateTime)
 
 internal class FileUploadHandler(private val mediator: Mediator) {
     suspend fun handleFileupload(

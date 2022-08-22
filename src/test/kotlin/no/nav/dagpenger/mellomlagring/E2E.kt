@@ -1,5 +1,7 @@
 package no.nav.dagpenger.mellomlagring
 
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import de.slub.urn.URN
 import io.kotest.matchers.shouldBe
@@ -33,6 +35,7 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.io.FileReader
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -95,13 +98,15 @@ fun getAzureAdToken(app: String): String {
 val httpClientJackson = HttpClient {
     install(ContentNegotiation) {
         jackson {
+            registerModule(JavaTimeModule())
+            disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
         }
     }
 }
 val plainHttpClient = HttpClient {
 }
 
-private data class Response(val filnavn: String, val urn: String) {
+private data class Response(val filnavn: String, val urn: String, val storrelse: Long, val tidspunkt: LocalDateTime) {
     private val _urn = URN.rfc8141().parse(urn)
     fun nss(): String = _urn.namespaceSpecificString().toString()
 }
