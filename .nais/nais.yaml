@@ -18,16 +18,16 @@ spec:
   replicas:
     min: 2
     max: 3
-    cpuThresholdPercentage: 50
+    cpuThresholdPercentage: 75
   prometheus:
     enabled: true
     path: "/internal/metrics"
   limits:
-    cpu: "200m"
-    memory: "256Mi"
+    cpu: "750m"
+    memory: "1024Mi"
   requests:
-    cpu: "200m"
-    memory: "256Mi"
+    cpu: "500m"
+    memory: "512Mi"
   envFrom:
     - secret: dp-mellomlagring-config
   secureLogs:
