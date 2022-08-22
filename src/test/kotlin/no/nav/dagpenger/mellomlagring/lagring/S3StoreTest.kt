@@ -69,40 +69,39 @@ internal class S3StoreTest {
                 innhold = "hubba".toByteArray(),
                 klumpInfo = KlumpInfo(
                     objektNavn = "urn:vedlegg:id/hubba",
-                    metadata = mapOf("meta" to "value")
+                    originalFilnavn = "hubba",
+                    storrelse = 10,
+                    eier = "hubba eier"
                 )
             )
         ).isSuccess shouldBe true
 
         store.lagre(
             Klump(
-                innhold = "hubba".toByteArray(),
+                innhold = "bubba".toByteArray(),
                 klumpInfo = KlumpInfo(
                     objektNavn = "urn:vedlegg:id/bubba",
-                    metadata = mapOf("meta" to "value")
+                    originalFilnavn = "bubba",
+                    storrelse = 0,
+                    eier = null,
                 )
             )
         ).isSuccess shouldBe true
 
-        store.listKlumpInfo("urn:vedlegg:id").getOrThrow() shouldContainExactlyInAnyOrder listOf(
-            KlumpInfo("urn:vedlegg:id/hubba", mapOf("meta" to "value")),
-            KlumpInfo("urn:vedlegg:id/bubba", mapOf("meta" to "value"))
+        val orThrow = store.listKlumpInfo("urn:vedlegg:id").getOrThrow()
+        orThrow shouldContainExactlyInAnyOrder listOf(
+            KlumpInfo(objektNavn = "urn:vedlegg:id/bubba", originalFilnavn = "bubba", storrelse = 0, eier = null),
+            KlumpInfo(objektNavn = "urn:vedlegg:id/hubba", originalFilnavn = "hubba", storrelse = 10, eier = "hubba eier"),
         )
 
         store.hent("urn:vedlegg:id/hubba").getOrNull().also {
             it shouldNotBe null
             it?.let { klump ->
                 klump.klumpInfo.objektNavn shouldBe "urn:vedlegg:id/hubba"
+                klump.klumpInfo.originalFilnavn shouldBe "hubba"
+                klump.klumpInfo.eier shouldBe "hubba eier"
+                klump.klumpInfo.storrelse shouldBe 10
                 String(klump.innhold) shouldBe "hubba"
-                klump.klumpInfo.metadata shouldBe mapOf("meta" to "value")
-            }
-        }
-
-        store.hentKlumpInfo("urn:vedlegg:id/hubba").getOrThrow().also {
-            it shouldNotBe null
-            it?.let { klumpInfo ->
-                klumpInfo.objektNavn shouldBe "urn:vedlegg:id/hubba"
-                klumpInfo.metadata shouldBe mapOf("meta" to "value")
             }
         }
 

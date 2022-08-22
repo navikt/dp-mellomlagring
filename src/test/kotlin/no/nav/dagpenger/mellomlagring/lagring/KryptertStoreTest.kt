@@ -42,17 +42,21 @@ internal class KryptertStoreTest {
                 innhold = "hubba".toByteArray(),
                 klumpInfo = KlumpInfo(
                     objektNavn = lagretHubbaUrn,
-                    metadata = mapOf("meta" to "value")
+                    originalFilnavn = "hubbaOriginalFilnavn",
+                    storrelse = 6,
+                    eier = testFnr,
                 )
             )
         ).isSuccess shouldBe true
 
         kryptertStore.lagre(
             Klump(
-                innhold = "hubba".toByteArray(),
+                innhold = "hubba bubba".toByteArray(),
                 klumpInfo = KlumpInfo(
                     objektNavn = "urn:vedlegg:id/bubba",
-                    metadata = mapOf("meta" to "value")
+                    originalFilnavn = "hubbaOriginalFilnavn",
+                    storrelse = 6,
+                    eier = testFnr,
                 )
             )
         ).isSuccess shouldBe true
@@ -100,7 +104,9 @@ internal class KryptertStoreTest {
                         innhold = "hubba".toByteArray(),
                         klumpInfo = KlumpInfo(
                             objektNavn = "urn:vedlegg:id/hubba",
-                            metadata = mapOf("meta" to "value")
+                            originalFilnavn = "hubba",
+                            storrelse = 0,
+                            eier = testFnr,
                         )
                     )
                 ).isSuccess

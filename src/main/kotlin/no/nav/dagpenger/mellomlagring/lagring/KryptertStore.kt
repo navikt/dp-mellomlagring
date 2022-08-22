@@ -74,8 +74,7 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
     }
 
     private fun KlumpInfo?.erEier(): Boolean {
-        val kryptertEier = this?.metadata?.get("eier")
-        return when (kryptertEier) {
+        return when (val kryptertEier = this?.eier) {
             null -> {
                 sikkerlogg.warn { "Fant ikke eier for klumpinfo: $this" }
                 false
@@ -91,31 +90,11 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
         }
     }
 
-    private fun Result<KlumpInfo?>.erEier(): Boolean = this.fold(
-        onSuccess = { klumpInfo: KlumpInfo? ->
-            return when (klumpInfo) {
-                null -> {
-                    sikkerlogg.warn { "Fant ikke klumpinfo" }
-                    false
-                }
-                else -> {
-                    klumpInfo.erEier()
-                }
-            }
-        },
-        onFailure = {
-            sikkerlogg.error("Kunne ikke hente info", it)
-            false
-        }
-    )
-
     private fun Klump.encrypt(eier: String): Klump {
-        val metadata = this.klumpInfo.metadata.toMutableMap().apply {
-            this["eier"] = fnr.encrypt()
-        }
+        val klumpInfo1 = this.klumpInfo.copy(eier = this.klumpInfo.eier.encrypt())
         return Klump(
             innhold = aead.encrypt(this.innhold, eier.toByteArray()),
-            klumpInfo = this.klumpInfo.copy(metadata = metadata.toMap())
+            klumpInfo = klumpInfo1
         )
     }
 
@@ -123,6 +102,8 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
         return Klump(innhold = aead.decrypt(this.innhold, eier.toByteArray()), klumpInfo = this.klumpInfo)
     }
 
-    private fun String.encrypt() = aead.encrypt(this.toByteArray(charset), fnr.toByteArray()).toString(charset)
+    private fun String?.encrypt() =
+        this?.let { aead.encrypt(this.toByteArray(charset), fnr.toByteArray()).toString(charset) }
+
     private fun String.decrypt() = aead.decrypt(this.toByteArray(charset), fnr.toByteArray()).toString(charset)
 }

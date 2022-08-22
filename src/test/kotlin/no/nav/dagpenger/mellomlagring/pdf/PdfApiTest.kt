@@ -59,7 +59,8 @@ internal class PdfApiTest {
         withMockAuthServerAndTestApplication({
             pdfApi(
                 mockk<BundleMediator>(relaxed = true).also {
-                    coEvery { it.bundle(any(), "123") } returns KlumpInfo("objektnavn", mapOf("filnavn" to "bundle.pdf"))
+                    coEvery { it.bundle(any(), "123") } returns
+                        KlumpInfo("objektnavn", "bundle.pdf", storrelse = 0, eier = null)
                 }
             )
         }) {

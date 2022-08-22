@@ -25,7 +25,7 @@ import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
 import org.junit.jupiter.api.Test
 
-internal class ApiTest {
+internal class VedleggApiTest {
 
     @Test
     fun `Uautorisert dersom ingen token finnes`() {
@@ -65,7 +65,8 @@ internal class ApiTest {
     fun `Liste filer for en id`() {
         val mediator = mockk<Mediator>().also {
             coEvery { it.liste("id", any()) } returns listOf(
-                KlumpInfo("id/fil1", mapOf("filnavn" to "fil1")), KlumpInfo("id/fil2", mapOf("filnavn" to "a b c"))
+                KlumpInfo(objektNavn = "id/fil1", originalFilnavn = "fil1", storrelse = 0, eier = "eier1"),
+                KlumpInfo(objektNavn = "id/fil2", originalFilnavn = "a b c", storrelse = 0, eier = "eier2"),
             )
             coEvery { it.liste("finnesikke", defaultDummyFodselsnummer) } returns emptyList()
         }
@@ -75,7 +76,7 @@ internal class ApiTest {
                     response.status shouldBe HttpStatusCode.OK
                     response.contentType().toString() shouldBe "application/json; charset=UTF-8"
                     //language=JSON
-                    response.bodyAsText() shouldBe """[{"filnavn":"fil1","urn":"urn:vedlegg:id/fil1"},{"filnavn":"a b c","urn":"urn:vedlegg:id/fil2"}]"""
+                    response.bodyAsText() shouldBe """[{"filnavn":"fil1","urn":"urn:vedlegg:id/fil1","storrelse":0},{"filnavn":"a b c","urn":"urn:vedlegg:id/fil2","storrelse":0}]"""
                 }
 
                 client.get("${fixture.path}/vedlegg/finnesikke") { autentisert(fixture) }.let { response ->
@@ -90,12 +91,12 @@ internal class ApiTest {
     @Test
     fun `Lagring av fil`() {
         val mediator = mockk<Mediator>().also {
-            coEvery { it.lagre("id", "file.csv", any(), defaultDummyFodselsnummer) } returns KlumpInfo("id/file.csv")
-            coEvery { it.lagre("id", "file2.csv", any(), defaultDummyFodselsnummer) } returns KlumpInfo("id/file2.csv")
-            coEvery { it.lagre("id", "fil med space", any(), defaultDummyFodselsnummer) } returns KlumpInfo(
-                "id/uuid",
-                mapOf("filnavn" to "fil med space")
-            )
+            coEvery { it.lagre("id", "file.csv", any(), defaultDummyFodselsnummer) } returns
+                KlumpInfo("id/file1.csv", "file1.csv", 0, defaultDummyFodselsnummer)
+            coEvery { it.lagre("id", "file2.csv", any(), defaultDummyFodselsnummer) } returns
+                KlumpInfo("id/file2.csv", "file.csv", 0, defaultDummyFodselsnummer)
+            coEvery { it.lagre("id", "fil med space", any(), defaultDummyFodselsnummer) } returns
+                KlumpInfo("id/uuid", "fil med space", 0, defaultDummyFodselsnummer)
         }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
@@ -122,7 +123,7 @@ internal class ApiTest {
                 }.let { response ->
                     response.status shouldBe HttpStatusCode.Created
                     //language=JSON
-                    response.bodyAsText() shouldBe """[{"filnavn":"id/file.csv","urn":"urn:vedlegg:id/file.csv"},{"filnavn":"id/file2.csv","urn":"urn:vedlegg:id/file2.csv"},{"filnavn":"fil med space","urn":"urn:vedlegg:id/uuid"}]"""
+                    response.bodyAsText() shouldBe """[{"filnavn":"file1.csv","urn":"urn:vedlegg:id/file1.csv","storrelse":0},{"filnavn":"file.csv","urn":"urn:vedlegg:id/file2.csv","storrelse":0},{"filnavn":"fil med space","urn":"urn:vedlegg:id/uuid","storrelse":0}]"""
                     response.contentType().toString() shouldBe "application/json; charset=UTF-8"
                 }
             }
@@ -136,7 +137,9 @@ internal class ApiTest {
                 innhold = "1".toByteArray(),
                 klumpInfo = KlumpInfo(
                     objektNavn = "id/filnavn.pdf",
-                    metadata = mapOf()
+                    originalFilnavn = "filnavn.pdf",
+                    storrelse = 0,
+                    eier = defaultDummyFodselsnummer,
                 )
             )
             coEvery {
@@ -213,6 +216,4 @@ internal class ApiTest {
             else -> {}
         }
     }
-
-    private data class Fil(val type: String, val path: String, val navn: String)
 }

@@ -54,7 +54,9 @@ internal class MediatorImpl(
         valider(filnavn, filinnhold)
         val klumpInfo = KlumpInfo(
             objektNavn = createStoreKey(soknadsId = soknadsId),
-            metadata = mapOf("filnavn" to filnavn)
+            originalFilnavn = filnavn,
+            storrelse = filinnhold.size.toLong(),
+            eier = eier,
         )
         return kryptertStore(eier).lagre(
             klump = Klump(

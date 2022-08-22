@@ -31,10 +31,7 @@ internal class S3Store(
             gcpStorage.get(BlobId.of(bucketName, storageKey))?.let { blob ->
                 Klump(
                     innhold = blob.getContent(),
-                    klumpInfo = KlumpInfo(
-                        objektNavn = blob.name,
-                        metadata = blob.metadata ?: emptyMap()
-                    )
+                    klumpInfo = KlumpInfo.fromBlob(blob)
                 )
             }
         }.onFailure {
@@ -46,7 +43,7 @@ internal class S3Store(
         val blobInfo =
             BlobInfo.newBuilder(BlobId.of(bucketName, klump.klumpInfo.objektNavn))
                 .setContentType("application/octet-stream")
-                .setMetadata(klump.klumpInfo.metadata)
+                .setMetadata(klump.klumpInfo.toMetadata())
                 .build() // todo contentType?
 
         return kotlin.runCatching {
@@ -73,12 +70,7 @@ internal class S3Store(
     override fun hentKlumpInfo(storageKey: StorageKey): Result<KlumpInfo?> {
         return kotlin.runCatching {
             gcpStorage.get(BlobId.of(bucketName, storageKey))
-                ?.let {
-                    KlumpInfo(
-                        objektNavn = it.name,
-                        metadata = it.metadata ?: emptyMap()
-                    )
-                }
+                ?.let { KlumpInfo.fromBlob(blob = it) }
         }.onSuccess {
             logger.debug { "Listet klumpinfo for fil: $storageKey" }
         }.onFailure {
@@ -90,7 +82,7 @@ internal class S3Store(
         return kotlin.runCatching {
             gcpStorage.list(bucketName, Storage.BlobListOption.prefix(keyPrefix))
                 ?.values
-                ?.map { KlumpInfo(objektNavn = it.name, metadata = it.metadata ?: emptyMap()) }
+                ?.map(KlumpInfo.Companion::fromBlob)
                 ?: emptyList()
         }.onSuccess {
             logger.debug { "Listet klumpinfo for path: $keyPrefix" }

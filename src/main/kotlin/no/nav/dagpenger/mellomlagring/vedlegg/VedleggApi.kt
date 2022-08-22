@@ -64,7 +64,9 @@ internal fun Route.vedlegg(
             val respond = fileUploadHandler.handleFileupload(multiPartData, id, call.eierResolver()).map { klumpInfo ->
                 Respond(
                     filnavn = klumpInfo.originalFilnavn,
-                    urn = VedleggUrn(klumpInfo.objektNavn).urn
+                    urn = VedleggUrn(klumpInfo.objektNavn).urn,
+                    storrelse = klumpInfo.storrelse
+
                 )
             }
             call.respond(HttpStatusCode.Created, respond)
@@ -75,7 +77,8 @@ internal fun Route.vedlegg(
             val vedlegg = mediator.liste(soknadsId, call.eierResolver()).map { klumpinfo ->
                 Respond(
                     filnavn = klumpinfo.originalFilnavn,
-                    urn = VedleggUrn(klumpinfo.objektNavn).urn
+                    urn = VedleggUrn(klumpinfo.objektNavn).urn,
+                    storrelse = klumpinfo.storrelse
                 )
             }
             call.respond(HttpStatusCode.OK, vedlegg)
@@ -110,7 +113,7 @@ internal fun Route.vedlegg(
     }
 }
 
-private data class Respond(val filnavn: String, val urn: String)
+private data class Respond(val filnavn: String, val urn: String, val storrelse: Long)
 
 internal class FileUploadHandler(private val mediator: Mediator) {
     suspend fun handleFileupload(

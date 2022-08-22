@@ -1,5 +1,7 @@
 package no.nav.dagpenger.mellomlagring.lagring
 
+import com.google.cloud.storage.Blob
+
 internal interface Store {
 
     fun hent(storageKey: StorageKey): Result<Klump?>
@@ -9,8 +11,28 @@ internal interface Store {
     fun listKlumpInfo(keyPrefix: StorageKey /* = kotlin.String */): Result<List<KlumpInfo>>
 }
 
-internal data class KlumpInfo(val objektNavn: String, val metadata: Map<String, String> = emptyMap()) {
-    val originalFilnavn: String = metadata["filnavn"] ?: objektNavn
+internal data class KlumpInfo(
+    val objektNavn: String,
+    val originalFilnavn: String,
+    val storrelse: Long,
+    val eier: String? = null
+) {
+
+    companion object {
+        fun fromBlob(blob: Blob) = KlumpInfo(
+            objektNavn = blob.name,
+            originalFilnavn = blob.metadata["originalFilnavn"] ?: blob.name,
+            storrelse = blob.metadata["storrelse "]?.toLong() ?: 0,
+            eier = blob.metadata["eier"]
+        )
+    }
+
+    fun toMetadata(): Map<String, String> = mutableMapOf(
+        "originalFilnavn" to originalFilnavn,
+        "storrelse " to storrelse.toString(),
+    ).also { map ->
+        eier?.let { map["eier"] = it }
+    }.toMap()
 }
 
 internal class Klump(
