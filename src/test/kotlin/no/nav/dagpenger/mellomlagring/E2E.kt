@@ -31,8 +31,14 @@ import no.nav.dagpenger.mellomlagring.test.fileAsByteArray
 import no.nav.dagpenger.oauth2.CachedOauth2Client
 import no.nav.dagpenger.oauth2.OAuth2Client
 import no.nav.dagpenger.oauth2.OAuth2Config
+import org.jsmart.zerocode.core.domain.LoadWith
+import org.jsmart.zerocode.core.domain.TestMapping
+import org.jsmart.zerocode.core.domain.TestMappings
+import org.jsmart.zerocode.jupiter.extension.ParallelLoadExtension
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import java.io.File
 import java.io.FileReader
 import java.time.LocalDateTime
@@ -111,6 +117,20 @@ private data class Response(val filnavn: String, val urn: String, val storrelse:
     fun nss(): String = _urn.namespaceSpecificString().toString()
 }
 
+@ExtendWith(ParallelLoadExtension::class)
+internal class E2ELoad {
+    @Test
+    @DisplayName("Load test E2E")
+    @LoadWith("load_generation.properties")
+    @TestMappings(
+        TestMapping(testClass = E2E::class, testMethod = "e2e"),
+    )
+    @Disabled
+    fun testLoad() {
+        // This space remains empty
+    }
+}
+
 internal class E2E {
     val eier = "51818700273"
     val eier2 = "12345678910"
@@ -120,8 +140,7 @@ internal class E2E {
 
     // selvbetjeningstoken er tidsbegrenset, så det må erstattes med jevne mellomrom,
     // logg inn på søknaden i dev med eier 51818700273 og kopier selvbetjening-token fra devtools ->Appilcation->Storage
-    val selvbetjeningsIdToken =
-        ""
+    val selvbetjeningsIdToken = ""
 
     @Disabled
     @Test
@@ -203,8 +222,12 @@ internal class E2E {
                     )
                 }
             bundleResponse.status shouldBe HttpStatusCode.Created
+            val bodyAsText = bundleResponse.bodyAsText().also { println(it) }
             val bundleId =
-                jacksonObjectMapper().readValue(bundleResponse.bodyAsText(), Response::class.java).also { println(it) }
+                jacksonObjectMapper().also {
+                    it.registerModule(JavaTimeModule())
+                    it.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                }.readValue(bodyAsText, Response::class.java).also { println(it) }
                     .nss()
 
             // hente bundle

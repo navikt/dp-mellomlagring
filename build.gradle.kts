@@ -103,6 +103,8 @@ dependencies {
     testImplementation(Ktor2.Server.library("test-host"))
     testImplementation(Ktor2.Client.library("mock"))
     testImplementation(Mockk.mockk)
+    testImplementation("org.jsmart:zerocode-tdd:1.3.29")
+    testImplementation("org.jsmart:zerocode-tdd-jupiter:1.3.29")
 
     // For E2E
     testImplementation("io.kubernetes:client-java:16.0.0")
