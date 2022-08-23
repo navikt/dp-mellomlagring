@@ -112,7 +112,13 @@ val httpClientJackson = HttpClient {
 val plainHttpClient = HttpClient {
 }
 
-private data class Response(val filnavn: String, val urn: String, val storrelse: Long, val tidspunkt: LocalDateTime) {
+private data class Response(
+    val filnavn: String,
+    val urn: String,
+    val filid: String,
+    val storrelse: Long,
+    val tidspunkt: LocalDateTime
+) {
     private val _urn = URN.rfc8141().parse(urn)
     fun nss(): String = _urn.namespaceSpecificString().toString()
 }
@@ -142,7 +148,7 @@ internal class E2E {
     // logg inn på søknaden i dev med eier 51818700273 og kopier selvbetjening-token fra devtools ->Appilcation->Storage
     val selvbetjeningsIdToken = ""
 
-    @Disabled
+//    @Disabled
     @Test
     fun e2e() {
         runBlocking {
