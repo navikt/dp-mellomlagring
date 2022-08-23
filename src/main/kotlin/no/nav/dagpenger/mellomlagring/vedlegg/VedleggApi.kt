@@ -104,14 +104,24 @@ internal fun Route.vedlegg(
     }
 }
 
-private fun KlumpInfo.toResponse() = Response(
-    filnavn = this.originalFilnavn,
-    urn = VedleggUrn(this.objektNavn).urn,
-    storrelse = this.storrelse,
-    tidspunkt = this.tidspunkt
-)
+private fun KlumpInfo.toResponse(): Response {
+    val vedleggUrn = VedleggUrn(this.objektNavn)
+    return Response(
+        filnavn = this.originalFilnavn,
+        urn = vedleggUrn.urn,
+        filid = vedleggUrn.nss,
+        storrelse = this.storrelse,
+        tidspunkt = this.tidspunkt
+    )
+}
 
-private data class Response(val filnavn: String, val urn: String, val storrelse: Long, val tidspunkt: LocalDateTime)
+private data class Response(
+    val filnavn: String,
+    val urn: String,
+    val filid: String,
+    val storrelse: Long,
+    val tidspunkt: LocalDateTime
+)
 
 internal class FileUploadHandler(private val mediator: Mediator) {
     suspend fun handleFileupload(

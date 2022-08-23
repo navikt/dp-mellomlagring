@@ -79,7 +79,7 @@ internal class VedleggApiTest {
                     response.status shouldBe HttpStatusCode.OK
                     response.contentType().toString() shouldBe "application/json; charset=UTF-8"
                     //language=JSON
-                    response.bodyAsText() shouldBe """[{"filnavn":"fil1","urn":"urn:vedlegg:id/fil1","storrelse":0,"tidspunkt":"$NOW"},{"filnavn":"a b c","urn":"urn:vedlegg:id/fil2","storrelse":0,"tidspunkt":"$NOW"}]"""
+                    response.bodyAsText() shouldBe """[{"filnavn":"fil1","urn":"urn:vedlegg:id/fil1","filid":"id/fil1","storrelse":0,"tidspunkt":"$NOW"},{"filnavn":"a b c","urn":"urn:vedlegg:id/fil2","filid":"id/fil2","storrelse":0,"tidspunkt":"$NOW"}]"""
                 }
 
                 client.get("${fixture.path}/vedlegg/finnesikke") { autentisert(fixture) }.let { response ->
@@ -126,7 +126,7 @@ internal class VedleggApiTest {
                 }.let { response ->
                     response.status shouldBe HttpStatusCode.Created
                     //language=JSON
-                    response.bodyAsText() shouldBe """[{"filnavn":"file1.csv","urn":"urn:vedlegg:id/file1.csv","storrelse":0,"tidspunkt":"$NOW"},{"filnavn":"file.csv","urn":"urn:vedlegg:id/file2.csv","storrelse":0,"tidspunkt":"$NOW"},{"filnavn":"fil med space","urn":"urn:vedlegg:id/uuid","storrelse":0,"tidspunkt":"$NOW"}]"""
+                    response.bodyAsText() shouldBe """[{"filnavn":"file1.csv","urn":"urn:vedlegg:id/file1.csv","filid":"id/file1.csv","storrelse":0,"tidspunkt":"$NOW"},{"filnavn":"file.csv","urn":"urn:vedlegg:id/file2.csv","filid":"id/file2.csv","storrelse":0,"tidspunkt":"$NOW"},{"filnavn":"fil med space","urn":"urn:vedlegg:id/uuid","filid":"id/uuid","storrelse":0,"tidspunkt":"$NOW"}]"""
                     response.contentType().toString() shouldBe "application/json; charset=UTF-8"
                 }
             }
