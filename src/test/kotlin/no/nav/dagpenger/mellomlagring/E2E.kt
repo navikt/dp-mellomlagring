@@ -148,7 +148,7 @@ internal class E2E {
     // logg inn på søknaden i dev med eier 51818700273 og kopier selvbetjening-token fra devtools ->Appilcation->Storage
     val selvbetjeningsIdToken = ""
 
-//    @Disabled
+    @Disabled
     @Test
     fun e2e() {
         runBlocking {
