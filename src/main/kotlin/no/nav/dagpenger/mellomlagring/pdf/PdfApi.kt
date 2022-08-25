@@ -38,7 +38,7 @@ private fun Route.bundle(mediator: BundleMediator) {
                 BundleResponse(
                     filnavn = klumpInfo.originalFilnavn,
                     urn = vedleggUrn.urn,
-                    filid = vedleggUrn.nss,
+                    filsti = vedleggUrn.nss,
                     storrelse = klumpInfo.storrelse,
                     tidspunkt = klumpInfo.tidspunkt
                 )
@@ -50,7 +50,7 @@ private fun Route.bundle(mediator: BundleMediator) {
 private data class BundleResponse(
     val filnavn: String,
     val urn: String,
-    val filid: String,
+    val filsti: String,
     val storrelse: Long,
     val tidspunkt: LocalDateTime
 )

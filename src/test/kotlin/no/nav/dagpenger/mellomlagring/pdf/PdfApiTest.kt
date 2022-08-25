@@ -82,7 +82,7 @@ internal class PdfApiTest {
                 response.status shouldBe HttpStatusCode.Created
                 response.contentType().toString() shouldBe "application/json; charset=UTF-8"
                 //language=JSON
-                response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:objektnavn","filid":"objektnavn","storrelse":0,"tidspunkt":"$now"}"""
+                response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:objektnavn","filsti":"objektnavn","storrelse":0,"tidspunkt":"$now"}"""
             }
         }
     }

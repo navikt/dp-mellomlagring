@@ -115,7 +115,7 @@ val plainHttpClient = HttpClient {
 private data class Response(
     val filnavn: String,
     val urn: String,
-    val filid: String,
+    val filsti: String,
     val storrelse: Long,
     val tidspunkt: LocalDateTime
 ) {
@@ -161,7 +161,7 @@ internal class E2E {
 
             // Send filer til mellomlagring
             httpClientJackson.submitFormWithBinaryData(
-                url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId",
+                url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
                 formData = formData {
                     append(
                         "image", "/smallimg1.jpg".fileAsByteArray(),
@@ -170,6 +170,14 @@ internal class E2E {
                             append(HttpHeaders.ContentDisposition, "filename=\"æ ø å.jpg\"")
                         }
                     )
+                }
+            ) {
+                this.header("Authorization", "Bearer $oboToken")
+            }.body<List<Response>>().also { println(it) }.size shouldBe 1
+
+            httpClientJackson.submitFormWithBinaryData(
+                url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta2",
+                formData = formData {
                     append(
                         "image", "/Arbeidsforhold2.pdf".fileAsByteArray(),
                         Headers.build {
@@ -180,7 +188,7 @@ internal class E2E {
                 }
             ) {
                 this.header("Authorization", "Bearer $oboToken")
-            }.body<List<Response>>().also { println(it) }.size shouldBe 2
+            }.body<List<Response>>().also { println(it) }.size shouldBe 1
 
             // List alle filer
             val listResponse =
@@ -276,6 +284,11 @@ internal class E2E {
             }.let {
                 it.status shouldBe HttpStatusCode.NoContent
             }
+
+            // List alle filer
+            httpClientJackson.get("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId") {
+                this.header("Authorization", "Bearer $oboToken")
+            }.body<List<Response>>().also { println(it) }
         }
     }
 }

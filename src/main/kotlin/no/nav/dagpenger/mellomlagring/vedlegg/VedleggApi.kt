@@ -120,7 +120,7 @@ private fun KlumpInfo.toResponse(): Response {
     return Response(
         filnavn = this.originalFilnavn,
         urn = vedleggUrn.urn,
-        filid = vedleggUrn.nss,
+        filsti = vedleggUrn.nss,
         storrelse = this.storrelse,
         tidspunkt = this.tidspunkt
     )
@@ -129,7 +129,7 @@ private fun KlumpInfo.toResponse(): Response {
 private data class Response(
     val filnavn: String,
     val urn: String,
-    val filid: String,
+    val filsti: String,
     val storrelse: Long,
     val tidspunkt: LocalDateTime
 )
