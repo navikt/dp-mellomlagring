@@ -1,5 +1,6 @@
 package no.nav.dagpenger.mellomlagring.vedlegg
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.kotest.matchers.shouldBe
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
@@ -68,8 +69,20 @@ internal class VedleggApiTest {
     fun `Liste filer for en id`() {
         val mediator = mockk<Mediator>().also {
             coEvery { it.liste("id", any()) } returns listOf(
-                KlumpInfo(objektNavn = "id/fil1", originalFilnavn = "fil1", storrelse = 0, eier = "eier1", tidspunkt = NOW),
-                KlumpInfo(objektNavn = "id/fil2", originalFilnavn = "a b c", storrelse = 0, eier = "eier2", tidspunkt = NOW),
+                KlumpInfo(
+                    objektNavn = "id/fil1",
+                    originalFilnavn = "fil1",
+                    storrelse = 0,
+                    eier = "eier1",
+                    tidspunkt = NOW
+                ),
+                KlumpInfo(
+                    objektNavn = "id/sub1/fil2",
+                    originalFilnavn = "a b c",
+                    storrelse = 0,
+                    eier = "eier2",
+                    tidspunkt = NOW
+                ),
             )
             coEvery { it.liste("finnesikke", defaultDummyFodselsnummer) } returns emptyList()
         }
@@ -79,13 +92,53 @@ internal class VedleggApiTest {
                     response.status shouldBe HttpStatusCode.OK
                     response.contentType().toString() shouldBe "application/json; charset=UTF-8"
                     //language=JSON
-                    response.bodyAsText() shouldBe """[{"filnavn":"fil1","urn":"urn:vedlegg:id/fil1","filid":"id/fil1","storrelse":0,"tidspunkt":"$NOW"},{"filnavn":"a b c","urn":"urn:vedlegg:id/fil2","filid":"id/fil2","storrelse":0,"tidspunkt":"$NOW"}]"""
+                    response.bodyAsText() shouldBe """[{"filnavn":"fil1","urn":"urn:vedlegg:id/fil1","filid":"id/fil1","storrelse":0,"tidspunkt":"$NOW"},{"filnavn":"a b c","urn":"urn:vedlegg:id/sub1/fil2","filid":"id/sub1/fil2","storrelse":0,"tidspunkt":"$NOW"}]"""
                 }
 
                 client.get("${fixture.path}/vedlegg/finnesikke") { autentisert(fixture) }.let { response ->
                     response.status shouldBe HttpStatusCode.OK
                     response.contentType().toString() shouldBe "application/json; charset=UTF-8"
                     response.bodyAsText() shouldBe """[]"""
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `Lagring av fil i subfolder`() {
+        val mediator = mockk<Mediator>().also {
+            coEvery { it.lagre("id/sub", "file1.csv", any(), defaultDummyFodselsnummer) } returns
+                KlumpInfo("id/sub/uuid1", "file1.csv", 0, defaultDummyFodselsnummer, NOW)
+            coEvery { it.lagre("id/sub", "file2.csv", any(), defaultDummyFodselsnummer) } returns
+                KlumpInfo("id/sub/uuid2", "file2.csv", 0, defaultDummyFodselsnummer, NOW)
+            coEvery { it.lagre("id/sub/subsub/", "file3.csv", any(), defaultDummyFodselsnummer) } returns
+                KlumpInfo("id/sub/subsub/uuid3", "file3.csv", 0, defaultDummyFodselsnummer, NOW)
+        }
+        withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
+            listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
+                client.post("${fixture.path}/vedlegg/id/sub") {
+                    autentisert(fixture)
+                    setBody(
+                        MultiPartFormDataContent(
+                            formData {
+                                append("hubba", "file1.csv", ContentType.Text.CSV) { this.append("1") }
+                                append("hubba", "file2.csv", ContentType.Text.CSV) { this.append("1") }
+                            },
+                            "boundary",
+                            ContentType.MultiPart.FormData.withParameter("boundary", "boundary")
+                        )
+                    )
+                }.let { response ->
+                    response.status shouldBe HttpStatusCode.Created
+                    response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+                    response.bodyAsText().let {
+                        //                        json.size() shouldBe 2
+                        jacksonObjectMapper().readTree(it).sortedBy { node -> node.get("filnavn").asText() }
+                            .let { sortedNodes ->
+                                sortedNodes.first().get("urn").asText() shouldBe "urn:vedlegg:id/sub/uuid1"
+                                sortedNodes.last().get("urn").asText() shouldBe "urn:vedlegg:id/sub/uuid2"
+                            }
+                    }
                 }
             }
         }
@@ -145,6 +198,16 @@ internal class VedleggApiTest {
                     eier = defaultDummyFodselsnummer,
                 )
             )
+
+            coEvery { it.hent(VedleggUrn("id/sub/uuid"), defaultDummyFodselsnummer) } returns Klump(
+                innhold = "uuid".toByteArray(),
+                klumpInfo = KlumpInfo(
+                    objektNavn = "id/sub/uuid",
+                    originalFilnavn = "filnavn.pdf",
+                    storrelse = 0,
+                    eier = defaultDummyFodselsnummer,
+                )
+            )
             coEvery {
                 it.hent(
                     VedleggUrn("id/finnesIkke.pdf"),
@@ -161,6 +224,12 @@ internal class VedleggApiTest {
                     response.bodyAsText() shouldBe "1"
                 }
 
+                client.get("${fixture.path}/vedlegg/id/sub/uuid") { autentisert(fixture) }.let { response ->
+                    response.status shouldBe HttpStatusCode.OK
+                    response.contentType() shouldBe ContentType.Application.OctetStream
+                    response.bodyAsText() shouldBe "uuid"
+                }
+
                 client.get("${fixture.path}/vedlegg/id/finnesIkke.pdf") { autentisert(fixture) }.status shouldBe HttpStatusCode.NotFound
             }
         }
@@ -170,6 +239,7 @@ internal class VedleggApiTest {
     fun `Slette vedlegg`() {
         val mockMediator = mockk<Mediator>().also {
             coEvery { it.slett(VedleggUrn("id/filnavn.pdf"), defaultDummyFodselsnummer) } returns true
+            coEvery { it.slett(VedleggUrn("id/sub/uuid"), defaultDummyFodselsnummer) } returns true
             coEvery {
                 it.slett(
                     VedleggUrn("id/finnesIkke.pdf"),
@@ -181,6 +251,7 @@ internal class VedleggApiTest {
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
             listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
                 client.delete("${fixture.path}/vedlegg/id/filnavn.pdf") { autentisert(fixture) }.status shouldBe HttpStatusCode.NoContent
+                client.delete("${fixture.path}/vedlegg/id/sub/uuid") { autentisert(fixture) }.status shouldBe HttpStatusCode.NoContent
                 client.delete("${fixture.path}/vedlegg/id/finnesIkke.pdf") { autentisert(fixture) }.status shouldBe HttpStatusCode.NotFound
             }
         }

@@ -58,32 +58,44 @@ internal fun Route.vedlegg(
     eierResolver: ApplicationCall.() -> String
 ) {
     route("/mellomlagring/vedlegg/{id}") {
+        fun ApplicationCall.id(): String {
+            return this.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
+        }
+
         post {
-            val id =
-                call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
             val multiPartData = call.receiveMultipart()
             val respond =
-                fileUploadHandler.handleFileupload(multiPartData, id, call.eierResolver()).map(KlumpInfo::toResponse)
+                fileUploadHandler.handleFileupload(multiPartData, call.id(), call.eierResolver())
+                    .map(KlumpInfo::toResponse)
             call.respond(HttpStatusCode.Created, respond)
         }
         get {
-            val soknadsId =
-                call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
-            val vedlegg = mediator.liste(soknadsId, call.eierResolver()).map { klumpinfo ->
+            val vedlegg = mediator.liste(call.id(), call.eierResolver()).map { klumpinfo ->
                 klumpinfo.toResponse()
             }
             call.respond(HttpStatusCode.OK, vedlegg)
         }
-        route("/{filnavn}") {
-            fun ApplicationCall.vedleggUrn(): VedleggUrn {
-                val id = this.parameters["id"]
-                val filnavn = this.parameters["filnavn"]
-                return VedleggUrn("$id/$filnavn")
+
+        route("/{subPath...}") {
+            fun ApplicationCall.subPath(): String {
+                return this.parameters.getAll("subPath")?.joinToString("/")
+                    ?: throw IllegalArgumentException("Fant ikke subPath")
+            }
+
+            fun ApplicationCall.fullPath(): String {
+                return listOf(this.id(), this.subPath()).joinToString("/")
+            }
+
+            post {
+                val multiPartData = call.receiveMultipart()
+                val respond =
+                    fileUploadHandler.handleFileupload(multiPartData, call.fullPath(), call.eierResolver())
+                        .map(KlumpInfo::toResponse)
+                call.respond(HttpStatusCode.Created, respond)
             }
 
             get {
-                val vedleggUrn = call.vedleggUrn()
-                mediator.hent(vedleggUrn, call.eierResolver())?.let {
+                mediator.hent(VedleggUrn(call.fullPath()), call.eierResolver())?.let {
                     call.respondOutputStream(ContentType.Application.OctetStream, HttpStatusCode.OK) {
                         withContext(Dispatchers.IO) {
                             this@respondOutputStream.write(it.innhold)
@@ -92,8 +104,7 @@ internal fun Route.vedlegg(
                 }
             }
             delete {
-                val vedleggUrn = call.vedleggUrn()
-                mediator.slett(vedleggUrn, call.eierResolver()).also {
+                mediator.slett(VedleggUrn(call.fullPath()), call.eierResolver()).also {
                     when (it) {
                         true -> call.respond(HttpStatusCode.NoContent)
                         else -> call.respond(HttpStatusCode.NotFound)
