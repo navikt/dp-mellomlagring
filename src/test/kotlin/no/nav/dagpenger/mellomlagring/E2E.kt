@@ -9,7 +9,6 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.timeout
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
@@ -43,9 +42,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.io.File
 import java.io.FileReader
-import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZonedDateTime
 import java.util.UUID
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -107,16 +107,31 @@ fun getAzureAdToken(app: String): String {
 
 val httpClientJackson = HttpClient {
     install(ContentNegotiation) {
-        install(HttpTimeout) {
-            requestTimeoutMillis = 100000
-        }
         jackson {
             registerModule(JavaTimeModule())
             disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
         }
     }
+    install(HttpTimeout) {
+        requestTimeoutMillis = 130.seconds.inWholeMilliseconds
+        connectTimeoutMillis = 130.seconds.inWholeMilliseconds
+        socketTimeoutMillis = 130.seconds.inWholeMilliseconds
+    }
 }
 val plainHttpClient = HttpClient {
+    install(HttpTimeout) {
+        requestTimeoutMillis = 130.seconds.inWholeMilliseconds
+        connectTimeoutMillis = 130.seconds.inWholeMilliseconds
+        socketTimeoutMillis = 130.seconds.inWholeMilliseconds
+    }
+}
+
+private data class BundleRequest(
+    val bundleNavn: String,
+    val soknadId: String,
+    val filer: List<URN>
+) {
+    data class URN(val urn: String)
 }
 
 private data class Response(
@@ -124,7 +139,7 @@ private data class Response(
     val urn: String,
     val filsti: String,
     val storrelse: Long,
-    val tidspunkt: LocalDateTime
+    val tidspunkt: ZonedDateTime
 ) {
     private val _urn = URN.rfc8141().parse(urn)
     fun nss(): String = _urn.namespaceSpecificString().toString()
@@ -153,17 +168,15 @@ internal class E2E {
 
     // selvbetjeningstoken er tidsbegrenset, så det må erstattes med jevne mellomrom,
     // logg inn på søknaden i dev med eier 51818700273 og kopier selvbetjening-token fra devtools ->Appilcation->Storage
-    val selvbetjeningsIdToken =
-        ""
+    val selvbetjeningsIdToken = "t "
 
-    @OptIn(ExperimentalTime::class)
     @Disabled
     @Test
-    fun middlesize() {
+    fun volume() {
         println("Running test with id: $soknadId and eier $eier")
         val fileAsByteArray = "/middlesize.jpg".fileAsByteArray()
         val formData = formData {
-            repeat(3) { n ->
+            repeat(6) { n ->
                 append(
                     "image", fileAsByteArray,
                     Headers.build {
@@ -179,19 +192,42 @@ internal class E2E {
                 selvbetjeningsIdToken
             )
             // Send filer til mellomlagring
-            measureTime {
-                val responseList = httpClientJackson.submitFormWithBinaryData(
+            val responseList = measure("Tid brukt på å sender opp filer") {
+                return@measure httpClientJackson.submitFormWithBinaryData(
                     url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
                     formData = formData
                 ) {
-                    timeout {
-                        requestTimeoutMillis = 30000
-                    }
                     this.header("Authorization", "Bearer $oboToken")
                 }.body<List<Response>>()
-                println(responseList)
-            }.also { println("Tid brukt $it") }
+            }
+
+            // Bundle filer
+            val azureadToken = getAzureAdToken("dp-behov-soknad-pdf")
+            val bundleResponse = measure("Tid brukt for å bundle") {
+                responseList.map { it.urn }
+                httpClientJackson.post("https://dp-mellomlagring.dev.intern.nav.no/v1/mellomlagring/pdf/bundle") {
+                    header("Authorization", "Bearer $azureadToken")
+                    this.header("X-Eier", value = eier)
+                    header(HttpHeaders.ContentType, "application/json")
+                    setBody(
+                        BundleRequest(
+                            bundleNavn = "bundle.pdf",
+                            soknadId = soknadId,
+                            filer = responseList.map { BundleRequest.URN(it.urn) }
+                        )
+                    )
+                }.body<Response>()
+            }.also { println(it) }
         }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private inline fun <T : Any> measure(msg: String, block: () -> T): T {
+        var t: T
+        measureTime {
+            t = block()
+        }.also { println("$msg: $it") }
+        return t
     }
 
     @Disabled

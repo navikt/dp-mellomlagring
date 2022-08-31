@@ -23,7 +23,9 @@ private object Kek {
 /**
  *  Krever
  *   gcloud auth application-default login
- *   roles/cloudkms.cryptoKeyEncrypterDecrypter
+ *   roles/cloudkms.cryptoKeyEncrypterDecrypter:
+ *   gcloud projects add-iam-policy-binding teamdagpenger-dev-885f --member user:giao.the.cung@nav.no --role roles/cloudkms.cryptoKeyEncrypterDecrypter --condition="expression=request.time < timestamp('$(date -v '+1H' -u +'%Y-%m-%dT%H:%M:%SZ')'),title=temp_access"q
+ *
  *   tilgang til bucket
  */
 fun main() {
@@ -37,7 +39,7 @@ fun main() {
     val gcs = StorageOptions.getDefaultInstance().service
 
     val blob =
-        gcs.get(BlobId.of("teamdagpenger-mellomlagring-dev", "39a0b3a8-bbf0-4673-9d8b-6747f956260f/Arbeidsforhold.pdf"))
+        gcs.get(BlobId.of("teamdagpenger-mellomlagring-dev", "c061c0c3-cf9e-4764-b058-090e2a77edfb/f3884faf-1c44-4233-97e2-7529ed956c98"))
     blob.getContent().let {
         println("Filstørellse: ${it.size}")
         aead.decrypt(it, "51818700273".toByteArray())
