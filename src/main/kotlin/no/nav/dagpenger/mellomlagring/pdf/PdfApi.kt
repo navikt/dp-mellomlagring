@@ -15,7 +15,7 @@ import io.ktor.server.routing.routing
 import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.auth.azureAdEier
 import no.nav.dagpenger.mellomlagring.vedlegg.VedleggUrn
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
 
 internal fun Application.pdfApi(mediator: BundleMediator) {
     routing {
@@ -52,7 +52,7 @@ private data class BundleResponse(
     val urn: String,
     val filsti: String,
     val storrelse: Long,
-    val tidspunkt: LocalDateTime
+    val tidspunkt: ZonedDateTime
 )
 
 @JsonDeserialize(using = BundleRequestDeserializer::class)

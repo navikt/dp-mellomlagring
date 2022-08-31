@@ -7,7 +7,9 @@ import de.slub.urn.URN
 import io.kotest.matchers.shouldBe
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
@@ -44,6 +46,8 @@ import java.io.FileReader
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.UUID
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 // Hente azuread eller tokenx secret for  app
 // jwker.nais.io -> tokenx,  azurerator.nais.io -> azuread
@@ -103,6 +107,9 @@ fun getAzureAdToken(app: String): String {
 
 val httpClientJackson = HttpClient {
     install(ContentNegotiation) {
+        install(HttpTimeout) {
+            requestTimeoutMillis = 100000
+        }
         jackson {
             registerModule(JavaTimeModule())
             disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
@@ -146,7 +153,46 @@ internal class E2E {
 
     // selvbetjeningstoken er tidsbegrenset, så det må erstattes med jevne mellomrom,
     // logg inn på søknaden i dev med eier 51818700273 og kopier selvbetjening-token fra devtools ->Appilcation->Storage
-    val selvbetjeningsIdToken = ""
+    val selvbetjeningsIdToken =
+        ""
+
+    @OptIn(ExperimentalTime::class)
+    @Disabled
+    @Test
+    fun middlesize() {
+        println("Running test with id: $soknadId and eier $eier")
+        val fileAsByteArray = "/middlesize.jpg".fileAsByteArray()
+        val formData = formData {
+            repeat(3) { n ->
+                append(
+                    "image", fileAsByteArray,
+                    Headers.build {
+                        append(HttpHeaders.ContentType, "image/jpeg")
+                        append(HttpHeaders.ContentDisposition, "filename=\"$n.jpg\"")
+                    }
+                )
+            }
+        }
+        runBlocking {
+            val oboToken = getOboToken(
+                "dp-soknadsdialog",
+                selvbetjeningsIdToken
+            )
+            // Send filer til mellomlagring
+            measureTime {
+                val responseList = httpClientJackson.submitFormWithBinaryData(
+                    url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
+                    formData = formData
+                ) {
+                    timeout {
+                        requestTimeoutMillis = 30000
+                    }
+                    this.header("Authorization", "Bearer $oboToken")
+                }.body<List<Response>>()
+                println(responseList)
+            }.also { println("Tid brukt $it") }
+        }
+    }
 
     @Disabled
     @Test

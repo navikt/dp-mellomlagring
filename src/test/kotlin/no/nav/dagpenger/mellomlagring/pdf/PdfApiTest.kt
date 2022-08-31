@@ -18,14 +18,15 @@ import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestA
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 internal class PdfApiTest {
     companion object {
         private const val bundlePath = "v1/mellomlagring/pdf/bundle"
     }
 
-    private val now = LocalDateTime.now()
+    private val now = ZonedDateTime.now()
 
     @Test
     fun `Uautorisert dersom ikke azuread token finnes`() {
@@ -82,7 +83,11 @@ internal class PdfApiTest {
                 response.status shouldBe HttpStatusCode.Created
                 response.contentType().toString() shouldBe "application/json; charset=UTF-8"
                 //language=JSON
-                response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:objektnavn","filsti":"objektnavn","storrelse":0,"tidspunkt":"$now"}"""
+                response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:objektnavn","filsti":"objektnavn","storrelse":0,"tidspunkt":"${
+                now.format(
+                    DateTimeFormatter.ISO_OFFSET_DATE_TIME
+                )
+                }"}"""
             }
         }
     }

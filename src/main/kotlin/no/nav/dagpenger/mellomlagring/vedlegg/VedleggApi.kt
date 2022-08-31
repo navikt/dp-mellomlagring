@@ -30,7 +30,7 @@ import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.auth.azureAdEier
 import no.nav.dagpenger.mellomlagring.auth.oboEier
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
 
 private val logger = KotlinLogging.logger { }
 
@@ -131,7 +131,7 @@ private data class Response(
     val urn: String,
     val filsti: String,
     val storrelse: Long,
-    val tidspunkt: LocalDateTime
+    val tidspunkt: ZonedDateTime
 )
 
 internal class FileUploadHandler(private val mediator: Mediator) {

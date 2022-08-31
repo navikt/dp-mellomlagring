@@ -1,7 +1,6 @@
 package no.nav.dagpenger.mellomlagring.lagring
 
 import com.google.cloud.storage.Blob
-import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
@@ -19,7 +18,7 @@ internal data class KlumpInfo(
     val originalFilnavn: String,
     val storrelse: Long,
     val eier: String? = null,
-    val tidspunkt: LocalDateTime = ZonedDateTime.now(ZoneId.of("Europe/Oslo")).toLocalDateTime()
+    val tidspunkt: ZonedDateTime = ZonedDateTime.now(ZoneId.of("Europe/Oslo"))
 ) {
 
     companion object {
@@ -28,7 +27,7 @@ internal data class KlumpInfo(
             originalFilnavn = blob.metadata["originalFilnavn"] ?: blob.name,
             storrelse = blob.metadata["storrelse "]?.toLong() ?: 0,
             eier = blob.metadata["eier"],
-            tidspunkt = LocalDateTime.parse(blob.metadata["tidspunkt"])
+            tidspunkt = ZonedDateTime.parse(blob.metadata["tidspunkt"])
         )
     }
 

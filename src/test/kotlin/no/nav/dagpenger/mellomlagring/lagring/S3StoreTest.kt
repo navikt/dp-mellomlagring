@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class S3StoreTest {
@@ -41,7 +41,7 @@ internal class S3StoreTest {
             }
     }
 
-    private val TODAY = LocalDateTime.now()
+    private val TODAY = ZonedDateTime.now()
 
     @Test
     fun `Exception hvis ikke bucket finnes`() {

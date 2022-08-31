@@ -24,12 +24,14 @@ import no.nav.dagpenger.mellomlagring.TestApplication.defaultDummyFodselsnummer
 import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestApplication
 import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
+import no.nav.dagpenger.mellomlagring.shouldBeJson
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
 internal class VedleggApiTest {
 
-    private val NOW = LocalDateTime.now()
+    private val NOW = ZonedDateTime.now()
 
     @Test
     fun `Uautorisert dersom ingen token finnes`() {
@@ -92,7 +94,22 @@ internal class VedleggApiTest {
                     response.status shouldBe HttpStatusCode.OK
                     response.contentType().toString() shouldBe "application/json; charset=UTF-8"
                     //language=JSON
-                    response.bodyAsText() shouldBe """[{"filnavn":"fil1","urn":"urn:vedlegg:id/fil1","filsti":"id/fil1","storrelse":0,"tidspunkt":"$NOW"},{"filnavn":"a b c","urn":"urn:vedlegg:id/sub1/fil2","filsti":"id/sub1/fil2","storrelse":0,"tidspunkt":"$NOW"}]"""
+                    response.bodyAsText() shouldBeJson """[
+  {
+    "filnavn": "fil1",
+    "urn": "urn:vedlegg:id/fil1",
+    "filsti": "id/fil1",
+    "storrelse": 0,
+    "tidspunkt": "${NOW.format(ISO_OFFSET_DATE_TIME)}"
+  },
+  {
+    "filnavn": "a b c",
+    "urn": "urn:vedlegg:id/sub1/fil2",
+    "filsti": "id/sub1/fil2",
+    "storrelse": 0,
+    "tidspunkt": "${NOW.format(ISO_OFFSET_DATE_TIME)}"
+  }
+]"""
                 }
 
                 client.get("${fixture.path}/vedlegg/finnesikke") { autentisert(fixture) }.let { response ->
@@ -179,7 +196,29 @@ internal class VedleggApiTest {
                 }.let { response ->
                     response.status shouldBe HttpStatusCode.Created
                     //language=JSON
-                    response.bodyAsText() shouldBe """[{"filnavn":"file1.csv","urn":"urn:vedlegg:id/file1.csv","filsti":"id/file1.csv","storrelse":0,"tidspunkt":"$NOW"},{"filnavn":"file.csv","urn":"urn:vedlegg:id/file2.csv","filsti":"id/file2.csv","storrelse":0,"tidspunkt":"$NOW"},{"filnavn":"fil med space","urn":"urn:vedlegg:id/uuid","filsti":"id/uuid","storrelse":0,"tidspunkt":"$NOW"}]"""
+                    response.bodyAsText() shouldBeJson """[
+  {
+    "filnavn": "file1.csv",
+    "urn": "urn:vedlegg:id/file1.csv",
+    "filsti": "id/file1.csv",
+    "storrelse": 0,
+    "tidspunkt": "${NOW.format(ISO_OFFSET_DATE_TIME)}"
+  },
+  {
+    "filnavn": "file.csv",
+    "urn": "urn:vedlegg:id/file2.csv",
+    "filsti": "id/file2.csv",
+    "storrelse": 0,
+    "tidspunkt": "${NOW.format(ISO_OFFSET_DATE_TIME)}"
+  },
+  {
+    "filnavn": "fil med space",
+    "urn": "urn:vedlegg:id/uuid",
+    "filsti": "id/uuid",
+    "storrelse": 0,
+    "tidspunkt": "${NOW.format(ISO_OFFSET_DATE_TIME)}"
+  }
+]"""
                     response.contentType().toString() shouldBe "application/json; charset=UTF-8"
                 }
             }

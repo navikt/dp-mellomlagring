@@ -90,7 +90,8 @@ dependencies {
     implementation("com.google.crypto.tink:tink-gcpkms:1.6.1")
     implementation(Jackson.jsr310)
 
-    runtimeOnly("ch.qos.logback:logback-classic:1.3.0-alpha11")
+    runtimeOnly("ch.qos.logback:logback-classic:1.2.11")
+    runtimeOnly("ch.qos.logback:logback-core:1.2.11")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.2") {
         exclude("com.fasterxml.jackson.core")
     }
@@ -105,6 +106,7 @@ dependencies {
     testImplementation(Mockk.mockk)
     testImplementation("org.jsmart:zerocode-tdd:1.3.29")
     testImplementation("org.jsmart:zerocode-tdd-jupiter:1.3.29")
+    testImplementation("org.skyscreamer:jsonassert:1.5.1")
 
     // For E2E
     testImplementation("io.kubernetes:client-java:16.0.0")
