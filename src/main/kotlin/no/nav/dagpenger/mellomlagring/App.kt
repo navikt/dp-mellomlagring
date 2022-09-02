@@ -24,11 +24,11 @@ import no.nav.dagpenger.mellomlagring.lagring.S3Store
 import no.nav.dagpenger.mellomlagring.monitoring.metrics
 import no.nav.dagpenger.mellomlagring.pdf.BundleMediator
 import no.nav.dagpenger.mellomlagring.pdf.pdfApi
+import no.nav.dagpenger.mellomlagring.vedlegg.AntiVirusValidering
 import no.nav.dagpenger.mellomlagring.vedlegg.MediatorImpl
 import no.nav.dagpenger.mellomlagring.vedlegg.NotFoundException
 import no.nav.dagpenger.mellomlagring.vedlegg.NotOwnerException
 import no.nav.dagpenger.mellomlagring.vedlegg.UgyldigFilInnhold
-import no.nav.dagpenger.mellomlagring.vedlegg.VirusValidering
 import no.nav.dagpenger.mellomlagring.vedlegg.vedleggApi
 import org.slf4j.event.Level
 
@@ -37,7 +37,7 @@ private val logger = KotlinLogging.logger { }
 fun main() {
     val mediator = MediatorImpl(
         store = S3Store(),
-        filValideringer = listOf(VirusValidering(clamAv())),
+        filValideringer = listOf(AntiVirusValidering(clamAv())),
         aead = Crypto.aead
     )
     embeddedServer(CIO, port = 8080) {
