@@ -168,7 +168,7 @@ internal class E2E {
 
     // selvbetjeningstoken er tidsbegrenset, så det må erstattes med jevne mellomrom,
     // logg inn på søknaden i dev med eier 51818700273 og kopier selvbetjening-token fra devtools ->Appilcation->Storage
-    val selvbetjeningsIdToken = "t "
+    val selvbetjeningsIdToken = ""
 
     @Disabled
     @Test
@@ -240,6 +240,27 @@ internal class E2E {
                 "dp-soknadsdialog",
                 selvbetjeningsIdToken
             )
+
+            // Send ugyldig filer
+            listOf("test.txt", "protected.pdf").forEach { fil ->
+                httpClientJackson.submitFormWithBinaryData(
+                    url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
+                    formData = formData {
+                        append(
+                            "text", "/$fil".fileAsByteArray(),
+                            Headers.build {
+                                append(HttpHeaders.ContentType, "text/plain")
+                                append(HttpHeaders.ContentDisposition, "filename=\"$fil\"")
+                            }
+                        )
+                    }
+                ) {
+                    this.header("Authorization", "Bearer $oboToken")
+                }.let {
+                    it.status shouldBe HttpStatusCode.BadRequest
+                    println(it.bodyAsText())
+                }
+            }
 
             // Send filer til mellomlagring
             httpClientJackson.submitFormWithBinaryData(
