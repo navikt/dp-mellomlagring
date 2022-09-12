@@ -17,7 +17,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.mockk
 import no.nav.dagpenger.mellomlagring.TestApplication
 import no.nav.dagpenger.mellomlagring.TestApplication.autentisert
@@ -294,37 +293,6 @@ internal class VedleggApiTest {
                 client.delete("${fixture.path}/vedlegg/id/sub/uuid") { autentisert(fixture) }.status shouldBe HttpStatusCode.NoContent
                 client.delete("${fixture.path}/vedlegg/id/finnesIkke.pdf") { autentisert(fixture) }.status shouldBe HttpStatusCode.NotFound
             }
-        }
-    }
-
-    @Test
-    fun `Batch sletting av vedlegg`() {
-        val klumpInfo1 = KlumpInfo(
-            objektNavn = "fil1",
-            originalFilnavn = "filnavn",
-            storrelse = 0,
-            eier = "eier",
-            tidspunkt = ZonedDateTime.now()
-        )
-        val klumpInfo2 = klumpInfo1.copy(objektNavn = "fil2")
-        val mockMediator = mockk<Mediator>().also {
-
-            coEvery { it.liste("123", defaultDummyFodselsnummer) } returns listOf(
-                klumpInfo1, klumpInfo2
-            )
-            coEvery { it.slett(VedleggUrn(klumpInfo1.objektNavn), defaultDummyFodselsnummer) } returns true
-            coEvery { it.slett(VedleggUrn(klumpInfo2.objektNavn), defaultDummyFodselsnummer) } returns true
-        }
-
-        withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
-            listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
-                client.delete("${fixture.path}/batch/vedlegg/123") { autentisert(fixture) }.status shouldBe HttpStatusCode.NoContent
-            }
-        }
-        coVerify(exactly = 2) {
-            mockMediator.liste("123", defaultDummyFodselsnummer)
-            mockMediator.slett(VedleggUrn(klumpInfo1.objektNavn), defaultDummyFodselsnummer)
-            mockMediator.slett(VedleggUrn(klumpInfo2.objektNavn), defaultDummyFodselsnummer)
         }
     }
 
