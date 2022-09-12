@@ -46,7 +46,6 @@ spec:
         - application: dp-soknadsdialog
         - application: dp-behov-soknad-pdf
         - application: dp-behov-journalforing
-        - application: dp-soknad
   tokenx:
     enabled: true
   azure:
