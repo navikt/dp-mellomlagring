@@ -57,6 +57,18 @@ internal fun Route.vedlegg(
     mediator: Mediator,
     eierResolver: ApplicationCall.() -> String
 ) {
+    route("/mellomlagring/batch/vedlegg/{id}") {
+        delete {
+            val id = this.call.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
+            val eier = call.eierResolver()
+
+            mediator.liste(id, eier).forEach {
+                mediator.slett(VedleggUrn(it.objektNavn), eier)
+            }
+            call.respond(HttpStatusCode.NoContent)
+        }
+    }
+
     route("/mellomlagring/vedlegg/{id}") {
         fun ApplicationCall.id(): String {
             return this.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
