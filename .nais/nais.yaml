@@ -24,10 +24,10 @@ spec:
     path: "/internal/metrics"
   limits:
     cpu: "750m"
-    memory: "1024Mi"
+    memory: "4096Mi"
   requests:
     cpu: "500m"
-    memory: "512Mi"
+    memory: "2042Mi"
   envFrom:
     - secret: dp-mellomlagring-config
   secureLogs:
