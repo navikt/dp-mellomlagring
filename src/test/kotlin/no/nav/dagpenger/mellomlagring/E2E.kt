@@ -176,7 +176,7 @@ internal class E2E {
         println("Running test with id: $soknadId and eier $eier")
         val fileAsByteArray = "/middlesize.jpg".fileAsByteArray()
         val formData = formData {
-            repeat(6) { n ->
+            repeat(2) { n ->
                 append(
                     "image", fileAsByteArray,
                     Headers.build {
@@ -202,12 +202,10 @@ internal class E2E {
             }
 
             // Bundle filer
-            val azureadToken = getAzureAdToken("dp-behov-soknad-pdf")
             val bundleResponse = measure("Tid brukt for å bundle") {
                 responseList.map { it.urn }
-                httpClientJackson.post("https://dp-mellomlagring.dev.intern.nav.no/v1/mellomlagring/pdf/bundle") {
-                    header("Authorization", "Bearer $azureadToken")
-                    this.header("X-Eier", value = eier)
+                httpClientJackson.post("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/pdf/bundle") {
+                    header("Authorization", "Bearer $oboToken")
                     header(HttpHeaders.ContentType, "application/json")
                     setBody(
                         BundleRequest(
@@ -321,9 +319,8 @@ internal class E2E {
 
             // Bundle filer
             val bundleResponse =
-                plainHttpClient.post("https://dp-mellomlagring.dev.intern.nav.no/v1/mellomlagring/pdf/bundle") {
-                    header("Authorization", "Bearer $azureadToken")
-                    header("X-Eier", value = eier)
+                plainHttpClient.post("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/pdf/bundle") {
+                    header("Authorization", "Bearer $oboToken")
                     header(HttpHeaders.ContentType, "application/json")
                     setBody(
                         """
