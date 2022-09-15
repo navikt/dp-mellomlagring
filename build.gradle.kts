@@ -86,12 +86,12 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(platform("com.google.cloud:libraries-bom:26.0.0"))
     implementation(platform(kotlin("bom")))
-    implementation("com.google.crypto.tink:tink:1.6.1")
-    implementation("com.google.crypto.tink:tink-gcpkms:1.6.1")
+    implementation("com.google.crypto.tink:tink:1.7.0")
+    implementation("com.google.crypto.tink:tink-gcpkms:1.7.0")
     implementation(Jackson.jsr310)
 
-    runtimeOnly("ch.qos.logback:logback-classic:1.2.11")
-    runtimeOnly("ch.qos.logback:logback-core:1.2.11")
+    runtimeOnly("ch.qos.logback:logback-classic:1.4.0")
+    runtimeOnly("ch.qos.logback:logback-core:1.4.0")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.2") {
         exclude("com.fasterxml.jackson.core")
     }
