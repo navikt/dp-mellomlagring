@@ -10,7 +10,6 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.install
 import io.ktor.server.auth.AuthenticationConfig
 import io.ktor.server.auth.jwt.JWTConfigureFunction
 import io.ktor.server.auth.jwt.JWTPrincipal

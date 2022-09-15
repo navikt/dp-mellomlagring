@@ -13,14 +13,14 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.mellomlagring.Config
-import no.nav.dagpenger.mellomlagring.auth.azureAdEier
+import no.nav.dagpenger.mellomlagring.auth.oboEier
 import no.nav.dagpenger.mellomlagring.vedlegg.VedleggUrn
 import java.time.ZonedDateTime
 
 internal fun Application.pdfApi(mediator: BundleMediator) {
     routing {
-        route("v1/mellomlagring/pdf") {
-            authenticate(Config.AzureAd.name) {
+        route("v1/obo/mellomlagring/pdf") {
+            authenticate(Config.TokenX.name) {
                 bundle(mediator)
             }
         }
@@ -31,7 +31,7 @@ private fun Route.bundle(mediator: BundleMediator) {
     route("/bundle") {
         post {
             val request = call.receive<BundleRequest>()
-            val klumpInfo = mediator.bundle(request, call.azureAdEier())
+            val klumpInfo = mediator.bundle(request, call.oboEier())
             val vedleggUrn = VedleggUrn(klumpInfo.objektNavn)
             call.respond(
                 HttpStatusCode.Created,

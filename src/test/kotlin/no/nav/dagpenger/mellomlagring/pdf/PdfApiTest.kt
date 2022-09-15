@@ -11,6 +11,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.mockk.coEvery
 import io.mockk.mockk
+import no.nav.dagpenger.mellomlagring.TestApplication
 import no.nav.dagpenger.mellomlagring.TestApplication.autentisert
 import no.nav.dagpenger.mellomlagring.TestApplication.azureAd
 import no.nav.dagpenger.mellomlagring.TestApplication.tokenXToken
@@ -23,37 +24,25 @@ import java.time.format.DateTimeFormatter
 
 internal class PdfApiTest {
     companion object {
-        private const val bundlePath = "v1/mellomlagring/pdf/bundle"
+        private const val bundlePath = "v1/obo/mellomlagring/pdf/bundle"
     }
 
     private val now = ZonedDateTime.now()
 
     @Test
-    fun `Uautorisert dersom ikke azuread token finnes`() {
+    fun `Uautorisert dersom ikke tokenX token finnes`() {
         withMockAuthServerAndTestApplication({ pdfApi(mockk(relaxed = true)) }) {
             client.post(bundlePath).status shouldBe HttpStatusCode.Unauthorized
-            client.post(bundlePath) { autentisert(token = tokenXToken) }.status shouldBe HttpStatusCode.Unauthorized
+            client.post(bundlePath) { autentisert(token = azureAd) }.status shouldBe HttpStatusCode.Unauthorized
         }
     }
 
     @Test
-    fun `Ugyldig request dersom ikke eier finnes`() {
-        withMockAuthServerAndTestApplication({ pdfApi(mockk(relaxed = true)) }) {
-            client.post(bundlePath) {
-                autentisert(token = azureAd, xEier = null)
-                header(HttpHeaders.ContentType, "application/json")
-                setBody(bundleBody)
-            }.status shouldBe HttpStatusCode.BadRequest
-        }
-    }
-
-    @Test
-    fun `Autoriset dersom azuread token og eier er i request`() {
+    fun `Autoriset dersom tokenX token i request`() {
         withMockAuthServerAndTestApplication({ pdfApi(mockk(relaxed = true)) }) {
             client.post(bundlePath) {
                 autentisert(
-                    token = azureAd,
-                    xEier = "123"
+                    token = tokenXToken,
                 )
             }.status shouldNotBe HttpStatusCode.Unauthorized
         }
@@ -64,7 +53,7 @@ internal class PdfApiTest {
         withMockAuthServerAndTestApplication({
             pdfApi(
                 mockk<BundleMediator>(relaxed = true).also {
-                    coEvery { it.bundle(any(), "123") } returns
+                    coEvery { it.bundle(any(), TestApplication.defaultDummyFodselsnummer) } returns
                         KlumpInfo(
                             objektNavn = "objektnavn",
                             originalFilnavn = "bundle.pdf",
@@ -76,7 +65,7 @@ internal class PdfApiTest {
             )
         }) {
             client.post(bundlePath) {
-                autentisert(token = azureAd, xEier = "123")
+                autentisert(token = tokenXToken)
                 header(HttpHeaders.ContentType, "application/json")
                 setBody(bundleBody)
             }.let { response ->
