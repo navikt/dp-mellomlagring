@@ -81,7 +81,7 @@ dependencies {
     implementation(Ktor2.Server.library("content-negotiation"))
     implementation(Ktor2.Server.library("metrics-micrometer"))
     implementation(Ktor2.Server.library("status-pages"))
-    implementation("com.github.navikt.dp-biblioteker:image-utils:2022.06.27-11.37.720934709949")
+    implementation("com.github.navikt.dp-biblioteker:image-utils:2022.09.16-09.49.80dfbee09357")
     implementation(Micrometer.prometheusRegistry)
     implementation(kotlin("stdlib"))
     implementation(platform("com.google.cloud:libraries-bom:26.0.0"))
