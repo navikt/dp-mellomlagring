@@ -30,9 +30,11 @@ internal object PdfValidering : Mediator.FilValidering {
 
     override suspend fun valider(filnavn: String, filinnhold: ByteArray): FilValideringResultat {
         return if (!filinnhold.isPdf()) return FilValideringResultat.Gyldig(filnavn) else {
-            when (val p = PDFDocument.load(filinnhold)) {
-                is InvalidPDFDocument -> FilValideringResultat.Ugyldig(filnavn, p.message() ?: "Ukjent pdf feil")
-                is ValidPDFDocument -> FilValideringResultat.Gyldig(filnavn)
+            PDFDocument.load(filinnhold).use { p ->
+                when (p) {
+                    is InvalidPDFDocument -> FilValideringResultat.Ugyldig(filnavn, p.message() ?: "Ukjent pdf feil")
+                    is ValidPDFDocument -> FilValideringResultat.Gyldig(filnavn)
+                }
             }
         }
     }
