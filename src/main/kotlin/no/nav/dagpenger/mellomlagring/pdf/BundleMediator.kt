@@ -31,10 +31,8 @@ internal class BundleMediator(private val mediator: Mediator) {
             mediator.hent(urn, eier)
         }.mapCatching {
             it ?: throw NotFoundException("Fant ikke $urn")
-        }.also {
-            if (it.isFailure) {
-                sikkerlogg.info { "Henting av vedlegg $urn feilet for eier $eier" }
-            }
+        }.onFailure {
+            sikkerlogg.error { "Henting av vedlegg $urn feilet for eier $eier" }
         }
     }
 }

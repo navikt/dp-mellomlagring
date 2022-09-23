@@ -27,6 +27,7 @@ internal fun Application.pdfApi(mediator: BundleMediator) {
     }
 }
 
+
 private fun Route.bundle(mediator: BundleMediator) {
     route("/bundle") {
         post {

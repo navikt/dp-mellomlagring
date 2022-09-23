@@ -21,14 +21,13 @@ import mu.KotlinLogging
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
-private val sikkerlogg = KotlinLogging.logger("tjenestekall")
 
 fun ApplicationCall.azureAdEier(): String =
     this.request.header("X-Eier") ?: throw IllegalArgumentException("Request mangler X-Eier header")
 
 fun ApplicationCall.oboEier(): String =
     this.principal<JWTPrincipal>()?.let {
-        it["pid"].also { pid -> pid?.let { sikkerlogg.info { "Subject(pid): $pid" } } }
+        it["pid"]
     } ?: throw IllegalArgumentException("Fant ikke pid i jwt")
 
 internal fun AuthenticationConfig.jwt(
