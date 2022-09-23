@@ -3,6 +3,7 @@ package no.nav.dagpenger.mellomlagring.pdf
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
+import no.nav.dagpenger.mellomlagring.pdf.ImageProcessor.tilPdf
 import no.nav.dagpenger.mellomlagring.vedlegg.Mediator
 import no.nav.dagpenger.mellomlagring.vedlegg.NotFoundException
 import no.nav.dagpenger.mellomlagring.vedlegg.VedleggUrn
@@ -15,15 +16,17 @@ internal class BundleMediator(private val mediator: Mediator) {
         val pdf: ByteArray = request.filer
             .map { hent(VedleggUrn(it.namespaceSpecificString().toString()), eier) }
             .map { it.getOrThrow().innhold }
-            .reduce(ImageProcessor::convertAndMerge)
+            .map { it.tilPdf() }
+            .reduce(ImageProcessor::mergePdf)
 
-        sikkerlogg.info { "Pdfbundle ${request.bundleNavn} er klar" }
         return mediator.lagre(
             soknadsId = request.soknadId,
             filnavn = request.bundleNavn,
             filinnhold = pdf,
             eier = eier
-        )
+        ).also {
+            sikkerlogg.info { "Pdfbundle $it er klar" }
+        }
     }
 
     private suspend fun hent(urn: VedleggUrn, eier: String): Result<Klump> {

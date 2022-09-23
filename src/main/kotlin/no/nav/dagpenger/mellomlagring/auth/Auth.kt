@@ -17,10 +17,8 @@ import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.auth.principal
 import io.ktor.server.request.header
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
 import java.net.URL
 import java.util.concurrent.TimeUnit
-
 
 fun ApplicationCall.azureAdEier(): String =
     this.request.header("X-Eier") ?: throw IllegalArgumentException("Request mangler X-Eier header")

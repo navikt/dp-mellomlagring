@@ -11,9 +11,9 @@ import java.io.BufferedOutputStream
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
-object ImageProcessor {
-    fun convertAndMerge(accumulator: ByteArray, currentValue: ByteArray): ByteArray {
-        return PDFDocument.merge(listOf(accumulator.tilPdf(), currentValue.tilPdf())).use { pdf ->
+internal object ImageProcessor {
+    fun mergePdf(accumulator: ByteArray, currentValue: ByteArray): ByteArray {
+        return PDFDocument.merge(listOf(accumulator, currentValue)).use { pdf ->
             ByteArrayOutputStream().use { os ->
                 pdf.save(BufferedOutputStream(os))
                 os.toByteArray()
@@ -21,7 +21,7 @@ object ImageProcessor {
         }
     }
 
-    private fun ByteArray.tilPdf(): ByteArray {
+    fun ByteArray.tilPdf(): ByteArray {
         return when {
             this.isJpeg() -> {
                 scaleImage(this, "jpeg")
