@@ -73,7 +73,7 @@ dependencies {
     implementation("io.ktor:ktor-client-content-negotiation:2.1.1")
     implementation("io.ktor:ktor-client-core:2.1.1")
     implementation("io.ktor:ktor-client-jackson:2.1.1")
-    implementation("io.ktor:ktor-serialization-jackson:2.1.1")
+    implementation("io.ktor:ktor-serialization-jackson:2.1.2")
     implementation("io.ktor:ktor-server-auth:2.1.1")
     implementation("io.ktor:ktor-server-auth-jwt:2.1.1")
     implementation("io.ktor:ktor-server-cio:2.1.1")
