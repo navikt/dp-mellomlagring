@@ -79,7 +79,7 @@ dependencies {
     implementation("io.ktor:ktor-server-cio:2.1.1")
     implementation("io.ktor:ktor-server-call-logging:2.1.1")
     implementation("io.ktor:ktor-server-content-negotiation:2.1.1")
-    implementation("io.ktor:ktor-server-metrics-micrometer:2.1.1")
+    implementation("io.ktor:ktor-server-metrics-micrometer:2.1.2")
     implementation("io.ktor:ktor-server-status-pages:2.1.1")
     implementation("com.github.navikt.dp-biblioteker:image-utils:2022.09.16-13.28.146a89c2a6f7")
     implementation("io.micrometer:micrometer-registry-prometheus:1.9.1")
