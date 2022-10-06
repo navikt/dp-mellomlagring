@@ -84,7 +84,7 @@ dependencies {
     implementation("com.github.navikt.dp-biblioteker:image-utils:2022.09.16-13.28.146a89c2a6f7")
     implementation("io.micrometer:micrometer-registry-prometheus:1.9.1")
     implementation(kotlin("stdlib"))
-    implementation(platform("com.google.cloud:libraries-bom:26.0.0"))
+    implementation(platform("com.google.cloud:libraries-bom:26.1.2"))
     implementation(platform(kotlin("bom")))
     implementation("com.google.crypto.tink:tink:1.7.0")
     implementation("com.google.crypto.tink:tink-gcpkms:1.7.0")
