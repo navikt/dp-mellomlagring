@@ -112,5 +112,5 @@ dependencies {
     testImplementation("io.kubernetes:client-java:16.0.0")
     testImplementation("com.github.navikt.dp-biblioteker:oauth2-klient:2022.09.16-09.49.80dfbee09357")
 
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.1")
 }
