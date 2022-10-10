@@ -100,7 +100,7 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers:1.17.5")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.1")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.1")
-    testImplementation("io.kotest:kotest-assertions-core-jvm:5.5.0")
+    testImplementation("io.kotest:kotest-assertions-core-jvm:5.5.1")
     testImplementation("io.ktor:ktor-server-test-host:2.1.2")
     testImplementation("io.ktor:ktor-client-${"mock"}:2.1.1")
     testImplementation("io.mockk:mockk:1.13.2")
