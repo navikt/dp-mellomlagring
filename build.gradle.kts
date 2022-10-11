@@ -68,7 +68,7 @@ dependencies {
     implementation("de.slub-dresden:urnlib:2.0.1")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
     implementation("com.natpryce:konfig:1.6.10.0")
-    implementation("io.github.microutils:kotlin-logging:3.0.0")
+    implementation("io.github.microutils:kotlin-logging:3.0.2")
     implementation("io.ktor:ktor-client-cio:2.1.2")
     implementation("io.ktor:ktor-client-content-negotiation:2.1.2")
     implementation("io.ktor:ktor-client-core:2.1.2")
