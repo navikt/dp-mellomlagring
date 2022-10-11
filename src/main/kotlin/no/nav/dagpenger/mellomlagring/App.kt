@@ -57,7 +57,7 @@ internal fun Application.ktorFeatures() {
         filter {
             !it.request.path().startsWith("/internal")
         }
-        this.level = Level.DEBUG
+        this.level = Level.INFO
     }
     install(Authentication) {
         jwt(Config.AzureAd.name, Config.AzureAd.wellKnownUrl) {
