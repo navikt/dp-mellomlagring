@@ -23,7 +23,8 @@ internal class BundleMediator(private val mediator: Mediator) {
             soknadsId = request.soknadId,
             filnavn = request.bundleNavn,
             filinnhold = pdf,
-            eier = eier
+            eier = eier,
+            filContentType = "application/pdf"
         ).also {
             sikkerlogg.info { "Pdfbundle $it er klar" }
         }

@@ -124,7 +124,7 @@ internal class VedleggApiTest {
     @Test
     fun `Lagring av fil i subfolder`() {
         val mediator = mockk<Mediator>().also {
-            coEvery { it.lagre("id/sub", "file1.csv", any(), defaultDummyFodselsnummer) } returns
+            coEvery { it.lagre("id/sub", "file1.csv", any(), any(), defaultDummyFodselsnummer) } returns
                 KlumpInfo(
                     objektNavn = "id/sub/uuid1",
                     "file1.csv",
@@ -133,9 +133,9 @@ internal class VedleggApiTest {
                     "application/octet-stream",
                     NOW,
                 )
-            coEvery { it.lagre("id/sub", "file2.csv", any(), defaultDummyFodselsnummer) } returns
+            coEvery { it.lagre("id/sub", "file2.csv", any(), any(), defaultDummyFodselsnummer) } returns
                 KlumpInfo("id/sub/uuid2", "file2.csv", 0, defaultDummyFodselsnummer, "application/octet-stream", NOW)
-            coEvery { it.lagre("id/sub/subsub/", "file3.csv", any(), defaultDummyFodselsnummer) } returns
+            coEvery { it.lagre("id/sub/subsub/", "file3.csv", any(), any(), defaultDummyFodselsnummer) } returns
                 KlumpInfo(
                     "id/sub/subsub/uuid3",
                     "file3.csv",
@@ -178,11 +178,11 @@ internal class VedleggApiTest {
     @Test
     fun `Lagring av fil`() {
         val mediator = mockk<Mediator>().also {
-            coEvery { it.lagre("id", "file.csv", any(), defaultDummyFodselsnummer) } returns
+            coEvery { it.lagre("id", "file.csv", any(), any(), defaultDummyFodselsnummer) } returns
                 KlumpInfo("id/file1.csv", "file1.csv", 0, defaultDummyFodselsnummer, "application/octet-stream", NOW)
-            coEvery { it.lagre("id", "file2.csv", any(), defaultDummyFodselsnummer) } returns
+            coEvery { it.lagre("id", "file2.csv", any(), any(), defaultDummyFodselsnummer) } returns
                 KlumpInfo("id/file2.csv", "file.csv", 0, defaultDummyFodselsnummer, "application/octet-stream", NOW)
-            coEvery { it.lagre("id", "fil med space", any(), defaultDummyFodselsnummer) } returns
+            coEvery { it.lagre("id", "fil med space", any(), any(), defaultDummyFodselsnummer) } returns
                 KlumpInfo("id/uuid", "fil med space", 0, defaultDummyFodselsnummer, "application/octet-stream", NOW)
         }
 

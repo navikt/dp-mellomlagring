@@ -53,14 +53,15 @@ class MediatorTest {
     fun `happy path lagre,listing, henting og sletting av filer`() {
 
         runBlocking {
-            mediator.lagre("id", "hubba", "hubba".toByteArray(), "eier").let { klumpinfo ->
+            mediator.lagre("id", "hubba", "hubba".toByteArray(), "application/octet-stream", "eier").let { klumpinfo ->
                 klumpinfo.objektNavn shouldBe "id/f9ece50c-e833-43c6-996e-aa70ddbc9870"
                 klumpinfo.originalFilnavn shouldBe "hubba"
             }
-            mediator.lagre("id", "hubba bubba", "hubba bubba".toByteArray(), "eier").let { klumpinfo ->
-                klumpinfo.objektNavn shouldBe "id/7170c6c2-17ca-11ed-861d-0242ac120002"
-                klumpinfo.originalFilnavn shouldBe "hubba bubba"
-            }
+            mediator.lagre("id", "hubba bubba", "hubba bubba".toByteArray(), "application/octet-stream", "eier")
+                .let { klumpinfo ->
+                    klumpinfo.objektNavn shouldBe "id/7170c6c2-17ca-11ed-861d-0242ac120002"
+                    klumpinfo.originalFilnavn shouldBe "hubba bubba"
+                }
 
             mediator.liste("id", "eier").let { klumpInfos ->
                 klumpInfos.size shouldBe 2
@@ -123,15 +124,15 @@ class MediatorTest {
 
         runBlocking {
             shouldNotThrow<Throwable> {
-                mockedMediator.lagre("id", "OK", "infisert".toByteArray(), "eier")
+                mockedMediator.lagre("id", "OK", "infisert".toByteArray(), "application/octet-stream", "eier")
             }
 
             shouldThrow<UgyldigFilInnhold> {
-                mockedMediator.lagre("id", "infisert", "infisert".toByteArray(), "eier")
+                mockedMediator.lagre("id", "infisert", "infisert".toByteArray(), "application/octet-stream", "eier")
             }
 
             shouldThrow<Throwable> {
-                mockedMediator.lagre("id", "exception", "infisert".toByteArray(), "eier")
+                mockedMediator.lagre("id", "exception", "infisert".toByteArray(), "application/octet-stream", "eier")
             }
         }
     }
@@ -158,7 +159,7 @@ class MediatorTest {
             }
 
             shouldThrow<StoreException> {
-                mockedMediator.lagre("id", "filnavn", "innhold".toByteArray(), "eier")
+                mockedMediator.lagre("id", "filnavn", "innhold".toByteArray(), "application/octet-stream", "eier")
             }
             shouldThrow<StoreException> {
                 mockedMediator.slett(VedleggUrn("nss"), "eier")

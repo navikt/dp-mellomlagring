@@ -150,7 +150,13 @@ internal class FileUploadHandler(private val mediator: Mediator) {
                         jobs.add(
                             async(Dispatchers.IO) {
                                 val bytes = part.streamProvider().readBytes()
-                                mediator.lagre(soknadsId, fileName, bytes, eier)
+                                mediator.lagre(
+                                    soknadsId,
+                                    fileName,
+                                    bytes,
+                                    part.contentType?.toString() ?: "application/octet-stream",
+                                    eier,
+                                )
                             }
                         )
                     }
