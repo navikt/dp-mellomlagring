@@ -96,7 +96,7 @@ internal fun Route.vedlegg(
 
             get {
                 mediator.hent(VedleggUrn(call.fullPath()), call.eierResolver())?.let {
-                    call.respondOutputStream(ContentType.Application.OctetStream, HttpStatusCode.OK) {
+                    call.respondOutputStream(ContentType.parse(it.klumpInfo.filContentType), HttpStatusCode.OK) {
                         withContext(Dispatchers.IO) {
                             this@respondOutputStream.write(it.innhold)
                         }
@@ -146,6 +146,7 @@ internal class FileUploadHandler(private val mediator: Mediator) {
                 when (part) {
                     is PartData.FileItem -> {
                         val fileName = part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
+
                         jobs.add(
                             async(Dispatchers.IO) {
                                 val bytes = part.streamProvider().readBytes()

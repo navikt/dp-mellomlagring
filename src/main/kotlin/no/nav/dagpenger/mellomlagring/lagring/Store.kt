@@ -18,6 +18,7 @@ internal data class KlumpInfo(
     val originalFilnavn: String,
     val storrelse: Long,
     val eier: String? = null,
+    val filContentType: String = "application/octet-stream",
     val tidspunkt: ZonedDateTime = ZonedDateTime.now(ZoneId.of("Europe/Oslo"))
 ) {
 
@@ -26,6 +27,7 @@ internal data class KlumpInfo(
             objektNavn = blob.name,
             originalFilnavn = blob.metadata["originalFilnavn"] ?: blob.name,
             storrelse = blob.metadata["storrelse "]?.toLong() ?: 0,
+            filContentType = blob.contentType ?: "application/octet-stream",
             eier = blob.metadata["eier"],
             tidspunkt = ZonedDateTime.parse(blob.metadata["tidspunkt"])
         )

@@ -42,7 +42,7 @@ internal class S3Store(
     override fun lagre(klump: Klump): Result<Int> {
         val blobInfo =
             BlobInfo.newBuilder(BlobId.of(bucketName, klump.klumpInfo.objektNavn))
-                .setContentType("application/octet-stream")
+                .setContentType(klump.klumpInfo.filContentType)
                 .setMetadata(klump.klumpInfo.toMetadata())
                 .build() // todo contentType?
 

@@ -16,6 +16,14 @@ import java.util.UUID
 internal interface Mediator {
 
     suspend fun lagre(soknadsId: String, filnavn: String, filinnhold: ByteArray, eier: String): KlumpInfo
+    suspend fun lagre(
+        soknadsId: String,
+        filnavn: String,
+        filinnhold: ByteArray,
+        filContentType: String,
+        eier: String
+    ): KlumpInfo
+
     suspend fun liste(soknadsId: String, eier: String): List<KlumpInfo>
     suspend fun hent(vedleggUrn: VedleggUrn, eier: String): Klump?
     suspend fun slett(vedleggUrn: VedleggUrn, eier: String): Boolean
@@ -56,6 +64,29 @@ internal class MediatorImpl(
             objektNavn = createStoreKey(soknadsId = soknadsId),
             originalFilnavn = filnavn,
             storrelse = filinnhold.size.toLong(),
+            eier = eier,
+        )
+        return kryptertStore(eier).lagre(
+            klump = Klump(
+                innhold = filinnhold,
+                klumpInfo = klumpInfo
+            )
+        ).getOrThrow().let { klumpInfo }
+    }
+
+    override suspend fun lagre(
+        soknadsId: String,
+        filnavn: String,
+        filinnhold: ByteArray,
+        filContentType: String,
+        eier: String
+    ): KlumpInfo {
+        valider(filnavn, filinnhold)
+        val klumpInfo = KlumpInfo(
+            objektNavn = createStoreKey(soknadsId = soknadsId),
+            originalFilnavn = filnavn,
+            storrelse = filinnhold.size.toLong(),
+            filContentType = filContentType,
             eier = eier,
         )
         return kryptertStore(eier).lagre(
