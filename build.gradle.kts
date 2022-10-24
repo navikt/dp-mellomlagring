@@ -110,7 +110,7 @@ dependencies {
 
     // For E2E
     testImplementation("io.kubernetes:client-java:16.0.1")
-    testImplementation("com.github.navikt.dp-biblioteker:oauth2-klient:2022.09.16-09.49.80dfbee09357")
+    testImplementation("com.github.navikt.dp-biblioteker:oauth2-klient:2022.10.22-09.05.6fcf3395aa4f")
 
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.1")
 }
