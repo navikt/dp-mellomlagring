@@ -105,7 +105,7 @@ dependencies {
     testImplementation("io.ktor:ktor-client-${"mock"}:2.1.1")
     testImplementation("io.mockk:mockk:1.13.2")
     testImplementation("org.jsmart:zerocode-tdd:1.3.30")
-    testImplementation("org.jsmart:zerocode-tdd-jupiter:1.3.29")
+    testImplementation("org.jsmart:zerocode-tdd-jupiter:1.3.30")
     testImplementation("org.skyscreamer:jsonassert:1.5.1")
 
     // For E2E
