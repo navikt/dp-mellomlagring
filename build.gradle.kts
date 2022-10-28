@@ -71,7 +71,7 @@ dependencies {
     implementation("io.github.microutils:kotlin-logging:3.0.2")
     implementation("io.ktor:ktor-client-cio:2.1.2")
     implementation("io.ktor:ktor-client-content-negotiation:2.1.2")
-    implementation("io.ktor:ktor-client-core:2.1.2")
+    implementation("io.ktor:ktor-client-core:2.1.3")
     implementation("io.ktor:ktor-client-jackson:2.1.2")
     implementation("io.ktor:ktor-serialization-jackson:2.1.2")
     implementation("io.ktor:ktor-server-auth:2.1.2")
