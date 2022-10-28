@@ -78,7 +78,7 @@ dependencies {
     implementation("io.ktor:ktor-server-auth-jwt:2.1.2")
     implementation("io.ktor:ktor-server-cio:2.1.2")
     implementation("io.ktor:ktor-server-call-logging:2.1.2")
-    implementation("io.ktor:ktor-server-content-negotiation:2.1.2")
+    implementation("io.ktor:ktor-server-content-negotiation:2.1.3")
     implementation("io.ktor:ktor-server-metrics-micrometer:2.1.2")
     implementation("io.ktor:ktor-server-status-pages:2.1.2")
     implementation("com.github.navikt.dp-biblioteker:image-utils:2022.10.22-09.05.6fcf3395aa4f")
