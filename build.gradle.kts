@@ -66,7 +66,7 @@ tasks.withType<Test> {
 dependencies {
     implementation("com.google.cloud:google-cloud-storage")
     implementation("de.slub-dresden:urnlib:2.0.1")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.0")
     implementation("com.natpryce:konfig:1.6.10.0")
     implementation("io.github.microutils:kotlin-logging:3.0.4")
     implementation("io.ktor:ktor-client-cio:2.1.3")
