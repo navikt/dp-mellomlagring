@@ -16,8 +16,8 @@ spec:
   readiness:
     path: "internal/isready"
   replicas:
-    min: 2
-    max: 3
+    min: 4
+    max: 4
     cpuThresholdPercentage: 75
   prometheus:
     enabled: true
@@ -33,9 +33,9 @@ spec:
   secureLogs:
     enabled: true
   ingresses:
-    {{#each ingresses as |url|}}
-     - {{url}}
-    {{/each}}
+    { { #each ingresses as |url|}}
+        - {{url } }
+      {{/each}}
   accessPolicy:
     outbound:
       rules:
@@ -55,6 +55,8 @@ spec:
   env:
     - name: DP_MELLOMLAGRING_BUCKETNAME
       value: {{bucketName}}
+    - name: JAVA_OPTS
+      value: -XX:MaxRAMPercentage=95 -XX:MinRAMPercentage=50 -XX:InitialRAMPercentage=25
   gcp:
     permissions:
       - resource:
@@ -63,4 +65,4 @@ spec:
           name: /locations/europe-north1/keyRings/dp-mellomlagring/cryptoKeys/dp-mellomlagring
         role: roles/cloudkms.cryptoKeyEncrypterDecrypter
     buckets:
-      - name: {{ bucketName }}
+      - name: { { bucketName } }
