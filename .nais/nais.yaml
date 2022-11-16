@@ -65,4 +65,4 @@ spec:
           name: /locations/europe-north1/keyRings/dp-mellomlagring/cryptoKeys/dp-mellomlagring
         role: roles/cloudkms.cryptoKeyEncrypterDecrypter
     buckets:
-      - name: { { bucketName } }
+      - name: {{ bucketName }}
