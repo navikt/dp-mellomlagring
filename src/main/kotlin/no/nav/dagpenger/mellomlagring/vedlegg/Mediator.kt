@@ -115,8 +115,9 @@ internal class MediatorImpl(
                 .map { it.feilMelding }
                 .takeIf { it.isNotEmpty() }
                 ?.let {
-                    logger.error { }
-                    throw UgyldigFilInnhold(filnavn, it)
+                    throw UgyldigFilInnhold(filnavn, it).also {
+                        logger.error { "Filvaliderings feil: ${it.message}" }
+                    }
                 }
         }
     }

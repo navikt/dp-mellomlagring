@@ -9,6 +9,7 @@ import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
+import io.ktor.server.logging.toLogString
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
@@ -70,7 +71,7 @@ internal fun Application.ktorFeatures() {
     }
     install(StatusPages) {
         exception<Throwable> { call, cause ->
-            logger.error(cause) { "Kunne ikke håndtere API kall" }
+            logger.error(cause) { "Kunne ikke håndtere API kall: ${call.request.toLogString()}" }
 
             when (cause) {
                 is IllegalArgumentException -> {
