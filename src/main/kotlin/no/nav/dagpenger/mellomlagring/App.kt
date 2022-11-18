@@ -59,6 +59,9 @@ internal fun Application.ktorFeatures() {
             !it.request.path().startsWith("/internal")
         }
         this.level = Level.INFO
+        mdc("x_søknadId") { call ->
+            call.parameters["id"]
+        }
     }
     install(Authentication) {
         jwt(Config.AzureAd.name, Config.AzureAd.wellKnownUrl) {
