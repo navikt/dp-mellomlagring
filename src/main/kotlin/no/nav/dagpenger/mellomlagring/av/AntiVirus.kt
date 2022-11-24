@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
@@ -14,6 +15,7 @@ import io.ktor.serialization.jackson.jackson
 import io.ktor.utils.io.streams.asInput
 import mu.KotlinLogging
 import java.io.ByteArrayInputStream
+import kotlin.time.Duration.Companion.seconds
 
 internal interface AntiVirus {
     suspend fun infisert(filnavn: String, filinnhold: ByteArray): Boolean
@@ -39,6 +41,9 @@ internal fun clamAv(engine: HttpClientEngine = CIO.create()): AntiVirus {
                 jackson {
                 }
             }
+            install(HttpTimeout) {
+                requestTimeoutMillis = 60.seconds.inWholeMilliseconds
+            }
         }
 
         override suspend fun infisert(filnavn: String, filinnhold: ByteArray): Boolean {
@@ -50,7 +55,7 @@ internal fun clamAv(engine: HttpClientEngine = CIO.create()): AntiVirus {
                             key = filnavn,
                             headers = Headers.build {
                                 append(HttpHeaders.ContentDisposition, "filename=$filnavn")
-                            },
+                            }
                         ) {
                             ByteArrayInputStream(filinnhold).asInput()
                         }
