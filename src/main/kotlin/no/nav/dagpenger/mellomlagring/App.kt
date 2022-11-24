@@ -2,6 +2,7 @@ package no.nav.dagpenger.mellomlagring
 
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
@@ -10,6 +11,8 @@ import io.ktor.server.auth.Authentication
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.logging.toLogString
+import io.ktor.server.plugins.callid.CallId
+import io.ktor.server.plugins.callid.callIdMdc
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
@@ -34,6 +37,7 @@ import no.nav.dagpenger.mellomlagring.vedlegg.PdfValidering
 import no.nav.dagpenger.mellomlagring.vedlegg.UgyldigFilInnhold
 import no.nav.dagpenger.mellomlagring.vedlegg.vedleggApi
 import org.slf4j.event.Level
+import java.util.UUID
 
 private val logger = KotlinLogging.logger { }
 
@@ -54,6 +58,7 @@ fun main() {
 
 internal fun Application.ktorFeatures() {
     install(CallLogging) {
+        callIdMdc("callId")
         disableDefaultColors()
         filter {
             !it.request.path().startsWith("/internal")
@@ -62,6 +67,11 @@ internal fun Application.ktorFeatures() {
         mdc("x_søknadId") { call ->
             call.parameters["id"]
         }
+    }
+    install(CallId) {
+        retrieveFromHeader(HttpHeaders.XRequestId)
+        generate { UUID.randomUUID().toString() }
+        verify { it.isNotEmpty() }
     }
     install(Authentication) {
         jwt(Config.AzureAd.name, Config.AzureAd.wellKnownUrl) {
@@ -83,24 +93,28 @@ internal fun Application.ktorFeatures() {
                         HttpProblem(title = "Klient feil", status = 400, detail = cause.message)
                     )
                 }
+
                 is NotOwnerException -> {
                     call.respond(
                         HttpStatusCode.Forbidden,
                         HttpProblem(title = "Ikke gyldig eier", status = 403, detail = cause.message)
                     )
                 }
+
                 is UgyldigFilInnhold -> {
                     call.respond(
                         HttpStatusCode.BadRequest,
                         HttpProblem(title = "Fil er ugyldig", status = 400, detail = cause.message)
                     )
                 }
+
                 is NotFoundException -> {
                     call.respond(
                         HttpStatusCode.NotFound,
                         HttpProblem(title = "Ressurs ikke funnet", status = 404, detail = cause.message)
                     )
                 }
+
                 else -> {
                     call.respond(
                         HttpStatusCode.InternalServerError,

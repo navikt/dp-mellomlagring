@@ -78,6 +78,7 @@ dependencies {
     implementation("io.ktor:ktor-server-auth-jwt:2.1.3")
     implementation("io.ktor:ktor-server-cio:2.1.3")
     implementation("io.ktor:ktor-server-call-logging:2.1.3")
+    implementation("io.ktor:ktor-server-call-id:2.1.3")
     implementation("io.ktor:ktor-server-content-negotiation:2.1.3")
     implementation("io.ktor:ktor-server-metrics-micrometer:2.1.3")
     implementation("io.ktor:ktor-server-status-pages:2.1.3")
