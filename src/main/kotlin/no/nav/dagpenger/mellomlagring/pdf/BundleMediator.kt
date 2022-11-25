@@ -3,6 +3,7 @@ package no.nav.dagpenger.mellomlagring.pdf
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
+import no.nav.dagpenger.mellomlagring.monitoring.Metrics
 import no.nav.dagpenger.mellomlagring.pdf.ImageProcessor.tilPdf
 import no.nav.dagpenger.mellomlagring.vedlegg.Mediator
 import no.nav.dagpenger.mellomlagring.vedlegg.NotFoundException
@@ -13,21 +14,26 @@ private val sikkerlogg = KotlinLogging.logger("tjenestekall")
 internal class BundleMediator(private val mediator: Mediator) {
     suspend fun bundle(request: BundleRequest, eier: String): KlumpInfo {
         sikkerlogg.info { "Starter bundling av ${request.filer} med bundlenavn ${request.bundleNavn} og eier $eier" }
+        Metrics.bundlerRequestCounter.inc()
         val pdf: ByteArray = request.filer
             .map { hent(VedleggUrn(it.namespaceSpecificString().toString()), eier) }
             .map { it.getOrThrow().innhold }
             .map { it.tilPdf() }
             .reduce(ImageProcessor::mergePdf)
 
-        return mediator.lagre(
-            soknadsId = request.soknadId,
-            filnavn = request.bundleNavn,
-            filinnhold = pdf,
-            eier = eier,
-            filContentType = "application/pdf"
-        ).also {
+        return kotlin.runCatching {
+            mediator.lagre(
+                soknadsId = request.soknadId,
+                filnavn = request.bundleNavn,
+                filinnhold = pdf,
+                eier = eier,
+                filContentType = "application/pdf"
+            )
+        }.onSuccess {
             sikkerlogg.info { "Pdfbundle $it er klar" }
-        }
+        }.onFailure {
+            Metrics.bundlerErrorTypesCounter.labels(it.javaClass.simpleName).inc()
+        }.getOrThrow()
     }
 
     private suspend fun hent(urn: VedleggUrn, eier: String): Result<Klump> {
