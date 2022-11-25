@@ -1,9 +1,18 @@
 package no.nav.dagpenger.mellomlagring.monitoring
 
+import io.micrometer.core.instrument.Clock
+import io.micrometer.prometheus.PrometheusConfig
+import io.micrometer.prometheus.PrometheusMeterRegistry
+import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.Counter
 
 object Metrics {
-    private val namespace = "dp_soknad"
+    internal val prometheusMeterRegistry = PrometheusMeterRegistry(
+        PrometheusConfig.DEFAULT, CollectorRegistry.defaultRegistry,
+        Clock.SYSTEM
+    )
+
+    private val namespace = "dp_mellomlagring"
 
     val bundlerErrorTypesCounter = Counter
         .build()
