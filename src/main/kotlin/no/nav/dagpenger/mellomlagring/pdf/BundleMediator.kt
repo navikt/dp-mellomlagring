@@ -10,18 +10,18 @@ import no.nav.dagpenger.mellomlagring.vedlegg.NotFoundException
 import no.nav.dagpenger.mellomlagring.vedlegg.VedleggUrn
 
 private val sikkerlogg = KotlinLogging.logger("tjenestekall")
+private val logger = KotlinLogging.logger { }
 
 internal class BundleMediator(private val mediator: Mediator) {
     suspend fun bundle(request: BundleRequest, eier: String): KlumpInfo {
-        sikkerlogg.info { "Starter bundling av ${request.filer} med bundlenavn ${request.bundleNavn} og eier $eier" }
         Metrics.bundlerRequestCounter.inc()
-        val pdf: ByteArray = request.filer
-            .map { hent(VedleggUrn(it.namespaceSpecificString().toString()), eier) }
-            .map { it.getOrThrow().innhold }
-            .map { it.tilPdf() }
-            .reduce(ImageProcessor::mergePdf)
-
         return kotlin.runCatching {
+            val pdf: ByteArray = request.filer
+                .map { hent(VedleggUrn(it.namespaceSpecificString().toString()), eier) }
+                .map { it.getOrThrow().innhold }
+                .map { it.tilPdf() }
+                .reduce(ImageProcessor::mergePdf)
+
             mediator.lagre(
                 soknadsId = request.soknadId,
                 filnavn = request.bundleNavn,
@@ -30,8 +30,9 @@ internal class BundleMediator(private val mediator: Mediator) {
                 filContentType = "application/pdf"
             )
         }.onSuccess {
-            sikkerlogg.info { "Pdfbundle $it er klar" }
+            logger.info { "Bundlet ${request.filer} -> ${it.objektNavn}" }
         }.onFailure {
+            sikkerlogg.error { "Feilet bundling av ${request.filer} med bundlenavn ${request.bundleNavn} og eier $eier" }
             Metrics.bundlerErrorTypesCounter.labels(it.javaClass.simpleName).inc()
         }.getOrThrow()
     }
