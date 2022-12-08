@@ -75,7 +75,7 @@ dependencies {
     implementation("io.ktor:ktor-client-jackson:2.1.3")
     implementation("io.ktor:ktor-serialization-jackson:2.1.3")
     implementation("io.ktor:ktor-server-auth:2.1.3")
-    implementation("io.ktor:ktor-server-auth-jwt:2.1.3")
+    implementation("io.ktor:ktor-server-auth-jwt:2.2.1")
     implementation("io.ktor:ktor-server-cio:2.1.3")
     implementation("io.ktor:ktor-server-call-logging:2.1.3")
     implementation("io.ktor:ktor-server-call-id:2.1.3")
