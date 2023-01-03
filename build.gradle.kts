@@ -64,7 +64,7 @@ tasks.withType<Test> {
 }
 
 dependencies {
-    val ktorVersion = "2.2.1"
+    val ktorVersion = "2.2.2"
 
     implementation("com.google.cloud:google-cloud-storage")
     implementation("de.slub-dresden:urnlib:2.0.1")
