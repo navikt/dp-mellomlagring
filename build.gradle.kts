@@ -102,7 +102,7 @@ dependencies {
     testImplementation("no.nav.security:mock-oauth2-server:0.5.7")
     testImplementation("org.testcontainers:testcontainers:1.17.6")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
     testImplementation("io.kotest:kotest-assertions-core-jvm:5.5.4")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
