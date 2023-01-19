@@ -41,7 +41,7 @@ spec:
     outbound:
       rules:
         - application: clamav
-          namespace: clamav
+          namespace: nais-sysstem
     inbound:
       rules:
         - application: dp-soknadsdialog
