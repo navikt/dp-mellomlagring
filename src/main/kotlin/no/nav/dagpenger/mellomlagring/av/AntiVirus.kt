@@ -49,7 +49,7 @@ internal fun clamAv(engine: HttpClientEngine = CIO.create()): AntiVirus {
         override suspend fun infisert(filnavn: String, filinnhold: ByteArray): Boolean {
             return runCatching<List<ScanResult>> {
                 httpClient.submitFormWithBinaryData(
-                    url = "http://clamav.nais-system.svc.cluster.local/scan",
+                    url = "http://clamav.clamav.svc.cluster.local/scan",
                     formData = formData {
                         appendInput(
                             key = filnavn,
