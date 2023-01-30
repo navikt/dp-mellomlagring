@@ -91,7 +91,7 @@ dependencies {
     implementation(platform(kotlin("bom")))
     implementation("com.google.crypto.tink:tink:1.7.0")
     implementation("com.google.crypto.tink:tink-gcpkms:1.7.0")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.1")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.2")
 
     runtimeOnly("ch.qos.logback:logback-core:1.4.5")
     runtimeOnly("ch.qos.logback:logback-classic:1.4.5")
