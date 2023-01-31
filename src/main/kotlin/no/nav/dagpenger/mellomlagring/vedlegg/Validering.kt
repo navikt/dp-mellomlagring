@@ -11,7 +11,7 @@ import no.nav.dagpenger.pdf.ValidPDFDocument
 internal class AntiVirusValidering(private val antiVirus: AntiVirus) : Mediator.FilValidering {
     override suspend fun valider(filnavn: String, filinnhold: ByteArray): FilValideringResultat {
         return when (antiVirus.infisert(filnavn, filinnhold)) {
-            true -> FilValideringResultat.Ugyldig(filnavn, "Fil har virus")
+            true -> FilValideringResultat.Ugyldig(filnavn, "Fil har virus", FeilType.FILE_VIRUS)
             else -> FilValideringResultat.Gyldig(filnavn)
         }
     }
@@ -22,7 +22,11 @@ internal object FiltypeValidering : Mediator.FilValidering {
     override suspend fun valider(filnavn: String, filinnhold: ByteArray): FilValideringResultat =
         when (filinnhold.gyldigFilFormat()) {
             true -> FilValideringResultat.Gyldig(filnavn)
-            else -> FilValideringResultat.Ugyldig(filnavn, "Fil er ikke av type JPEG, PNG eller PDF")
+            else -> FilValideringResultat.Ugyldig(
+                filnavn,
+                "Fil er ikke av type JPEG, PNG eller PDF",
+                FeilType.FILE_ILLEGAL_FORMAT
+            )
         }
 }
 
@@ -32,7 +36,12 @@ internal object PdfValidering : Mediator.FilValidering {
         return if (!filinnhold.isPdf()) return FilValideringResultat.Gyldig(filnavn) else {
             PDFDocument.load(filinnhold).use { p ->
                 when (p) {
-                    is InvalidPDFDocument -> FilValideringResultat.Ugyldig(filnavn, p.message() ?: "Ukjent pdf feil")
+                    is InvalidPDFDocument -> FilValideringResultat.Ugyldig(
+                        filnavn,
+                        p.message() ?: "Ukjent pdf feil",
+                        FeilType.FILE_ENCRYPTED
+                    )
+
                     is ValidPDFDocument -> FilValideringResultat.Gyldig(filnavn)
                 }
             }

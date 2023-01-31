@@ -30,6 +30,7 @@ import no.nav.dagpenger.mellomlagring.pdf.BundleMediator
 import no.nav.dagpenger.mellomlagring.pdf.pdfApi
 import no.nav.dagpenger.mellomlagring.vedlegg.AntiVirusValidering
 import no.nav.dagpenger.mellomlagring.vedlegg.FiltypeValidering
+import no.nav.dagpenger.mellomlagring.vedlegg.Mediator
 import no.nav.dagpenger.mellomlagring.vedlegg.MediatorImpl
 import no.nav.dagpenger.mellomlagring.vedlegg.NotFoundException
 import no.nav.dagpenger.mellomlagring.vedlegg.NotOwnerException
@@ -47,13 +48,15 @@ fun main() {
         filValideringer = listOf(FiltypeValidering, PdfValidering, AntiVirusValidering(clamAv())),
         aead = Crypto.aead
     )
-    embeddedServer(CIO, port = 8080) {
-        ktorFeatures()
-        health()
-        vedleggApi(mediator)
-        pdfApi(BundleMediator(mediator))
-        metrics()
-    }.start(wait = true)
+    embeddedServer(CIO, port = 8080, module = mellomLagring(mediator)).start(wait = true)
+}
+
+internal fun mellomLagring(mediator: Mediator): Application.() -> Unit = {
+    ktorFeatures()
+    health()
+    vedleggApi(mediator)
+    pdfApi(BundleMediator(mediator))
+    metrics()
 }
 
 internal fun Application.ktorFeatures() {
@@ -104,7 +107,12 @@ internal fun Application.ktorFeatures() {
                 is UgyldigFilInnhold -> {
                     call.respond(
                         HttpStatusCode.BadRequest,
-                        HttpProblem(title = "Fil er ugyldig", status = 400, detail = cause.message)
+                        HttpProblem(
+                            title = "Fil er ugyldig",
+                            status = 400,
+                            detail = cause.message,
+                            errorType = cause.feilMeldinger.keys.first().name
+                        )
                     )
                 }
 

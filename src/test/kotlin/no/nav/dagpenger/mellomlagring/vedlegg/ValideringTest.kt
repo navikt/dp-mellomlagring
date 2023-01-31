@@ -1,6 +1,7 @@
 package no.nav.dagpenger.mellomlagring.vedlegg
 
 import io.kotest.matchers.should
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -21,7 +22,10 @@ internal class ValideringTest {
             }
         ).let {
             runBlocking {
-                it.valider("infisert", "".toByteArray()) should beInstanceOf<Ugyldig>()
+                it.valider("infisert", "".toByteArray()).let { filValideringResultat ->
+                    filValideringResultat should beInstanceOf<Ugyldig>()
+                    (filValideringResultat as Ugyldig).feilType shouldBe FeilType.FILE_VIRUS
+                }
                 it.valider("ok", "".toByteArray()) should beInstanceOf<Gyldig>()
             }
         }
@@ -33,7 +37,10 @@ internal class ValideringTest {
             FiltypeValidering.valider("jpg", "/fisk1.jpg".fileAsByteArray()) should beInstanceOf<Gyldig>()
             FiltypeValidering.valider("pdf", "/Arbeidsforhold.pdf".fileAsByteArray()) should beInstanceOf<Gyldig>()
             FiltypeValidering.valider("png", "/cloud.png".fileAsByteArray()) should beInstanceOf<Gyldig>()
-            FiltypeValidering.valider("txt", "/test.txt".fileAsByteArray()) should beInstanceOf<Ugyldig>()
+            FiltypeValidering.valider("txt", "/test.txt".fileAsByteArray()).let { resultat ->
+                resultat should beInstanceOf<Ugyldig>()
+                (resultat as Ugyldig).feilType shouldBe FeilType.FILE_ILLEGAL_FORMAT
+            }
         }
     }
 
@@ -42,7 +49,10 @@ internal class ValideringTest {
         runBlocking {
             PdfValidering.valider("txt", "/test.txt".fileAsByteArray()) should beInstanceOf<Gyldig>()
             PdfValidering.valider("pdf", "/Arbeidsforhold.pdf".fileAsByteArray()) should beInstanceOf<Gyldig>()
-            PdfValidering.valider("protected", "/protected.pdf".fileAsByteArray()) should beInstanceOf<Ugyldig>()
+            PdfValidering.valider("protected", "/protected.pdf".fileAsByteArray()).let { resultat ->
+                resultat should beInstanceOf<Ugyldig>()
+                (resultat as Ugyldig).feilType shouldBe FeilType.FILE_ENCRYPTED
+            }
         }
     }
 }

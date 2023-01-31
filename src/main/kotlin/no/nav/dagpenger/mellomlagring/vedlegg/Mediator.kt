@@ -33,13 +33,21 @@ internal interface Mediator {
 
 abstract class FilValideringResultat(open val filnavn: String) {
     data class Gyldig(override val filnavn: String) : FilValideringResultat(filnavn)
-    data class Ugyldig(override val filnavn: String, val feilMelding: String) : FilValideringResultat(filnavn)
+    data class Ugyldig(override val filnavn: String, val feilMelding: String, val feilType: FeilType) :
+        FilValideringResultat(filnavn)
+}
+
+enum class FeilType {
+    UNAVAILABLE,
+    FILE_VIRUS,
+    FILE_ILLEGAL_FORMAT,
+    FILE_ENCRYPTED
 }
 
 internal class NotOwnerException(msg: String) : Throwable(msg)
 
-internal class UgyldigFilInnhold(filnavn: String, feilMeldinger: List<String>) : Throwable() {
-    override val message: String = "$filnavn feilet følgende valideringer: ${feilMeldinger.joinToString(", ")}"
+internal class UgyldigFilInnhold(filnavn: String, val feilMeldinger: Map<FeilType, String>) : Throwable() {
+    override val message: String = "$filnavn feilet følgende valideringer: ${feilMeldinger.values.joinToString(", ")}"
 }
 
 internal class NotFoundException(ressursNøkkel: String) : Throwable() {
@@ -112,7 +120,7 @@ internal class MediatorImpl(
                 .map { async { it.valider(filnavn, filinnhold) } }
                 .awaitAll()
                 .filterIsInstance<FilValideringResultat.Ugyldig>()
-                .map { it.feilMelding }
+                .associate { it.feilType to it.feilMelding }
                 .takeIf { it.isNotEmpty() }
                 ?.let {
                     throw UgyldigFilInnhold(filnavn, it).also {

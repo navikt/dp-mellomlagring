@@ -115,7 +115,7 @@ class MediatorTest {
             filValideringer = listOf(
                 mockk<Mediator.FilValidering>().also {
                     coEvery { it.valider("exception", any()) } throws Throwable("En feil")
-                    coEvery { it.valider("infisert", any()) } returns FilValideringResultat.Ugyldig("infisert", "virus")
+                    coEvery { it.valider("infisert", any()) } returns FilValideringResultat.Ugyldig("infisert", "virus", FeilType.FILE_VIRUS)
                     coEvery { it.valider("OK", any()) } returns FilValideringResultat.Gyldig("gyldig")
                 }
             ),

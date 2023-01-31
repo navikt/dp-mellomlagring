@@ -134,7 +134,14 @@ internal class VedleggApiTest {
                     NOW,
                 )
             coEvery { it.lagre("id/sub", "file2.csv", any(), any(), defaultDummyFodselsnummer) } returns
-                KlumpInfo("id/sub/uuid2", "file2.csv", 0, defaultDummyFodselsnummer, "application/octet-stream", NOW)
+                KlumpInfo(
+                    "id/sub/uuid2",
+                    "file2.csv",
+                    0,
+                    defaultDummyFodselsnummer,
+                    "application/octet-stream",
+                    NOW
+                )
             coEvery { it.lagre("id/sub/subsub/", "file3.csv", any(), any(), defaultDummyFodselsnummer) } returns
                 KlumpInfo(
                     "id/sub/subsub/uuid3",
@@ -179,7 +186,14 @@ internal class VedleggApiTest {
     fun `Lagring av fil`() {
         val mediator = mockk<Mediator>().also {
             coEvery { it.lagre("id", "file.csv", any(), any(), defaultDummyFodselsnummer) } returns
-                KlumpInfo("id/file1.csv", "file1.csv", 0, defaultDummyFodselsnummer, "application/octet-stream", NOW)
+                KlumpInfo(
+                    "id/file1.csv",
+                    "file1.csv",
+                    0,
+                    defaultDummyFodselsnummer,
+                    "application/octet-stream",
+                    NOW
+                )
             coEvery { it.lagre("id", "file2.csv", any(), any(), defaultDummyFodselsnummer) } returns
                 KlumpInfo("id/file2.csv", "file.csv", 0, defaultDummyFodselsnummer, "application/octet-stream", NOW)
             coEvery { it.lagre("id", "fil med space", any(), any(), defaultDummyFodselsnummer) } returns
@@ -303,7 +317,8 @@ internal class VedleggApiTest {
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
             listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
-                client.delete("${fixture.path}/vedlegg/id/filnavn.pdf") { autentisert(fixture) }.status shouldBe HttpStatusCode.NoContent
+                val delete = client.delete("${fixture.path}/vedlegg/id/filnavn.pdf") { autentisert(fixture) }
+                delete.status shouldBe HttpStatusCode.NoContent
                 client.delete("${fixture.path}/vedlegg/id/sub/uuid") { autentisert(fixture) }.status shouldBe HttpStatusCode.NoContent
                 client.delete("${fixture.path}/vedlegg/id/finnesIkke.pdf") { autentisert(fixture) }.status shouldBe HttpStatusCode.NotFound
             }
@@ -315,7 +330,10 @@ internal class VedleggApiTest {
         val mockMediator = mockk<Mediator>().also {
             coEvery { it.hent(VedleggUrn("id/illegalargument"), any()) } throws IllegalArgumentException("test")
             coEvery { it.hent(VedleggUrn("id/notOwner"), any()) } throws NotOwnerException("test")
-            coEvery { it.hent(VedleggUrn("id/ugyldiginnhold"), any()) } throws UgyldigFilInnhold("test", listOf("test"))
+            coEvery { it.hent(VedleggUrn("id/ugyldiginnhold"), any()) } throws UgyldigFilInnhold(
+                "test",
+                mapOf(FeilType.FILE_VIRUS to "test")
+            )
             coEvery { it.hent(VedleggUrn("id/throwable"), any()) } throws Throwable("test")
             coEvery { it.hent(VedleggUrn("id/notfound"), any()) } throws NotFoundException("test")
         }
@@ -323,9 +341,13 @@ internal class VedleggApiTest {
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
             client.get("v1/obo/mellomlagring/vedlegg/id/illegalargument") { autentisert() }.status shouldBe HttpStatusCode.BadRequest
             client.get("v1/obo/mellomlagring/vedlegg/id/notOwner") { autentisert() }.status shouldBe HttpStatusCode.Forbidden
-            client.get("v1/obo/mellomlagring/vedlegg/id/ugyldiginnhold") { autentisert() }.status shouldBe HttpStatusCode.BadRequest
             client.get("v1/obo/mellomlagring/vedlegg/id/throwable") { autentisert() }.status shouldBe HttpStatusCode.InternalServerError
             client.get("v1/obo/mellomlagring/vedlegg/id/notfound") { autentisert() }.status shouldBe HttpStatusCode.NotFound
+            client.get("v1/obo/mellomlagring/vedlegg/id/ugyldiginnhold") { autentisert() }.let {
+                it.status shouldBe HttpStatusCode.BadRequest
+                //language=JSON
+                it.bodyAsText() shouldBe """{"type":"about:blank","title":"Fil er ugyldig","status":400,"detail":"test feilet følgende valideringer: test","instance":"about:blank","errorType":"FILE_VIRUS"}""".trimIndent()
+            }
         }
     }
 

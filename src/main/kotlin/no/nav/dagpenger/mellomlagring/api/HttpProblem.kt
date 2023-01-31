@@ -7,5 +7,6 @@ data class HttpProblem(
     val title: String,
     val status: Int? = 500,
     val detail: String? = null,
-    val instance: URI = URI.create("about:blank")
+    val instance: URI = URI.create("about:blank"),
+    val errorType: String? = null
 )
