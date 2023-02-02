@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     application
-    kotlin("jvm") version "1.8.0"
+    kotlin("jvm") version "1.8.10"
     id("com.diffplug.spotless") version "6.13.0"
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
