@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.forms.formData
@@ -43,6 +44,13 @@ internal fun clamAv(engine: HttpClientEngine = CIO.create()): AntiVirus {
             }
             install(HttpTimeout) {
                 requestTimeoutMillis = 60.seconds.inWholeMilliseconds
+            }
+
+            install(HttpRequestRetry) {
+                retryIf(3) { _, response ->
+                    response.status.value.let { it in 400..599 }
+                }
+                exponentialDelay()
             }
         }
 
