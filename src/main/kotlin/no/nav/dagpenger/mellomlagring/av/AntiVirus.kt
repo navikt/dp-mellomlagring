@@ -6,10 +6,12 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.escapeIfNeeded
@@ -48,10 +50,17 @@ internal fun clamAv(engine: HttpClientEngine = CIO.create()): AntiVirus {
             }
 
             install(HttpRequestRetry) {
-                retryIf(3) { _, response ->
+                retryIf(3) { _, response: HttpResponse ->
                     response.status.value.let { it in 400..599 }
                 }
                 exponentialDelay()
+            }
+            HttpResponseValidator {
+                validateResponse {
+                    if (it.body<List<ScanResult>>().isEmpty()) {
+                        throw IllegalArgumentException("Skal ikke få tom liste fra clamv")
+                    }
+                }
             }
         }
 

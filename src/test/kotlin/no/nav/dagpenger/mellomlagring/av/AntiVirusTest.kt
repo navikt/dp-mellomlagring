@@ -1,5 +1,6 @@
 package no.nav.dagpenger.mellomlagring.av
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -38,6 +39,23 @@ internal class AntiVirusTest {
                     )
                 }
             ).infisert("filnavn.pdf", "innhold".toByteArray()) shouldBe true
+        }
+    }
+
+    @Test
+    fun `Feilhåndtering ved tom resultat liste fra clamav`() {
+        runBlocking {
+            shouldThrow<IllegalArgumentException> {
+                clamAv(
+                    MockEngine {
+                        respond(
+                            content = """[]""",
+                            status = HttpStatusCode.OK,
+                            headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                        )
+                    }
+                ).infisert("filnavn.pdf", "innhold".toByteArray())
+            }
         }
     }
 }
