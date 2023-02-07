@@ -6,7 +6,6 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.forms.formData
@@ -55,13 +54,6 @@ internal fun clamAv(engine: HttpClientEngine = CIO.create()): AntiVirus {
                 }
                 exponentialDelay()
             }
-            HttpResponseValidator {
-                validateResponse {
-                    if (it.body<List<ScanResult>>().isEmpty()) {
-                        throw IllegalArgumentException("Skal ikke få tom liste fra clamv")
-                    }
-                }
-            }
         }
 
         override suspend fun infisert(filnavn: String, filinnhold: ByteArray): Boolean {
@@ -81,6 +73,7 @@ internal fun clamAv(engine: HttpClientEngine = CIO.create()): AntiVirus {
                 ).body()
             }.fold(
                 onSuccess = {
+                    require(it.isNotEmpty()) { "Skal ikke få tom liste fra clamv" }
                     logger.info { "Scannet fil $filnavn med resultat $it" }
                     it
                 },
