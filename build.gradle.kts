@@ -64,6 +64,7 @@ tasks.withType<Test> {
 }
 
 dependencies {
+    implementation("io.ktor:ktor-client-logging-jvm:2.2.3")
     val ktorVersion = "2.2.3"
 
     implementation("com.google.cloud:google-cloud-storage")

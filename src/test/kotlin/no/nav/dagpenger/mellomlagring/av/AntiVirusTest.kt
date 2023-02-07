@@ -22,7 +22,7 @@ internal class AntiVirusTest {
                         headers = headersOf(HttpHeaders.ContentType, "application/json"),
                     )
                 }
-            ).infisert("filnavn.pdf", "innhold".toByteArray()) shouldBe false
+            ).infisert("filnavn med masse space t.pdf", "innhold".toByteArray()) shouldBe false
         }
     }
 
