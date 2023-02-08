@@ -91,6 +91,7 @@ internal fun Route.vedlegg(
                 val respond =
                     fileUploadHandler.handleFileupload(multiPartData, call.fullPath(), call.eierResolver())
                         .map(KlumpInfo::toResponse)
+                this.hubba(mediator, call.fullPath(), call.eierResolver())
                 call.respond(HttpStatusCode.Created, respond)
             }
 
@@ -160,12 +161,15 @@ internal class FileUploadHandler(private val mediator: Mediator) {
                             }
                         )
                     }
+
                     is PartData.BinaryItem -> part.dispose().also {
                         logger.warn { "binary item not supported" }
                     }
+
                     is PartData.FormItem -> part.dispose().also {
                         logger.warn { "form item not supported" }
                     }
+
                     is PartData.BinaryChannelItem -> part.dispose().also {
                         logger.warn { "BinaryChannel item not supported" }
                     }

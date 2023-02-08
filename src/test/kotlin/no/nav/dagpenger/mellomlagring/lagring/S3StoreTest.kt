@@ -99,6 +99,8 @@ internal class S3StoreTest {
             KlumpInfo(objektNavn = "urn:vedlegg:id/hubba", originalFilnavn = "hubba", storrelse = 10, eier = "hubba eier", tidspunkt = TODAY),
         )
 
+        store.listKlumpInfo("urn:vedlegg").getOrThrow().let { it.size shouldBe 2 }
+
         store.hent("urn:vedlegg:id/hubba").getOrNull().also {
             it shouldNotBe null
             it?.let { klump ->
