@@ -73,12 +73,12 @@ internal fun clamAv(engine: HttpClientEngine = CIO.create()): AntiVirus {
                 ).body()
             }.fold(
                 onSuccess = {
-                    require(it.isNotEmpty()) { "Skal ikke få tom liste fra clamv" }
+                    require(it.isNotEmpty()) { "Skal ikke få tom liste fra clamv. Fil: $filnavn " }
                     logger.info { "Scannet fil $filnavn med resultat $it" }
                     it
                 },
                 onFailure = { t ->
-                    logger.error(t) { "Fikk ikke scannet fil: ${t.message}" }
+                    logger.error(t) { "Fikk ikke scannet fil $filnavn: ${t.message}" }
                     throw t
                 }
             ).any { it.infisert() }
