@@ -13,7 +13,6 @@ import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
-import io.ktor.http.escapeIfNeeded
 import io.ktor.serialization.jackson.jackson
 import io.ktor.utils.io.streams.asInput
 import mu.KotlinLogging
@@ -64,7 +63,7 @@ internal fun clamAv(engine: HttpClientEngine = CIO.create()): AntiVirus {
                         appendInput(
                             key = filnavn,
                             headers = Headers.build {
-                                append(HttpHeaders.ContentDisposition, "filename=${filnavn.escapeIfNeeded()}")
+                                append(HttpHeaders.ContentDisposition, "filename=redacted")
                             }
                         ) {
                             ByteArrayInputStream(filinnhold).asInput()
