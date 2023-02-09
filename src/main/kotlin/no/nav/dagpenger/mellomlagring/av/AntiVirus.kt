@@ -8,13 +8,11 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.request.forms.formData
-import io.ktor.client.request.forms.submitFormWithBinaryData
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.client.request.url
 import io.ktor.client.statement.HttpResponse
-import io.ktor.http.Headers
-import io.ktor.http.HttpHeaders
 import io.ktor.serialization.jackson.jackson
-import io.ktor.utils.io.streams.asInput
 import mu.KotlinLogging
 import java.io.ByteArrayInputStream
 import kotlin.time.Duration.Companion.seconds
@@ -57,19 +55,10 @@ internal fun clamAv(engine: HttpClientEngine = CIO.create()): AntiVirus {
 
         override suspend fun infisert(filnavn: String, filinnhold: ByteArray): Boolean {
             return runCatching<List<ScanResult>> {
-                httpClient.submitFormWithBinaryData(
-                    url = "http://clamav.nais-system.svc.cluster.local/scan",
-                    formData = formData {
-                        appendInput(
-                            key = filnavn,
-                            headers = Headers.build {
-                                append(HttpHeaders.ContentDisposition, "filename=redacted")
-                            }
-                        ) {
-                            ByteArrayInputStream(filinnhold).asInput()
-                        }
-                    }
-                ).body()
+                httpClient.put {
+                    url("http://clamav.nais-system.svc.cluster.local/scan")
+                    setBody(ByteArrayInputStream(filinnhold))
+                }.body()
             }.fold(
                 onSuccess = {
                     require(it.isNotEmpty()) { "Skal ikke få tom liste fra clamv. Fil: $filnavn " }
