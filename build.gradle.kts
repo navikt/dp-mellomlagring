@@ -1,3 +1,5 @@
+import Build_gradle.Versions.dpBiblioteker
+import Build_gradle.Versions.ktor
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -63,29 +65,34 @@ tasks.withType<Test> {
     }
 }
 
+object Versions {
+    val ktor = "2.2.3"
+    val dpBiblioteker = "2023.02.06-17.50.b3b2d001f61f"
+}
+
 dependencies {
-    implementation("io.ktor:ktor-client-logging-jvm:2.2.3")
-    val ktorVersion = "2.2.3"
 
     implementation("com.google.cloud:google-cloud-storage")
     implementation("de.slub-dresden:urnlib:2.0.1")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
     implementation("com.natpryce:konfig:1.6.10.0")
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-jackson:$ktorVersion")
-    implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    implementation("io.ktor:ktor-server-auth:$ktorVersion")
-    implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
-    implementation("io.ktor:ktor-server-cio:$ktorVersion")
-    implementation("io.ktor:ktor-server-call-logging:$ktorVersion")
-    implementation("io.ktor:ktor-server-call-id:$ktorVersion")
-    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-server-metrics-micrometer:$ktorVersion")
-    implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
-    implementation("com.github.navikt.dp-biblioteker:image-utils:2022.11.24-14.34.528555d5f3df")
+    implementation("io.ktor:ktor-client-cio:$ktor")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktor")
+    implementation("io.ktor:ktor-client-core:$ktor")
+    implementation("io.ktor:ktor-client-jackson:$ktor")
+    implementation("io.ktor:ktor-client-logging-jvm:$ktor")
+    implementation("io.ktor:ktor-serialization-jackson:$ktor")
+    implementation("io.ktor:ktor-server-auth:$ktor")
+    implementation("io.ktor:ktor-server-auth-jwt:$ktor")
+    implementation("io.ktor:ktor-server-cio:$ktor")
+    implementation("io.ktor:ktor-server-call-logging:$ktor")
+    implementation("io.ktor:ktor-server-call-id:$ktor")
+    implementation("io.ktor:ktor-server-content-negotiation:$ktor")
+    implementation("io.ktor:ktor-server-metrics-micrometer:$ktor")
+    implementation("io.ktor:ktor-server-status-pages:$ktor")
+    implementation("com.github.navikt.dp-biblioteker:image-utils:$dpBiblioteker")
+    implementation("com.github.navikt.dp-biblioteker:ktor-client-metrics:$dpBiblioteker")
     implementation("io.micrometer:micrometer-registry-prometheus:1.10.4")
     implementation(kotlin("stdlib"))
     implementation(platform("com.google.cloud:libraries-bom:26.0.0"))
@@ -105,8 +112,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
     testImplementation("io.kotest:kotest-assertions-core-jvm:5.5.5")
-    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
-    testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
+    testImplementation("io.ktor:ktor-server-test-host:$ktor")
+    testImplementation("io.ktor:ktor-client-mock:$ktor")
     testImplementation("io.mockk:mockk:1.13.4")
     testImplementation("org.jsmart:zerocode-tdd:1.3.31")
     testImplementation("org.jsmart:zerocode-tdd-jupiter:1.3.31")

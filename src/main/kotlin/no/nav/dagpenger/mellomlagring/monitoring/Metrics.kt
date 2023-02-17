@@ -12,7 +12,7 @@ object Metrics {
         Clock.SYSTEM
     )
 
-    private val namespace = "dp_mellomlagring"
+    val namespace = "dp_mellomlagring"
 
     val bundlerErrorTypesCounter = Counter
         .build()
@@ -20,6 +20,14 @@ object Metrics {
         .name("pdf_bundle_error_counter")
         .help("Teller feil på PDF bundling")
         .labelNames("exception_name")
+        .register()
+
+    val antivirusResultCounter = Counter
+        .build()
+        .namespace(namespace)
+        .name("antivirus_result_count")
+        .help("Teller antivirus results")
+        .labelNames("antivirus_result")
         .register()
 
     val bundlerRequestCounter = Counter

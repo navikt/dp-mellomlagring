@@ -7,6 +7,7 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import io.prometheus.client.CollectorRegistry
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
@@ -16,13 +17,14 @@ internal class AntiVirusTest {
     fun `Ikke infisert fil`() {
         runBlocking {
             clamAv(
-                MockEngine {
+                engine = MockEngine {
                     respond(
                         content = """[{"Filename": "filnavn.pdf", "Result": "OK"}]""",
                         status = HttpStatusCode.OK,
                         headers = headersOf(HttpHeaders.ContentType, "application/json"),
                     )
-                }
+                },
+                registry = CollectorRegistry()
             ).infisert("filnavn med masse space t.pdf", "innhold".toByteArray()) shouldBe false
         }
     }
@@ -30,15 +32,23 @@ internal class AntiVirusTest {
     @Test
     fun `infisert fil`() {
         runBlocking {
+            val registry = CollectorRegistry(true)
             clamAv(
-                MockEngine {
+                engine = MockEngine {
                     respond(
-                        content = """[{"Filename": "filnavn.pdf", "Result": "FOUNOKD"}]""",
+                        content = """[{"Filename": "filnavn.pdf", "Result": "FOUND"}]""",
                         status = HttpStatusCode.OK,
                         headers = headersOf(HttpHeaders.ContentType, "application/json"),
                     )
-                }
+                },
+                registry = registry
             ).infisert("filnavn.pdf", "innhold".toByteArray()) shouldBe true
+
+            registry.getSampleValue(
+                "dp_mellomlagring_clamav_client_status_total",
+                listOf("status").toTypedArray(),
+                listOf("200").toTypedArray()
+            ) shouldBe 1
         }
     }
 
@@ -47,13 +57,14 @@ internal class AntiVirusTest {
         runBlocking {
             shouldThrow<IllegalArgumentException> {
                 clamAv(
-                    MockEngine {
+                    engine = MockEngine {
                         respond(
                             content = """[]""",
                             status = HttpStatusCode.OK,
                             headers = headersOf(HttpHeaders.ContentType, "application/json"),
                         )
-                    }
+                    },
+                    registry = CollectorRegistry()
                 ).infisert("filnavn.pdf", "innhold".toByteArray())
             }
         }
