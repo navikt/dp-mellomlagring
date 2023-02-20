@@ -103,7 +103,7 @@ dependencies {
 
     runtimeOnly("ch.qos.logback:logback-core:1.4.5")
     runtimeOnly("ch.qos.logback:logback-classic:1.4.5")
-    runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.2") {
+    runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.3") {
         exclude("com.fasterxml.jackson.core")
     }
 
