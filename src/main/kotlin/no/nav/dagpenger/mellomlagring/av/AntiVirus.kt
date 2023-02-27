@@ -48,7 +48,7 @@ internal fun clamAv(
                 }
             }
             install(HttpTimeout) {
-                requestTimeoutMillis = 10.seconds.inWholeMilliseconds
+                requestTimeoutMillis = 15.seconds.inWholeMilliseconds
             }
 
             install(PrometheusMetricsPlugin) {
