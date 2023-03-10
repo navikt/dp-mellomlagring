@@ -19,8 +19,11 @@ jobs:
       - uses: gradle/gradle-build-action@v2
         with:
           arguments: build --info
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       - uses: nais/docker-build-push@v0
+        name: docker-build-push
         id: docker-build-push
         with:
           team: teamdagpenger
@@ -35,6 +38,8 @@ jobs:
         with:
           name: nais-yaml
           path: .nais
+    outputs:
+      image: ${{ steps.docker-build-push.outputs.image }}
 
   deploy-dev:
     name: Deploy to dev
@@ -54,12 +59,12 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/nais.yaml
           VARS: .nais/dev.yaml
-          VAR: image=${{steps.docker-build-push.outputs.image}}
+          VAR: image=${{ needs.build.outputs.image }}
           PRINT_PAYLOAD: true
 
   deploy-prod:
     name: Deploy to Production
-    needs: [deploy-dev]
+    needs: [build, deploy-dev]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
