@@ -2,11 +2,11 @@ name: Build and deploy
 
 on: [push]
 
-env:
-  IMAGE: ghcr.io/${{ github.repository }}/${{ github.repository }}:${{ github.sha }}
-
 jobs:
   build:
+    permissions:
+      contents: "read"
+      id-token: "write"
     name: Build and publish Docker image
     runs-on: ubuntu-latest
     steps:
@@ -20,25 +20,15 @@ jobs:
         with:
           arguments: build --info
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+      - uses: nais/docker-build-push@v0
+        id: docker-build-push
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          tags: ${{ env.IMAGE }}
-          push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
+          team: teamdagpenger
+          push_image: true # optional, default true
+          dockerfile: Dockerfile # optional, default Dockerfile
+          docker_context: . # optional, default .
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
       - name: Archive NAIS yaml
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v3
@@ -64,6 +54,7 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/nais.yaml
           VARS: .nais/dev.yaml
+          VAR: image=${{steps.docker-build-push.outputs.image}}
           PRINT_PAYLOAD: true
 
   deploy-prod:
@@ -84,4 +75,5 @@ jobs:
           CLUSTER: prod-gcp
           RESOURCE: .nais/nais.yaml
           VARS: .nais/prod.yaml
+          VAR: image=${{steps.docker-build-push.outputs.image}}
           PRINT_PAYLOAD: true
