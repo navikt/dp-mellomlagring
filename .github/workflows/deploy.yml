@@ -80,5 +80,5 @@ jobs:
           CLUSTER: prod-gcp
           RESOURCE: .nais/nais.yaml
           VARS: .nais/prod.yaml
-          VAR: image=${{steps.docker-build-push.outputs.image}}
+          VAR: image=${{ needs.build.outputs.image }}
           PRINT_PAYLOAD: true
