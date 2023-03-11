@@ -19,8 +19,6 @@ jobs:
       - uses: gradle/gradle-build-action@v2
         with:
           arguments: build --info
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
 
       - uses: nais/docker-build-push@multiple-tags
         name: docker-build-push
