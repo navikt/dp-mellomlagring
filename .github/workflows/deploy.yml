@@ -20,11 +20,12 @@ jobs:
         with:
           arguments: build --info
 
-      - uses: nais/docker-build-push@multiple-tags
+      - uses: nais/docker-build-push@v1
         name: docker-build-push
         id: docker-build-push
         with:
           team: teamdagpenger
+          tag: latest
           push_image: true # optional, default true
           dockerfile: Dockerfile # optional, default Dockerfile
           docker_context: . # optional, default .
