@@ -124,7 +124,7 @@ internal class MediatorImpl(
                 .takeIf { it.isNotEmpty() }
                 ?.let {
                     throw UgyldigFilInnhold(filnavn, it).also {
-                        logger.error { "Filvaliderings feil: ${it.message}" }
+                        logger.warn { "Filvaliderings feil: ${it.message}" }
                     }
                 }
         }

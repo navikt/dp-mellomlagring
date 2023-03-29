@@ -85,7 +85,7 @@ internal fun clamAv(
                     }
                 },
                 onFailure = { t ->
-                    logger.error(t) { "Fikk ikke scannet fil $filnavn: ${t.message}" }
+                    logger.warn(t) { "Fikk ikke scannet fil $filnavn: ${t.message}" }
                     throw t
                 }
             ).any { it.infisert() }

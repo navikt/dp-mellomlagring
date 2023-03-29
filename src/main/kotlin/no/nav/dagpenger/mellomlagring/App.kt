@@ -87,7 +87,7 @@ internal fun Application.ktorFeatures() {
     }
     install(StatusPages) {
         exception<Throwable> { call, cause ->
-            logger.error(cause) { "Kunne ikke håndtere API kall: ${call.request.toLogString()}" }
+            logger.warn(cause) { "Kunne ikke håndtere API kall: ${call.request.toLogString()}" }
 
             when (cause) {
                 is IllegalArgumentException -> {
