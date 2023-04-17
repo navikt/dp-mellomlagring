@@ -108,7 +108,7 @@ dependencies {
     }
 
     testImplementation("no.nav.security:mock-oauth2-server:0.5.8")
-    testImplementation("org.testcontainers:testcontainers:1.17.6")
+    testImplementation("org.testcontainers:testcontainers:1.18.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
     testImplementation("io.kotest:kotest-assertions-core-jvm:5.5.5")
@@ -117,7 +117,6 @@ dependencies {
     testImplementation("io.mockk:mockk:1.13.5")
     testImplementation("org.jsmart:zerocode-tdd:1.3.33")
     testImplementation("org.jsmart:zerocode-tdd-jupiter:1.3.33")
->>>>>>> origin/dependabot/gradle/org.jsmart-zerocode-tdd-1.3.33
     testImplementation("org.skyscreamer:jsonassert:1.5.1")
 
     // For E2E
