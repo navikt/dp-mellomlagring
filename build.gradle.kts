@@ -111,7 +111,7 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers:1.18.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
-    testImplementation("io.kotest:kotest-assertions-core-jvm:5.5.5")
+    testImplementation("io.kotest:kotest-assertions-core-jvm:5.6.1")
     testImplementation("io.ktor:ktor-server-test-host:$ktor")
     testImplementation("io.ktor:ktor-client-mock:$ktor")
     testImplementation("io.mockk:mockk:1.13.5")
