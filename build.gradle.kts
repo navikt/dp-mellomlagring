@@ -29,19 +29,14 @@ tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions {
         jvmTarget = "17"
     }
-
     dependsOn("spotlessApply")
 }
 
 kotlin {
     jvmToolchain {
-        this.languageVersion.set(JavaLanguageVersion.of(JavaVersion.VERSION_17.toString())) // "8"
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
-java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
-}
-
 tasks.withType<Jar>().configureEach {
     dependsOn("test")
 }

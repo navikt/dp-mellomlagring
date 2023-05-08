@@ -44,6 +44,7 @@ jobs:
   deploy-dev:
     name: Deploy to dev
     needs: [build]
+    environment: dev-gcp
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
@@ -65,6 +66,7 @@ jobs:
   deploy-prod:
     name: Deploy to Production
     needs: [build, deploy-dev]
+    environment: prod-gcp
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
