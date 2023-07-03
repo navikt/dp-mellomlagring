@@ -102,7 +102,7 @@ dependencies {
         exclude("com.fasterxml.jackson.core")
     }
 
-    testImplementation("no.nav.security:mock-oauth2-server:0.5.8")
+    testImplementation("no.nav.security:mock-oauth2-server:0.5.9")
     testImplementation("org.testcontainers:testcontainers:1.18.3")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
