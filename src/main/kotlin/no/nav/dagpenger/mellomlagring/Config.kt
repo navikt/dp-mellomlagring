@@ -104,6 +104,7 @@ internal object Config {
                 Env.LOCAL -> {
                     KeyTemplates.get("AES128_GCM")
                 }
+
                 else -> {
                     // ServiceAccount kommer fra en json fil på path GOOGLE_APPLICATION_CREDENTIALS i env
                     GcpKmsClient.register(Optional.of(kekUri), Optional.empty())
@@ -118,7 +119,9 @@ internal object Config {
         .setHost(storageUrl) // From docker-compose
         .setProjectId("dagpenger")
         .build()
-        .service.also {
-            if (createBucket) it.create(BucketInfo.of(bucketName))
+        .service.also { it ->
+            if (createBucket && it.get(bucketName) == null) {
+                it.create(BucketInfo.of(bucketName))
+            }
         }
 }

@@ -4,7 +4,7 @@ import org.testcontainers.containers.FixedHostPortGenericContainer
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
 
 object GoogleCloudStorageTestcontainer {
-    const val IMAGE = "fsouza/fake-gcs-server:1.36.1"
+    const val IMAGE = "fsouza/fake-gcs-server:1.45.2"
 
     fun createAndStart(fixedPort: Int): FixedHostPortGenericContainer<Nothing> {
         // Because https://stackoverflow.com/questions/69337669/request-with-ipv4-from-python-to-gcs-emulator/70417427#70417427
