@@ -18,7 +18,8 @@ jobs:
 
       - uses: gradle/gradle-build-action@v2.6.0
         with:
-          arguments: build --info
+          arguments: --configuration-cache build
+          gradle-home-cache-cleanup: true
 
       - uses: nais/docker-build-push@v0
         name: docker-build-push
