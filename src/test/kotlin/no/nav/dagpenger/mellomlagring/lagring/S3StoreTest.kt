@@ -33,7 +33,7 @@ internal class S3StoreTest {
                         "-backend",
                         "memory",
                         "-scheme",
-                        "http"
+                        "http",
                     )
                 }
                 container.setWaitStrategy(HostPortWaitStrategy())
@@ -50,7 +50,7 @@ internal class S3StoreTest {
             S3Store(
                 gcpStorage = Config.localStorage(
                     storageUrl = "http://${gcs.host}:${gcs.firstMappedPort}",
-                    createBucket = false
+                    createBucket = false,
                 ),
             )
         }
@@ -63,7 +63,7 @@ internal class S3StoreTest {
         val store = S3Store(
             gcpStorage = Config.localStorage(
                 storageUrl = "http://${gcsFixedHost.host}:$FIXED_HOST_PORT",
-                createBucket = true
+                createBucket = true,
             ),
         )
 
@@ -75,9 +75,9 @@ internal class S3StoreTest {
                     originalFilnavn = "hubba",
                     storrelse = 10,
                     eier = "hubba eier",
-                    tidspunkt = TODAY
-                )
-            )
+                    tidspunkt = TODAY,
+                ),
+            ),
         ).isSuccess shouldBe true
 
         store.lagre(
@@ -88,9 +88,9 @@ internal class S3StoreTest {
                     originalFilnavn = "bubba",
                     storrelse = 0,
                     eier = null,
-                    tidspunkt = TODAY
-                )
-            )
+                    tidspunkt = TODAY,
+                ),
+            ),
         ).isSuccess shouldBe true
 
         val orThrow = store.listKlumpInfo("urn:vedlegg:id").getOrThrow()

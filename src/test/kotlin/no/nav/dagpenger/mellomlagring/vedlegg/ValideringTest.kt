@@ -19,7 +19,7 @@ internal class ValideringTest {
             mockk<AntiVirus>().also {
                 coEvery { it.infisert("infisert", any()) } returns true
                 coEvery { it.infisert("ok", any()) } returns false
-            }
+            },
         ).let {
             runBlocking {
                 it.valider("infisert", "".toByteArray()).let { filValideringResultat ->

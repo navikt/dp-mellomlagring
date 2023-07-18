@@ -11,7 +11,7 @@ import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.dagpenger.mellomlagring.monitoring.Metrics.prometheusMeterRegistry
 
 internal fun Application.metrics(
-    registry: PrometheusMeterRegistry = prometheusMeterRegistry
+    registry: PrometheusMeterRegistry = prometheusMeterRegistry,
 ) {
     install(MicrometerMetrics) {
         this.registry = registry

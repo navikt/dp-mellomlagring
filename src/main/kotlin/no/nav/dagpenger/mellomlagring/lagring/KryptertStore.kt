@@ -43,7 +43,7 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
             },
             onFailure = {
                 Result.failure(it)
-            }
+            },
         )
     }
 
@@ -69,7 +69,7 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
             },
             onFailure = {
                 Result.failure(it)
-            }
+            },
         )
     }
 
@@ -94,7 +94,7 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
         val klumpInfo1 = this.klumpInfo.copy(eier = this.klumpInfo.eier.encrypt())
         return Klump(
             innhold = aead.encrypt(this.innhold, eier.toByteArray()),
-            klumpInfo = klumpInfo1
+            klumpInfo = klumpInfo1,
         )
     }
 

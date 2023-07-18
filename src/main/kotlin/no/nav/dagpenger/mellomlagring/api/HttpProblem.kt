@@ -8,5 +8,5 @@ data class HttpProblem(
     val status: Int? = 500,
     val detail: String? = null,
     val instance: URI = URI.create("about:blank"),
-    val errorType: String? = null
+    val errorType: String? = null,
 )

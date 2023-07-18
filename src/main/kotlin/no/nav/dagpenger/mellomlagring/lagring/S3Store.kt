@@ -31,7 +31,7 @@ internal class S3Store(
             gcpStorage.get(BlobId.of(bucketName, storageKey))?.let { blob ->
                 Klump(
                     innhold = blob.getContent(),
-                    klumpInfo = KlumpInfo.fromBlob(blob)
+                    klumpInfo = KlumpInfo.fromBlob(blob),
                 )
             }
         }.onFailure {

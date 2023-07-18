@@ -22,8 +22,8 @@ internal object TestApplication {
             issuerId = Config.TokenX.name,
             audience = Config.TokenX.audience,
             claims = mapOf<String, Any>(
-                "pid" to defaultDummyFodselsnummer
-            )
+                "pid" to defaultDummyFodselsnummer,
+            ),
         ).serialize()
     }
 
@@ -36,7 +36,7 @@ internal object TestApplication {
 
     internal fun withMockAuthServerAndTestApplication(
         moduleFunction: Application.() -> Unit,
-        test: suspend ApplicationTestBuilder.() -> Unit
+        test: suspend ApplicationTestBuilder.() -> Unit,
     ) {
         try {
             System.setProperty("TOKEN_X_WELL_KNOWN_URL", "${mockOAuth2Server.wellKnownUrl(Config.TokenX.name)}")

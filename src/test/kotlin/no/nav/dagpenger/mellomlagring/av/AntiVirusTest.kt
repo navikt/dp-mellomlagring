@@ -24,7 +24,7 @@ internal class AntiVirusTest {
                         headers = headersOf(HttpHeaders.ContentType, "application/json"),
                     )
                 },
-                registry = CollectorRegistry()
+                registry = CollectorRegistry(),
             ).infisert("filnavn med masse space t.pdf", "innhold".toByteArray()) shouldBe false
         }
     }
@@ -41,13 +41,13 @@ internal class AntiVirusTest {
                         headers = headersOf(HttpHeaders.ContentType, "application/json"),
                     )
                 },
-                registry = registry
+                registry = registry,
             ).infisert("filnavn.pdf", "innhold".toByteArray()) shouldBe true
 
             registry.getSampleValue(
                 "dp_mellomlagring_clamav_client_status_total",
                 listOf("status").toTypedArray(),
-                listOf("200").toTypedArray()
+                listOf("200").toTypedArray(),
             ) shouldBe 1
         }
     }
@@ -64,7 +64,7 @@ internal class AntiVirusTest {
                             headers = headersOf(HttpHeaders.ContentType, "application/json"),
                         )
                     },
-                    registry = CollectorRegistry()
+                    registry = CollectorRegistry(),
                 ).infisert("filnavn.pdf", "innhold".toByteArray())
             }
         }

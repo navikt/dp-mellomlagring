@@ -21,7 +21,7 @@ internal object BundleRequestDeserializer : JsonDeserializer<BundleRequest>() {
             onFailure = { t ->
                 sikkerlogg.error("Kunne ikke deserialisere bundlerequest: " + t.cause)
                 throw IllegalArgumentException(t)
-            }
+            },
         )
     }
 

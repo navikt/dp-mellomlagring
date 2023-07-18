@@ -25,7 +25,7 @@ internal object FiltypeValidering : Mediator.FilValidering {
             else -> FilValideringResultat.Ugyldig(
                 filnavn,
                 "Fil er ikke av type JPEG, PNG eller PDF",
-                FeilType.FILE_ILLEGAL_FORMAT
+                FeilType.FILE_ILLEGAL_FORMAT,
             )
         }
 }
@@ -33,13 +33,15 @@ internal object FiltypeValidering : Mediator.FilValidering {
 internal object PdfValidering : Mediator.FilValidering {
 
     override suspend fun valider(filnavn: String, filinnhold: ByteArray): FilValideringResultat {
-        return if (!filinnhold.isPdf()) return FilValideringResultat.Gyldig(filnavn) else {
+        return if (!filinnhold.isPdf()) {
+            return FilValideringResultat.Gyldig(filnavn)
+        } else {
             PDFDocument.load(filinnhold).use { p ->
                 when (p) {
                     is InvalidPDFDocument -> FilValideringResultat.Ugyldig(
                         filnavn,
                         p.message() ?: "Ukjent pdf feil",
-                        FeilType.FILE_ENCRYPTED
+                        FeilType.FILE_ENCRYPTED,
                     )
 
                     is ValidPDFDocument -> FilValideringResultat.Gyldig(filnavn)

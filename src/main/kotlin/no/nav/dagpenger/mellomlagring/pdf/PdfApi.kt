@@ -40,8 +40,8 @@ private fun Route.bundle(mediator: BundleMediator) {
                     urn = vedleggUrn.urn,
                     filsti = vedleggUrn.nss,
                     storrelse = klumpInfo.storrelse,
-                    tidspunkt = klumpInfo.tidspunkt
-                )
+                    tidspunkt = klumpInfo.tidspunkt,
+                ),
             )
         }
     }
@@ -52,12 +52,12 @@ private data class BundleResponse(
     val urn: String,
     val filsti: String,
     val storrelse: Long,
-    val tidspunkt: ZonedDateTime
+    val tidspunkt: ZonedDateTime,
 )
 
 @JsonDeserialize(using = BundleRequestDeserializer::class)
 internal data class BundleRequest(
     val soknadId: String,
     val bundleNavn: String,
-    val filer: Set<URN>
+    val filer: Set<URN>,
 )

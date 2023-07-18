@@ -30,7 +30,7 @@ internal data class ScanResult(
     @JsonProperty("Filename")
     val fileName: String,
     @JsonProperty("Result")
-    val result: String
+    val result: String,
 ) {
     fun infisert(): Boolean {
         return result.uppercase() != "OK"
@@ -39,7 +39,7 @@ internal data class ScanResult(
 
 internal fun clamAv(
     engine: HttpClientEngine = CIO.create(),
-    registry: CollectorRegistry = CollectorRegistry.defaultRegistry
+    registry: CollectorRegistry = CollectorRegistry.defaultRegistry,
 ): AntiVirus {
     return object : AntiVirus {
         private val httpClient = HttpClient(engine) {
@@ -87,7 +87,7 @@ internal fun clamAv(
                 onFailure = { t ->
                     logger.warn(t) { "Fikk ikke scannet fil $filnavn: ${t.message}" }
                     throw t
-                }
+                },
             ).any { it.infisert() }
         }
     }

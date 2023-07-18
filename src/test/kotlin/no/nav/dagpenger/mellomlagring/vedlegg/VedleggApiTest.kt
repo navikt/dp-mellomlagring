@@ -58,7 +58,7 @@ internal class VedleggApiTest {
                 client.get("${fixture.path}/vedlegg/1") {
                     autentisert(
                         token = TestApplication.azureAd,
-                        xEier = defaultDummyFodselsnummer
+                        xEier = defaultDummyFodselsnummer,
                     )
                 }.status shouldBe HttpStatusCode.OK
 
@@ -76,14 +76,14 @@ internal class VedleggApiTest {
                     originalFilnavn = "fil1",
                     storrelse = 0,
                     eier = "eier1",
-                    tidspunkt = NOW
+                    tidspunkt = NOW,
                 ),
                 KlumpInfo(
                     objektNavn = "id/sub1/fil2",
                     originalFilnavn = "a b c",
                     storrelse = 0,
                     eier = "eier2",
-                    tidspunkt = NOW
+                    tidspunkt = NOW,
                 ),
             )
             coEvery { it.liste("finnesikke", defaultDummyFodselsnummer) } returns emptyList()
@@ -140,7 +140,7 @@ internal class VedleggApiTest {
                     0,
                     defaultDummyFodselsnummer,
                     "application/octet-stream",
-                    NOW
+                    NOW,
                 )
             coEvery { it.lagre("id/sub/subsub/", "file3.csv", any(), any(), defaultDummyFodselsnummer) } returns
                 KlumpInfo(
@@ -149,7 +149,7 @@ internal class VedleggApiTest {
                     0,
                     defaultDummyFodselsnummer,
                     "application/octet-stream",
-                    NOW
+                    NOW,
                 )
         }
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
@@ -163,8 +163,8 @@ internal class VedleggApiTest {
                                 append("hubba", "file2.csv", ContentType.Text.CSV) { this.append("1") }
                             },
                             "boundary",
-                            ContentType.MultiPart.FormData.withParameter("boundary", "boundary")
-                        )
+                            ContentType.MultiPart.FormData.withParameter("boundary", "boundary"),
+                        ),
                     )
                 }.let { response ->
                     response.status shouldBe HttpStatusCode.Created
@@ -192,7 +192,7 @@ internal class VedleggApiTest {
                     0,
                     defaultDummyFodselsnummer,
                     "application/octet-stream",
-                    NOW
+                    NOW,
                 )
             coEvery { it.lagre("id", "file2.csv", any(), any(), defaultDummyFodselsnummer) } returns
                 KlumpInfo("id/file2.csv", "file.csv", 0, defaultDummyFodselsnummer, "application/octet-stream", NOW)
@@ -218,8 +218,8 @@ internal class VedleggApiTest {
                                 }
                             },
                             "boundary",
-                            ContentType.MultiPart.FormData.withParameter("boundary", "boundary")
-                        )
+                            ContentType.MultiPart.FormData.withParameter("boundary", "boundary"),
+                        ),
                     )
                 }.let { response ->
                     response.status shouldBe HttpStatusCode.Created
@@ -263,7 +263,7 @@ internal class VedleggApiTest {
                     originalFilnavn = "filnavn.pdf",
                     storrelse = 0,
                     eier = defaultDummyFodselsnummer,
-                )
+                ),
             )
 
             coEvery { it.hent(VedleggUrn("id/sub/uuid"), defaultDummyFodselsnummer) } returns Klump(
@@ -273,12 +273,12 @@ internal class VedleggApiTest {
                     originalFilnavn = "filnavn.pdf",
                     storrelse = 0,
                     eier = defaultDummyFodselsnummer,
-                )
+                ),
             )
             coEvery {
                 it.hent(
                     VedleggUrn("id/finnesIkke.pdf"),
-                    defaultDummyFodselsnummer
+                    defaultDummyFodselsnummer,
                 )
             } throws NotFoundException("hjk")
         }
@@ -310,7 +310,7 @@ internal class VedleggApiTest {
             coEvery {
                 it.slett(
                     VedleggUrn("id/finnesIkke.pdf"),
-                    defaultDummyFodselsnummer
+                    defaultDummyFodselsnummer,
                 )
             } throws NotFoundException("hjkhk")
         }
@@ -332,7 +332,7 @@ internal class VedleggApiTest {
             coEvery { it.hent(VedleggUrn("id/notOwner"), any()) } throws NotOwnerException("test")
             coEvery { it.hent(VedleggUrn("id/ugyldiginnhold"), any()) } throws UgyldigFilInnhold(
                 "test",
-                mapOf(FeilType.FILE_VIRUS to "test")
+                mapOf(FeilType.FILE_VIRUS to "test"),
             )
             coEvery { it.hent(VedleggUrn("id/throwable"), any()) } throws Throwable("test")
             coEvery { it.hent(VedleggUrn("id/notfound"), any()) } throws NotFoundException("test")

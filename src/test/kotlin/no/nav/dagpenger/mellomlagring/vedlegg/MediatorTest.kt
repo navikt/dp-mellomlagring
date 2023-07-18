@@ -34,24 +34,23 @@ class MediatorTest {
             filValideringer = listOf(
                 mockk<Mediator.FilValidering>().also {
                     coEvery { it.valider(any(), any()) } returns FilValideringResultat.Gyldig("filnavn")
-                }
+                },
             ),
             aead = Crypto.aead,
-            uuidGenerator = fixedUUIDGenerator()
+            uuidGenerator = fixedUUIDGenerator(),
         )
     }
 
     private val fixedUUIDGenerator: () -> () -> UUID = {
         val iterator = listOf<UUID>(
             UUID.fromString("f9ece50c-e833-43c6-996e-aa70ddbc9870"),
-            UUID.fromString("7170c6c2-17ca-11ed-861d-0242ac120002")
+            UUID.fromString("7170c6c2-17ca-11ed-861d-0242ac120002"),
         ).iterator();
         { iterator.next() }
     }
 
     @Test
     fun `happy path lagre,listing, henting og sletting av filer`() {
-
         runBlocking {
             mediator.lagre("id", "hubba", "hubba".toByteArray(), "application/octet-stream", "eier").let { klumpinfo ->
                 klumpinfo.objektNavn shouldBe "id/f9ece50c-e833-43c6-996e-aa70ddbc9870"
@@ -90,7 +89,7 @@ class MediatorTest {
             shouldThrow<NotFoundException> {
                 mediator.hent(
                     VedleggUrn("id/f9ece50c-e833-43c6-996e-aa70ddbc9870"),
-                    "eier"
+                    "eier",
                 )
             }
         }
@@ -117,9 +116,9 @@ class MediatorTest {
                     coEvery { it.valider("exception", any()) } throws Throwable("En feil")
                     coEvery { it.valider("infisert", any()) } returns FilValideringResultat.Ugyldig("infisert", "virus", FeilType.FILE_VIRUS)
                     coEvery { it.valider("OK", any()) } returns FilValideringResultat.Gyldig("gyldig")
-                }
+                },
             ),
-            aead = Crypto.aead
+            aead = Crypto.aead,
         )
 
         runBlocking {
@@ -147,7 +146,7 @@ class MediatorTest {
                 every { it.slett(any()) } returns Result.failure(Throwable("feil"))
                 every { it.listKlumpInfo(any()) } returns Result.failure(Throwable("feil"))
             },
-            Crypto.aead
+            Crypto.aead,
         )
         runBlocking() {
             shouldThrow<StoreException> {

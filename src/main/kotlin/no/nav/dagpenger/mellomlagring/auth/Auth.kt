@@ -31,7 +31,7 @@ fun ApplicationCall.oboEier(): String =
 internal fun AuthenticationConfig.jwt(
     name: String,
     wellKnowUrl: String,
-    configure: JWTConfigureFunction = {}
+    configure: JWTConfigureFunction = {},
 ) {
     val openIDConfiguration: OpenIDConfiguration =
         runBlocking { httpClient.get(wellKnowUrl).body() }
@@ -40,7 +40,7 @@ internal fun AuthenticationConfig.jwt(
         verifier(
             jwkProvider = cachedJwkProvider(openIDConfiguration.jwksUri),
             issuer = openIDConfiguration.issuer,
-            configure
+            configure,
         )
         validate {
             val subject = it.payload.claims["pid"]?.asString() ?: it.payload.claims["sub"]?.asString()
@@ -56,7 +56,7 @@ private data class OpenIDConfiguration(
     @JsonProperty("jwks_uri")
     val jwksUri: String,
     @JsonProperty("issuer")
-    val issuer: String
+    val issuer: String,
 )
 
 private fun cachedJwkProvider(jwksUri: String): JwkProvider {
@@ -65,7 +65,7 @@ private fun cachedJwkProvider(jwksUri: String): JwkProvider {
         .rateLimited(
             10,
             1,
-            TimeUnit.MINUTES
+            TimeUnit.MINUTES,
         ) // if not cached, only allow max 10 different keys per minute to be fetched from external provider
         .build()
 }

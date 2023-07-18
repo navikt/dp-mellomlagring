@@ -8,8 +8,9 @@ import io.prometheus.client.Counter
 
 object Metrics {
     internal val prometheusMeterRegistry = PrometheusMeterRegistry(
-        PrometheusConfig.DEFAULT, CollectorRegistry.defaultRegistry,
-        Clock.SYSTEM
+        PrometheusConfig.DEFAULT,
+        CollectorRegistry.defaultRegistry,
+        Clock.SYSTEM,
     )
 
     val namespace = "dp_mellomlagring"

@@ -20,7 +20,7 @@ internal interface Mediator {
         filnavn: String,
         filinnhold: ByteArray,
         filContentType: String,
-        eier: String
+        eier: String,
     ): KlumpInfo
 
     suspend fun liste(soknadsId: String, eier: String): List<KlumpInfo>
@@ -41,7 +41,7 @@ enum class FeilType {
     UNAVAILABLE,
     FILE_VIRUS,
     FILE_ILLEGAL_FORMAT,
-    FILE_ENCRYPTED
+    FILE_ENCRYPTED,
 }
 
 internal class NotOwnerException(msg: String) : Throwable(msg)
@@ -60,7 +60,7 @@ internal class MediatorImpl(
     private val store: Store,
     private val aead: Aead,
     private val filValideringer: List<Mediator.FilValidering> = emptyList(),
-    private val uuidGenerator: () -> UUID = UUID::randomUUID
+    private val uuidGenerator: () -> UUID = UUID::randomUUID,
 ) : Mediator {
 
     private fun kryptertStore(eier: String) = KryptertStore(eier, store, aead)
@@ -70,7 +70,7 @@ internal class MediatorImpl(
         filnavn: String,
         filinnhold: ByteArray,
         filContentType: String,
-        eier: String
+        eier: String,
     ): KlumpInfo {
         valider(filnavn, filinnhold)
         val klumpInfo = KlumpInfo(
@@ -83,8 +83,8 @@ internal class MediatorImpl(
         return kryptertStore(eier).lagre(
             klump = Klump(
                 innhold = filinnhold,
-                klumpInfo = klumpInfo
-            )
+                klumpInfo = klumpInfo,
+            ),
         ).getOrThrow().let { klumpInfo }
     }
 

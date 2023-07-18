@@ -31,7 +31,7 @@ internal class KryptertStoreTest {
         val s3store = S3Store(
             gcpStorage = Config.localStorage(
                 storageUrl = "http://${gcsFixedHost.host}:$FIXED_HOST_PORT",
-                createBucket = true
+                createBucket = true,
             ),
         )
         val kryptertStore = KryptertStore(fnr = testFnr, store = s3store, aead = Crypto.aead)
@@ -45,8 +45,8 @@ internal class KryptertStoreTest {
                     originalFilnavn = "hubbaOriginalFilnavn",
                     storrelse = 6,
                     eier = testFnr,
-                )
-            )
+                ),
+            ),
         ).isSuccess shouldBe true
 
         kryptertStore.lagre(
@@ -57,8 +57,8 @@ internal class KryptertStoreTest {
                     originalFilnavn = "hubbaOriginalFilnavn",
                     storrelse = 6,
                     eier = testFnr,
-                )
-            )
+                ),
+            ),
         ).isSuccess shouldBe true
 
         s3store.hent(lagretHubbaUrn).getOrThrow().also {
@@ -94,7 +94,7 @@ internal class KryptertStoreTest {
         val s3store = S3Store(
             gcpStorage = Config.localStorage(
                 storageUrl = "http://${gcsFixedHost.host}:$FIXED_HOST_PORT",
-                createBucket = true
+                createBucket = true,
             ),
         )
         KryptertStore(fnr = testFnr, store = s3store, aead = Crypto.aead).also {
@@ -107,9 +107,9 @@ internal class KryptertStoreTest {
                             originalFilnavn = "hubba",
                             storrelse = 0,
                             eier = testFnr,
-                        )
-                    )
-                ).isSuccess
+                        ),
+                    ),
+                ).isSuccess,
             )
         }
 

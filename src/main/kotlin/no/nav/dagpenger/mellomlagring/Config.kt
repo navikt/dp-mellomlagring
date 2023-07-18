@@ -42,8 +42,8 @@ internal object Config {
             "TOKEN_X_CLIENT_ID" to "tokenxClientId",
             "AZURE_APP_PRE_AUTHORIZED_APPS" to
                 //language=JSON
-                """ [ { "name": "EnApp", "clientId": "clientId-til-tillatt-app-123" } ]"""
-        )
+                """ [ { "name": "EnApp", "clientId": "clientId-til-tillatt-app-123" } ]""",
+        ),
     )
 
     private val properties: Configuration
@@ -90,12 +90,12 @@ internal object Config {
 
         private val kekUri by lazy {
             "gcp-kms://projects/${
-            properties[
-                Key(
-                    "GCP_TEAM_PROJECT_ID",
-                    stringType
-                )
-            ]
+                properties[
+                    Key(
+                        "GCP_TEAM_PROJECT_ID",
+                        stringType,
+                    ),
+                ]
             }/locations/europe-north1/keyRings/dp-mellomlagring/cryptoKeys/dp-mellomlagring"
         }
 

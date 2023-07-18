@@ -69,7 +69,7 @@ fun getAuthEnv(app: String, type: String = "jwker.nais.io"): Map<String, String>
         null,
         null,
         null,
-        null
+        null,
     ).items.also { secrets ->
         secrets.sortByDescending<V1Secret?, OffsetDateTime> { it?.metadata?.creationTimestamp }
     }.first<V1Secret?>()?.data!!.mapValues { e -> String(e.value) }
@@ -87,18 +87,18 @@ suspend fun getOboToken(app: String, selvbetjeningsIdToken: String): String {
     return tokenClient.tokenExchange(
         // 51818700273 -
         token = selvbetjeningsIdToken,
-        audience = "dev-gcp:teamdagpenger:dp-mellomlagring"
+        audience = "dev-gcp:teamdagpenger:dp-mellomlagring",
     ).accessToken
 }
 
 fun getAzureAdToken(app: String): String {
     val azureadConfig = OAuth2Config.AzureAd(
-        getAuthEnv(app, "azurerator.nais.io")
+        getAuthEnv(app, "azurerator.nais.io"),
     )
     val tokenAzureAdClient: CachedOauth2Client by lazy {
         CachedOauth2Client(
             tokenEndpointUrl = azureadConfig.tokenEndpointUrl,
-            authType = azureadConfig.clientSecret()
+            authType = azureadConfig.clientSecret(),
         )
     }
 
@@ -129,7 +129,7 @@ val plainHttpClient = HttpClient {
 private data class BundleRequest(
     val bundleNavn: String,
     val soknadId: String,
-    val filer: List<URN>
+    val filer: List<URN>,
 ) {
     data class URN(val urn: String)
 }
@@ -139,7 +139,7 @@ private data class Response(
     val urn: String,
     val filsti: String,
     val storrelse: Long,
-    val tidspunkt: ZonedDateTime
+    val tidspunkt: ZonedDateTime,
 ) {
     private val _urn = URN.rfc8141().parse(urn)
     fun nss(): String = _urn.namespaceSpecificString().toString()
@@ -178,24 +178,25 @@ internal class E2E {
         val formData = formData {
             repeat(2) { n ->
                 append(
-                    "image", fileAsByteArray,
+                    "image",
+                    fileAsByteArray,
                     Headers.build {
                         append(HttpHeaders.ContentType, "image/jpeg")
                         append(HttpHeaders.ContentDisposition, "filename=\"$n.jpg\"")
-                    }
+                    },
                 )
             }
         }
         runBlocking {
             val oboToken = getOboToken(
                 "dp-soknadsdialog",
-                selvbetjeningsIdToken
+                selvbetjeningsIdToken,
             )
             // Send filer til mellomlagring
             val responseList = measure("Tid brukt på å sender opp filer") {
                 return@measure httpClientJackson.submitFormWithBinaryData(
                     url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
-                    formData = formData
+                    formData = formData,
                 ) {
                     this.header("Authorization", "Bearer $oboToken")
                 }.body<List<Response>>()
@@ -211,8 +212,8 @@ internal class E2E {
                         BundleRequest(
                             bundleNavn = "bundle.pdf",
                             soknadId = soknadId,
-                            filer = responseList.map { BundleRequest.URN(it.urn) }
-                        )
+                            filer = responseList.map { BundleRequest.URN(it.urn) },
+                        ),
                     )
                 }.body<Response>()
             }.also { println(it) }
@@ -232,11 +233,10 @@ internal class E2E {
     @Test
     fun e2e() {
         runBlocking {
-
             println("Running test with id: $soknadId and eier $eier")
             val oboToken = getOboToken(
                 "dp-soknadsdialog",
-                selvbetjeningsIdToken
+                selvbetjeningsIdToken,
             )
 
             // Send ugyldig filer
@@ -245,13 +245,14 @@ internal class E2E {
                     url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
                     formData = formData {
                         append(
-                            "text", "/$fil".fileAsByteArray(),
+                            "text",
+                            "/$fil".fileAsByteArray(),
                             Headers.build {
                                 append(HttpHeaders.ContentType, "text/plain")
                                 append(HttpHeaders.ContentDisposition, "filename=\"$fil\"")
-                            }
+                            },
                         )
-                    }
+                    },
                 ) {
                     this.header("Authorization", "Bearer $oboToken")
                 }.let {
@@ -265,13 +266,14 @@ internal class E2E {
                 url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
                 formData = formData {
                     append(
-                        "image", "/smallimg1.jpg".fileAsByteArray(),
+                        "image",
+                        "/smallimg1.jpg".fileAsByteArray(),
                         Headers.build {
                             append(HttpHeaders.ContentType, "image/jpeg")
                             append(HttpHeaders.ContentDisposition, "filename=\"æ ø å.jpg\"")
-                        }
+                        },
                     )
-                }
+                },
             ) {
                 this.header("Authorization", "Bearer $oboToken")
             }.body<List<Response>>().also { println(it) }.size shouldBe 1
@@ -280,13 +282,14 @@ internal class E2E {
                 url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta2",
                 formData = formData {
                     append(
-                        "image", "/Arbeidsforhold2.pdf".fileAsByteArray(),
+                        "image",
+                        "/Arbeidsforhold2.pdf".fileAsByteArray(),
                         Headers.build {
                             append(HttpHeaders.ContentType, "application/pdf")
                             append(HttpHeaders.ContentDisposition, "filename=\"Arbeidsforhold.pdf\"")
-                        }
+                        },
                     )
-                }
+                },
             ) {
                 this.header("Authorization", "Bearer $oboToken")
             }.body<List<Response>>().also { println(it) }.size shouldBe 1
@@ -332,7 +335,7 @@ internal class E2E {
                           {"urn": "urn:vedlegg:$id2"}
                         ]   
                       }
-                    """
+                    """,
                     )
                 }
             bundleResponse.status shouldBe HttpStatusCode.Created

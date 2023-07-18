@@ -46,7 +46,7 @@ fun main() {
     val mediator = MediatorImpl(
         store = S3Store(),
         filValideringer = listOf(FiltypeValidering, PdfValidering, AntiVirusValidering(clamAv())),
-        aead = Crypto.aead
+        aead = Crypto.aead,
     )
     embeddedServer(CIO, port = 8080, module = mellomLagring(mediator)).start(wait = true)
 }
@@ -93,14 +93,14 @@ internal fun Application.ktorFeatures() {
                 is IllegalArgumentException -> {
                     call.respond(
                         HttpStatusCode.BadRequest,
-                        HttpProblem(title = "Klient feil", status = 400, detail = cause.message)
+                        HttpProblem(title = "Klient feil", status = 400, detail = cause.message),
                     )
                 }
 
                 is NotOwnerException -> {
                     call.respond(
                         HttpStatusCode.Forbidden,
-                        HttpProblem(title = "Ikke gyldig eier", status = 403, detail = cause.message)
+                        HttpProblem(title = "Ikke gyldig eier", status = 403, detail = cause.message),
                     )
                 }
 
@@ -111,22 +111,22 @@ internal fun Application.ktorFeatures() {
                             title = "Fil er ugyldig",
                             status = 400,
                             detail = cause.message,
-                            errorType = cause.feilMeldinger.keys.first().name
-                        )
+                            errorType = cause.feilMeldinger.keys.first().name,
+                        ),
                     )
                 }
 
                 is NotFoundException -> {
                     call.respond(
                         HttpStatusCode.NotFound,
-                        HttpProblem(title = "Ressurs ikke funnet", status = 404, detail = cause.message)
+                        HttpProblem(title = "Ressurs ikke funnet", status = 404, detail = cause.message),
                     )
                 }
 
                 else -> {
                     call.respond(
                         HttpStatusCode.InternalServerError,
-                        HttpProblem(title = "Feilet", detail = cause.message)
+                        HttpProblem(title = "Feilet", detail = cause.message),
                     )
                 }
             }

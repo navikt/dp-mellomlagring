@@ -55,7 +55,7 @@ internal fun Application.vedleggApi(mediator: Mediator) {
 internal fun Route.vedlegg(
     fileUploadHandler: FileUploadHandler,
     mediator: Mediator,
-    eierResolver: ApplicationCall.() -> String
+    eierResolver: ApplicationCall.() -> String,
 ) {
     route("/mellomlagring/vedlegg/{id}") {
         fun ApplicationCall.id(): String {
@@ -122,7 +122,7 @@ private fun KlumpInfo.toResponse(): Response {
         urn = vedleggUrn.urn,
         filsti = vedleggUrn.nss,
         storrelse = this.storrelse,
-        tidspunkt = this.tidspunkt
+        tidspunkt = this.tidspunkt,
     )
 }
 
@@ -131,14 +131,14 @@ private data class Response(
     val urn: String,
     val filsti: String,
     val storrelse: Long,
-    val tidspunkt: ZonedDateTime
+    val tidspunkt: ZonedDateTime,
 )
 
 internal class FileUploadHandler(private val mediator: Mediator) {
     suspend fun handleFileupload(
         multiPartData: MultiPartData,
         soknadsId: String,
-        eier: String
+        eier: String,
     ): List<KlumpInfo> {
         return coroutineScope {
             val jobs = mutableListOf<Deferred<KlumpInfo>>()
@@ -157,7 +157,7 @@ internal class FileUploadHandler(private val mediator: Mediator) {
                                     part.contentType?.toString() ?: "application/octet-stream",
                                     eier,
                                 )
-                            }
+                            },
                         )
                     }
                     is PartData.BinaryItem -> part.dispose().also {

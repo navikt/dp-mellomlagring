@@ -44,9 +44,10 @@ internal object ImageProcessor {
                 ImageScaler.scale(
                     it,
                     Dimension(1140, 1654),
-                    ImageScaler.ScaleMode.SCALE_TO_FIT_INSIDE_BOX
+                    ImageScaler.ScaleMode.SCALE_TO_FIT_INSIDE_BOX,
                 ),
-                format, os
+                format,
+                os,
             )
             ImageConverter.toPDF(os.toByteArray())
         }

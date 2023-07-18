@@ -59,9 +59,9 @@ internal class PdfApiTest {
                             originalFilnavn = "bundle.pdf",
                             storrelse = 0,
                             eier = null,
-                            tidspunkt = now
+                            tidspunkt = now,
                         )
-                }
+                },
             )
         }) {
             client.post(bundlePath) {
@@ -73,9 +73,9 @@ internal class PdfApiTest {
                 response.contentType().toString() shouldBe "application/json; charset=UTF-8"
                 //language=JSON
                 response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:objektnavn","filsti":"objektnavn","storrelse":0,"tidspunkt":"${
-                now.format(
-                    DateTimeFormatter.ISO_OFFSET_DATE_TIME
-                )
+                    now.format(
+                        DateTimeFormatter.ISO_OFFSET_DATE_TIME,
+                    )
                 }"}"""
             }
         }

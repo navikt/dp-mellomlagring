@@ -27,7 +27,7 @@ internal class BundleMediator(private val mediator: Mediator) {
                 filnavn = request.bundleNavn,
                 filinnhold = pdf,
                 eier = eier,
-                filContentType = "application/pdf"
+                filContentType = "application/pdf",
             )
         }.onSuccess {
             logger.info { "Bundlet ${request.filer} -> ${it.objektNavn}" }

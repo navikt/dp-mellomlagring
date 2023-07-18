@@ -43,7 +43,7 @@ internal class ImageProcessorTest {
 
             ImageProcessor.mergePdf(
                 "/Arbeidsforhold.pdf".fileAsByteArray().tilPdf(),
-                "/fisk2.jpg".fileAsByteArray().tilPdf()
+                "/fisk2.jpg".fileAsByteArray().tilPdf(),
             )
                 .takeIf { skrivTilFil }
                 ?.let {
@@ -52,7 +52,7 @@ internal class ImageProcessorTest {
 
             ImageProcessor.mergePdf(
                 "/Arbeidsforhold.pdf".fileAsByteArray().tilPdf(),
-                "/Arbeidsforhold.pdf".fileAsByteArray().tilPdf()
+                "/Arbeidsforhold.pdf".fileAsByteArray().tilPdf(),
             )
                 .takeIf { skrivTilFil }
                 ?.let {

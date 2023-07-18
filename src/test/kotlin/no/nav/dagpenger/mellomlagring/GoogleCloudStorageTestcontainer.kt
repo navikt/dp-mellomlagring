@@ -21,7 +21,7 @@ object GoogleCloudStorageTestcontainer {
                         "-backend",
                         "memory",
                         "-scheme",
-                        "http"
+                        "http",
                     )
                 }
                 container.setWaitStrategy(HostPortWaitStrategy())
