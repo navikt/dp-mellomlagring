@@ -67,7 +67,7 @@ tasks.withType<Test> {
 }
 
 object Versions {
-    val ktor = "2.3.2"
+    val ktor = "2.3.3"
     val dpBiblioteker = "2023.04.27-09.33.fcf0798bf943"
 }
 
