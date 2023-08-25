@@ -115,7 +115,7 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-core-jvm:5.6.2")
     testImplementation("io.ktor:ktor-server-test-host:$ktor")
     testImplementation("io.ktor:ktor-client-mock:$ktor")
-    testImplementation("io.mockk:mockk:1.13.5")
+    testImplementation("io.mockk:mockk:1.13.7")
     testImplementation("org.jsmart:zerocode-tdd:1.3.34")
     testImplementation("org.jsmart:zerocode-tdd-jupiter:1.3.34")
     testImplementation("org.skyscreamer:jsonassert:1.5.1")
