@@ -208,7 +208,7 @@ internal class E2E {
             val responseList =
                 measure("Tid brukt på å sender opp filer") {
                     return@measure httpClientJackson.submitFormWithBinaryData(
-                        url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
+                        url = "https://dp-mellomlagring.intern.dev.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
                         formData = formData,
                     ) {
                         this.header("Authorization", "Bearer $oboToken")
@@ -219,7 +219,7 @@ internal class E2E {
             val bundleResponse =
                 measure("Tid brukt for å bundle") {
                     responseList.map { it.urn }
-                    httpClientJackson.post("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/pdf/bundle") {
+                    httpClientJackson.post("https://dp-mellomlagring.intern.dev.nav.no/v1/obo/mellomlagring/pdf/bundle") {
                         header("Authorization", "Bearer $oboToken")
                         header(HttpHeaders.ContentType, "application/json")
                         setBody(
@@ -260,7 +260,7 @@ internal class E2E {
             // Send ugyldig filer
             listOf("test.txt", "protected.pdf").forEach { fil ->
                 httpClientJackson.submitFormWithBinaryData(
-                    url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
+                    url = "https://dp-mellomlagring.intern.dev.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
                     formData =
                         formData {
                             append(
@@ -282,7 +282,7 @@ internal class E2E {
 
             // Send filer til mellomlagring
             httpClientJackson.submitFormWithBinaryData(
-                url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
+                url = "https://dp-mellomlagring.intern.dev.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
                 formData =
                     formData {
                         append(
@@ -299,7 +299,7 @@ internal class E2E {
             }.body<List<Response>>().also { println(it) }.size shouldBe 1
 
             httpClientJackson.submitFormWithBinaryData(
-                url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta2",
+                url = "https://dp-mellomlagring.intern.dev.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta2",
                 formData =
                     formData {
                         append(
@@ -317,13 +317,13 @@ internal class E2E {
 
             // List alle filer
             val listResponse =
-                httpClientJackson.get("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId") {
+                httpClientJackson.get("https://dp-mellomlagring.intern.dev.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId") {
                     this.header("Authorization", "Bearer $oboToken")
                 }.body<List<Response>>().also { println(it) }
 
             // Hent en fil
             val id1 = listResponse.first { it.filnavn == "æ ø å.jpg" }.nss()
-            httpClientJackson.get("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$id1") {
+            httpClientJackson.get("https://dp-mellomlagring.intern.dev.nav.no/v1/obo/mellomlagring/vedlegg/$id1") {
                 this.header("Authorization", "Bearer $oboToken")
             }.also { response ->
                 println(response)
@@ -333,7 +333,7 @@ internal class E2E {
             // hente en fil med azuread
             val azureadToken = getAzureAdToken("dp-behov-soknad-pdf")
             val id2 = listResponse.first { it.filnavn == "Arbeidsforhold.pdf" }.nss()
-            httpClientJackson.get("https://dp-mellomlagring.dev.intern.nav.no/v1/azuread/mellomlagring/vedlegg/$id2") {
+            httpClientJackson.get("https://dp-mellomlagring.intern.dev.nav.no/v1/azuread/mellomlagring/vedlegg/$id2") {
                 this.header("Authorization", "Bearer $azureadToken")
                 this.header("X-Eier", value = eier)
             }.also { response ->
@@ -343,7 +343,7 @@ internal class E2E {
 
             // Bundle filer
             val bundleResponse =
-                plainHttpClient.post("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/pdf/bundle") {
+                plainHttpClient.post("https://dp-mellomlagring.intern.dev.nav.no/v1/obo/mellomlagring/pdf/bundle") {
                     header("Authorization", "Bearer $oboToken")
                     header(HttpHeaders.ContentType, "application/json")
                     setBody(
@@ -369,7 +369,7 @@ internal class E2E {
                     .nss()
 
             // hente bundle
-            httpClientJackson.get("https://dp-mellomlagring.dev.intern.nav.no/v1/azuread/mellomlagring/vedlegg/$bundleId") {
+            httpClientJackson.get("https://dp-mellomlagring.intern.dev.nav.no/v1/azuread/mellomlagring/vedlegg/$bundleId") {
                 this.header("Authorization", "Bearer $azureadToken")
                 this.header("X-Eier", value = eier)
             }.also { response ->
@@ -378,7 +378,7 @@ internal class E2E {
             }
 
             // Kan ikke slette bundle dersom man ikke eier fil
-            httpClientJackson.delete("https://dp-mellomlagring.dev.intern.nav.no/v1/azuread/mellomlagring/vedlegg/$bundleId") {
+            httpClientJackson.delete("https://dp-mellomlagring.intern.dev.nav.no/v1/azuread/mellomlagring/vedlegg/$bundleId") {
                 this.header("Authorization", "Bearer $azureadToken")
                 this.header("X-Eier", value = eier2)
             }.let { response ->
@@ -387,7 +387,7 @@ internal class E2E {
 
             // Kan slette filer med riktig eier.
             // azure
-            httpClientJackson.delete("https://dp-mellomlagring.dev.intern.nav.no/v1/azuread/mellomlagring/vedlegg/$bundleId") {
+            httpClientJackson.delete("https://dp-mellomlagring.intern.dev.nav.no/v1/azuread/mellomlagring/vedlegg/$bundleId") {
                 this.header("Authorization", "Bearer $azureadToken")
                 this.header("X-Eier", value = eier)
             }.let {
@@ -395,7 +395,7 @@ internal class E2E {
             }
 
             // azure
-            httpClientJackson.delete("https://dp-mellomlagring.dev.intern.nav.no/v1/azuread/mellomlagring/vedlegg/$id1") {
+            httpClientJackson.delete("https://dp-mellomlagring.intern.dev.nav.no/v1/azuread/mellomlagring/vedlegg/$id1") {
                 this.header("Authorization", "Bearer $azureadToken")
                 this.header("X-Eier", value = eier)
             }.let {
@@ -403,14 +403,14 @@ internal class E2E {
             }
 
             // obo
-            httpClientJackson.delete("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$id2") {
+            httpClientJackson.delete("https://dp-mellomlagring.intern.dev.nav.no/v1/obo/mellomlagring/vedlegg/$id2") {
                 this.header("Authorization", "Bearer $oboToken")
             }.let {
                 it.status shouldBe HttpStatusCode.NoContent
             }
 
             // List alle filer
-            httpClientJackson.get("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId") {
+            httpClientJackson.get("https://dp-mellomlagring.intern.dev.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId") {
                 this.header("Authorization", "Bearer $oboToken")
             }.body<List<Response>>().also { println(it) }
         }
