@@ -23,28 +23,32 @@ import java.util.Optional
 
 internal object Config {
     internal enum class Env {
-        LOCAL, DEV, PROD
+        LOCAL,
+        DEV,
+        PROD,
     }
 
-    private val env: Env = when (System.getenv().getOrDefault("NAIS_CLUSTER_NAME", "LOCAL")) {
-        "dev-gcp" -> Env.DEV
-        "prod-gcp" -> Env.PROD
-        else -> Env.LOCAL
-    }
+    private val env: Env =
+        when (System.getenv().getOrDefault("NAIS_CLUSTER_NAME", "LOCAL")) {
+            "dev-gcp" -> Env.DEV
+            "prod-gcp" -> Env.PROD
+            else -> Env.LOCAL
+        }
 
-    private val defaultProperties = ConfigurationMap(
-        mapOf(
-            "DP_MELLOMLAGRING_BUCKETNAME" to "teamdagpenger-mellomlagring-local",
-            "DP_MELLOMLAGRING_STORAGE_URL" to "http://localhost:4443",
-            "AZURE_APP_WELL_KNOWN_URL" to "http://localhost:4443",
-            "AZURE_APP_CLIENT_ID" to "azureClientId",
-            "TOKEN_X_WELL_KNOWN_URL" to "http://localhost:4443",
-            "TOKEN_X_CLIENT_ID" to "tokenxClientId",
-            "AZURE_APP_PRE_AUTHORIZED_APPS" to
-                //language=JSON
-                """ [ { "name": "EnApp", "clientId": "clientId-til-tillatt-app-123" } ]""",
-        ),
-    )
+    private val defaultProperties =
+        ConfigurationMap(
+            mapOf(
+                "DP_MELLOMLAGRING_BUCKETNAME" to "teamdagpenger-mellomlagring-local",
+                "DP_MELLOMLAGRING_STORAGE_URL" to "http://localhost:4443",
+                "AZURE_APP_WELL_KNOWN_URL" to "http://localhost:4443",
+                "AZURE_APP_CLIENT_ID" to "azureClientId",
+                "TOKEN_X_WELL_KNOWN_URL" to "http://localhost:4443",
+                "TOKEN_X_CLIENT_ID" to "tokenxClientId",
+                "AZURE_APP_PRE_AUTHORIZED_APPS" to
+                    //language=JSON
+                    """ [ { "name": "EnApp", "clientId": "clientId-til-tillatt-app-123" } ]""",
+            ),
+        )
 
     private val properties: Configuration
         get() =
@@ -57,13 +61,16 @@ internal object Config {
             }
         }
 
+        @Suppress("ktlint:standard:property-naming")
         const val name = "azureAd"
+
         val audience = properties[Key("AZURE_APP_CLIENT_ID", stringType)]
         val wellKnownUrl = properties[Key("AZURE_APP_WELL_KNOWN_URL", stringType)]
         val preAuthorizedApps = PreAuthorizedApp.from(properties[Key("AZURE_APP_PRE_AUTHORIZED_APPS", stringType)])
     }
 
     object TokenX {
+        @Suppress("ktlint:standard:property-naming")
         const val name = "tokenX"
         val audience = properties[Key("TOKEN_X_CLIENT_ID", stringType)]
         val wellKnownUrl = properties[Key("TOKEN_X_WELL_KNOWN_URL", stringType)]
@@ -114,7 +121,10 @@ internal object Config {
         }
     }
 
-    internal fun localStorage(storageUrl: String, createBucket: Boolean) = StorageOptions.newBuilder()
+    internal fun localStorage(
+        storageUrl: String,
+        createBucket: Boolean,
+    ) = StorageOptions.newBuilder()
         .setCredentials(NoCredentials.getInstance())
         .setHost(storageUrl) // From docker-compose
         .setProjectId("dagpenger")

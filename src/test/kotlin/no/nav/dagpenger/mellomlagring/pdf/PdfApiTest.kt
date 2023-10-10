@@ -24,7 +24,7 @@ import java.time.format.DateTimeFormatter
 
 internal class PdfApiTest {
     companion object {
-        private const val bundlePath = "v1/obo/mellomlagring/pdf/bundle"
+        private const val BUNDLE_PATH = "v1/obo/mellomlagring/pdf/bundle"
     }
 
     private val now = ZonedDateTime.now()
@@ -32,15 +32,15 @@ internal class PdfApiTest {
     @Test
     fun `Uautorisert dersom ikke tokenX token finnes`() {
         withMockAuthServerAndTestApplication({ pdfApi(mockk(relaxed = true)) }) {
-            client.post(bundlePath).status shouldBe HttpStatusCode.Unauthorized
-            client.post(bundlePath) { autentisert(token = azureAd) }.status shouldBe HttpStatusCode.Unauthorized
+            client.post(BUNDLE_PATH).status shouldBe HttpStatusCode.Unauthorized
+            client.post(BUNDLE_PATH) { autentisert(token = azureAd) }.status shouldBe HttpStatusCode.Unauthorized
         }
     }
 
     @Test
     fun `Autoriset dersom tokenX token i request`() {
         withMockAuthServerAndTestApplication({ pdfApi(mockk(relaxed = true)) }) {
-            client.post(bundlePath) {
+            client.post(BUNDLE_PATH) {
                 autentisert(
                     token = tokenXToken,
                 )
@@ -53,7 +53,7 @@ internal class PdfApiTest {
         withMockAuthServerAndTestApplication({
             pdfApi(
                 mockk<BundleMediator>(relaxed = true).also {
-                    coEvery { it.bundle(any(), TestApplication.defaultDummyFodselsnummer) } returns
+                    coEvery { it.bundle(any(), TestApplication.DEFAULT_DUMMY_FODSELNUMMER) } returns
                         KlumpInfo(
                             objektNavn = "objektnavn",
                             originalFilnavn = "bundle.pdf",
@@ -64,7 +64,7 @@ internal class PdfApiTest {
                 },
             )
         }) {
-            client.post(bundlePath) {
+            client.post(BUNDLE_PATH) {
                 autentisert(token = tokenXToken)
                 header(HttpHeaders.ContentType, "application/json")
                 setBody(bundleBody)

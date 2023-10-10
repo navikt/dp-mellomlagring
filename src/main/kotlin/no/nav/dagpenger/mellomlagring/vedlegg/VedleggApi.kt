@@ -70,9 +70,10 @@ internal fun Route.vedlegg(
             call.respond(HttpStatusCode.Created, respond)
         }
         get {
-            val vedlegg = mediator.liste(call.id(), call.eierResolver()).map { klumpinfo ->
-                klumpinfo.toResponse()
-            }
+            val vedlegg =
+                mediator.liste(call.id(), call.eierResolver()).map { klumpinfo ->
+                    klumpinfo.toResponse()
+                }
             call.respond(HttpStatusCode.OK, vedlegg)
         }
 
@@ -160,15 +161,18 @@ internal class FileUploadHandler(private val mediator: Mediator) {
                             },
                         )
                     }
-                    is PartData.BinaryItem -> part.dispose().also {
-                        logger.warn { "binary item not supported" }
-                    }
-                    is PartData.FormItem -> part.dispose().also {
-                        logger.warn { "form item not supported" }
-                    }
-                    is PartData.BinaryChannelItem -> part.dispose().also {
-                        logger.warn { "BinaryChannel item not supported" }
-                    }
+                    is PartData.BinaryItem ->
+                        part.dispose().also {
+                            logger.warn { "binary item not supported" }
+                        }
+                    is PartData.FormItem ->
+                        part.dispose().also {
+                            logger.warn { "form item not supported" }
+                        }
+                    is PartData.BinaryChannelItem ->
+                        part.dispose().also {
+                            logger.warn { "BinaryChannel item not supported" }
+                        }
                 }
             }
             jobs.awaitAll()

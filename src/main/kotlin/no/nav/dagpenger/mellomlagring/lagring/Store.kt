@@ -5,12 +5,15 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 internal interface Store {
-
     fun hent(storageKey: StorageKey): Result<Klump?>
+
     fun lagre(klump: Klump): Result<Int>
-    fun slett(storageKey: StorageKey /* = kotlin.String */): Result<Boolean>
-    fun hentKlumpInfo(storageKey: StorageKey /* = kotlin.String */): Result<KlumpInfo?>
-    fun listKlumpInfo(keyPrefix: StorageKey /* = kotlin.String */): Result<List<KlumpInfo>>
+
+    fun slett(storageKey: StorageKey): Result<Boolean>
+
+    fun hentKlumpInfo(storageKey: StorageKey): Result<KlumpInfo?>
+
+    fun listKlumpInfo(keyPrefix: StorageKey): Result<List<KlumpInfo>>
 }
 
 internal data class KlumpInfo(
@@ -21,25 +24,26 @@ internal data class KlumpInfo(
     val filContentType: String = "application/octet-stream",
     val tidspunkt: ZonedDateTime = ZonedDateTime.now(ZoneId.of("Europe/Oslo")),
 ) {
-
     companion object {
-        fun fromBlob(blob: Blob) = KlumpInfo(
-            objektNavn = blob.name,
-            originalFilnavn = blob.metadata["originalFilnavn"] ?: blob.name,
-            storrelse = blob.metadata["storrelse "]?.toLong() ?: 0,
-            filContentType = blob.contentType ?: "application/octet-stream",
-            eier = blob.metadata["eier"],
-            tidspunkt = ZonedDateTime.parse(blob.metadata["tidspunkt"]),
-        )
+        fun fromBlob(blob: Blob) =
+            KlumpInfo(
+                objektNavn = blob.name,
+                originalFilnavn = blob.metadata["originalFilnavn"] ?: blob.name,
+                storrelse = blob.metadata["storrelse "]?.toLong() ?: 0,
+                filContentType = blob.contentType ?: "application/octet-stream",
+                eier = blob.metadata["eier"],
+                tidspunkt = ZonedDateTime.parse(blob.metadata["tidspunkt"]),
+            )
     }
 
-    fun toMetadata(): Map<String, String> = mutableMapOf(
-        "originalFilnavn" to originalFilnavn,
-        "storrelse " to storrelse.toString(),
-        "tidspunkt" to tidspunkt.toString(),
-    ).also { map ->
-        eier?.let { map["eier"] = it }
-    }.toMap()
+    fun toMetadata(): Map<String, String> =
+        mutableMapOf(
+            "originalFilnavn" to originalFilnavn,
+            "storrelse " to storrelse.toString(),
+            "tidspunkt" to tidspunkt.toString(),
+        ).also { map ->
+            eier?.let { map["eier"] = it }
+        }.toMap()
 }
 
 internal class Klump(

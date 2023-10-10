@@ -14,9 +14,9 @@ import java.nio.charset.Charset
 import java.util.Optional
 
 private object Kek {
-    const val dev =
+    const val DEV =
         "gcp-kms://projects/teamdagpenger-dev-885f/locations/europe-north1/keyRings/dp-mellomlagring/cryptoKeys/dp-mellomlagring"
-    const val prod =
+    const val PROD =
         "gcp-kms://projects/teamdagpenger-prod-9042/locations/europe-north1/keyRings/dp-mellomlagring/cryptoKeys/dp-mellomlagring"
 }
 
@@ -30,11 +30,12 @@ private object Kek {
  */
 fun main() {
     AeadConfig.register()
-    GcpKmsClient.register(Optional.of(Kek.dev), Optional.empty())
+    GcpKmsClient.register(Optional.of(Kek.DEV), Optional.empty())
 
-    val aead = KmsEnvelopeAeadKeyManager.createKeyTemplate(Kek.dev, KeyTemplates.get("AES128_GCM")).let {
-        KeysetHandle.generateNew(it).getPrimitive(Aead::class.java)
-    }.also { it.check() }
+    val aead =
+        KmsEnvelopeAeadKeyManager.createKeyTemplate(Kek.DEV, KeyTemplates.get("AES128_GCM")).let {
+            KeysetHandle.generateNew(it).getPrimitive(Aead::class.java)
+        }.also { it.check() }
 
     val gcs = StorageOptions.getDefaultInstance().service
 

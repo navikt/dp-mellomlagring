@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test
 import java.io.File
 
 internal class ImageProcessorTest {
-
     private val skrivTilFil = true
 
     @Test
@@ -34,7 +33,7 @@ internal class ImageProcessorTest {
 
     @Test
     fun `slår sammen pdfer`() {
-        shouldNotThrowAny() {
+        shouldNotThrowAny {
             ImageProcessor.mergePdf("/fisk1.jpg".fileAsByteArray().tilPdf(), "/fisk2.jpg".fileAsByteArray().tilPdf())
                 .takeIf { skrivTilFil }
                 ?.let {

@@ -1,5 +1,3 @@
-import Build_gradle.Versions.dpBiblioteker
-import Build_gradle.Versions.ktor
 import com.diffplug.spotless.LineEnding
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
@@ -7,8 +5,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     application
-    kotlin("jvm") version "1.9.0"
-    id("com.diffplug.spotless") version "6.13.0"
+    alias(libs.plugins.kotlin)
+    alias(libs.plugins.spotless)
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
@@ -66,63 +64,56 @@ tasks.withType<Test> {
     }
 }
 
-object Versions {
-    val ktor = "2.3.2"
-    val dpBiblioteker = "2023.04.27-09.33.fcf0798bf943"
-}
-
 dependencies {
 
     implementation("com.google.cloud:google-cloud-storage")
     implementation("de.slub-dresden:urnlib:2.0.1")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2")
-    implementation("com.natpryce:konfig:1.6.10.0")
-    implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("io.ktor:ktor-client-cio:$ktor")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktor")
-    implementation("io.ktor:ktor-client-core:$ktor")
-    implementation("io.ktor:ktor-client-jackson:$ktor")
-    implementation("io.ktor:ktor-client-logging-jvm:$ktor")
-    implementation("io.ktor:ktor-serialization-jackson:$ktor")
-    implementation("io.ktor:ktor-server-auth:$ktor")
-    implementation("io.ktor:ktor-server-auth-jwt:$ktor")
-    implementation("io.ktor:ktor-server-cio:$ktor")
-    implementation("io.ktor:ktor-server-call-logging:$ktor")
-    implementation("io.ktor:ktor-server-call-id:$ktor")
-    implementation("io.ktor:ktor-server-content-negotiation:$ktor")
-    implementation("io.ktor:ktor-server-metrics-micrometer:$ktor")
-    implementation("io.ktor:ktor-server-status-pages:$ktor")
-    implementation("com.github.navikt.dp-biblioteker:image-utils:$dpBiblioteker")
-    implementation("com.github.navikt.dp-biblioteker:ktor-client-metrics:$dpBiblioteker")
-    implementation("io.micrometer:micrometer-registry-prometheus:1.11.2")
+    implementation(libs.jackson.core)
+    implementation(libs.konfig)
+    implementation(libs.kotlin.logging)
+    implementation(libs.bundles.ktor.client)
+    implementation(libs.bundles.ktor.server)
+    implementation(libs.ktor.server.cio)
+    implementation(libs.ktor.server.metrics.micrometer)
+    implementation(libs.dp.biblioteker.image.utils)
+    implementation(libs.dp.biblioteker.ktor.klient.metrics)
+    implementation(libs.micrometer.registry.prometheus)
     implementation(kotlin("stdlib"))
     implementation(platform("com.google.cloud:libraries-bom:26.0.0"))
     implementation(platform(kotlin("bom")))
     implementation("com.google.crypto.tink:tink:1.7.0")
     implementation("com.google.crypto.tink:tink-gcpkms:1.7.0")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2")
+    implementation(libs.jackson.datatype.jsr310)
 
-    runtimeOnly("ch.qos.logback:logback-core:1.4.8")
-    runtimeOnly("ch.qos.logback:logback-classic:1.4.8")
+    runtimeOnly(libs.logback.core)
+    runtimeOnly(libs.logback.classic)
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.4") {
         exclude("com.fasterxml.jackson.core")
     }
 
-    testImplementation("no.nav.security:mock-oauth2-server:1.0.0")
-    testImplementation("org.testcontainers:testcontainers:1.18.3")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.0")
-    testImplementation("io.kotest:kotest-assertions-core-jvm:5.6.2")
-    testImplementation("io.ktor:ktor-server-test-host:$ktor")
-    testImplementation("io.ktor:ktor-client-mock:$ktor")
-    testImplementation("io.mockk:mockk:1.13.5")
-    testImplementation("org.jsmart:zerocode-tdd:1.3.34")
-    testImplementation("org.jsmart:zerocode-tdd-jupiter:1.3.34")
+    testImplementation(libs.mock.oauth2.server)
+    testImplementation(libs.testcontainer)
+
+    val junitVersion = libs.versions.junit.get()
+    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+
+    testImplementation(libs.kotest.assertions.core)
+
+    val ktorVersion = libs.versions.ktor.get()
+    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
+    testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
+
+    testImplementation(libs.mockk)
+
+    val zerocodeVersion = "1.3.35"
+    testImplementation("org.jsmart:zerocode-tdd:$zerocodeVersion")
+    testImplementation("org.jsmart:zerocode-tdd-jupiter:$zerocodeVersion")
+
     testImplementation("org.skyscreamer:jsonassert:1.5.1")
 
     // For E2E
     testImplementation("io.kubernetes:client-java:18.0.1")
-    testImplementation("com.github.navikt.dp-biblioteker:oauth2-klient:2023.04.27-09.33.fcf0798bf943")
-
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
+    testImplementation(libs.dp.biblioteker.oauth2.klient)
 }

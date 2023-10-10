@@ -19,8 +19,8 @@ import io.ktor.http.contentType
 import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.dagpenger.mellomlagring.TestApplication
+import no.nav.dagpenger.mellomlagring.TestApplication.DEFAULT_DUMMY_FODSELNUMMER
 import no.nav.dagpenger.mellomlagring.TestApplication.autentisert
-import no.nav.dagpenger.mellomlagring.TestApplication.defaultDummyFodselsnummer
 import no.nav.dagpenger.mellomlagring.TestApplication.withMockAuthServerAndTestApplication
 import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
@@ -30,8 +30,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
 internal class VedleggApiTest {
-
-    private val NOW = ZonedDateTime.now()
+    private val now = ZonedDateTime.now()
 
     @Test
     fun `Uautorisert dersom ingen token finnes`() {
@@ -58,36 +57,39 @@ internal class VedleggApiTest {
                 client.get("${fixture.path}/vedlegg/1") {
                     autentisert(
                         token = TestApplication.azureAd,
-                        xEier = defaultDummyFodselsnummer,
+                        xEier = DEFAULT_DUMMY_FODSELNUMMER,
                     )
                 }.status shouldBe HttpStatusCode.OK
 
-                client.get("${fixture.path}/vedlegg/1") { autentisert(token = TestApplication.azureAd) }.status shouldBe HttpStatusCode.BadRequest
+                client.get("${fixture.path}/vedlegg/1") { autentisert(token = TestApplication.azureAd) }
+                    .status shouldBe HttpStatusCode.BadRequest
             }
         }
     }
 
     @Test
     fun `Liste filer for en id`() {
-        val mediator = mockk<Mediator>().also {
-            coEvery { it.liste("id", any()) } returns listOf(
-                KlumpInfo(
-                    objektNavn = "id/fil1",
-                    originalFilnavn = "fil1",
-                    storrelse = 0,
-                    eier = "eier1",
-                    tidspunkt = NOW,
-                ),
-                KlumpInfo(
-                    objektNavn = "id/sub1/fil2",
-                    originalFilnavn = "a b c",
-                    storrelse = 0,
-                    eier = "eier2",
-                    tidspunkt = NOW,
-                ),
-            )
-            coEvery { it.liste("finnesikke", defaultDummyFodselsnummer) } returns emptyList()
-        }
+        val mediator =
+            mockk<Mediator>().also {
+                coEvery { it.liste("id", any()) } returns
+                    listOf(
+                        KlumpInfo(
+                            objektNavn = "id/fil1",
+                            originalFilnavn = "fil1",
+                            storrelse = 0,
+                            eier = "eier1",
+                            tidspunkt = now,
+                        ),
+                        KlumpInfo(
+                            objektNavn = "id/sub1/fil2",
+                            originalFilnavn = "a b c",
+                            storrelse = 0,
+                            eier = "eier2",
+                            tidspunkt = now,
+                        ),
+                    )
+                coEvery { it.liste("finnesikke", DEFAULT_DUMMY_FODSELNUMMER) } returns emptyList()
+            }
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
             listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
                 client.get("${fixture.path}/vedlegg/id") { autentisert(fixture) }.let { response ->
@@ -100,14 +102,14 @@ internal class VedleggApiTest {
     "urn": "urn:vedlegg:id/fil1",
     "filsti": "id/fil1",
     "storrelse": 0,
-    "tidspunkt": "${NOW.format(ISO_OFFSET_DATE_TIME)}"
+    "tidspunkt": "${now.format(ISO_OFFSET_DATE_TIME)}"
   },
   {
     "filnavn": "a b c",
     "urn": "urn:vedlegg:id/sub1/fil2",
     "filsti": "id/sub1/fil2",
     "storrelse": 0,
-    "tidspunkt": "${NOW.format(ISO_OFFSET_DATE_TIME)}"
+    "tidspunkt": "${now.format(ISO_OFFSET_DATE_TIME)}"
   }
 ]"""
                 }
@@ -123,35 +125,36 @@ internal class VedleggApiTest {
 
     @Test
     fun `Lagring av fil i subfolder`() {
-        val mediator = mockk<Mediator>().also {
-            coEvery { it.lagre("id/sub", "file1.csv", any(), any(), defaultDummyFodselsnummer) } returns
-                KlumpInfo(
-                    objektNavn = "id/sub/uuid1",
-                    "file1.csv",
-                    0,
-                    defaultDummyFodselsnummer,
-                    "application/octet-stream",
-                    NOW,
-                )
-            coEvery { it.lagre("id/sub", "file2.csv", any(), any(), defaultDummyFodselsnummer) } returns
-                KlumpInfo(
-                    "id/sub/uuid2",
-                    "file2.csv",
-                    0,
-                    defaultDummyFodselsnummer,
-                    "application/octet-stream",
-                    NOW,
-                )
-            coEvery { it.lagre("id/sub/subsub/", "file3.csv", any(), any(), defaultDummyFodselsnummer) } returns
-                KlumpInfo(
-                    "id/sub/subsub/uuid3",
-                    "file3.csv",
-                    0,
-                    defaultDummyFodselsnummer,
-                    "application/octet-stream",
-                    NOW,
-                )
-        }
+        val mediator =
+            mockk<Mediator>().also {
+                coEvery { it.lagre("id/sub", "file1.csv", any(), any(), DEFAULT_DUMMY_FODSELNUMMER) } returns
+                    KlumpInfo(
+                        objektNavn = "id/sub/uuid1",
+                        "file1.csv",
+                        0,
+                        DEFAULT_DUMMY_FODSELNUMMER,
+                        "application/octet-stream",
+                        now,
+                    )
+                coEvery { it.lagre("id/sub", "file2.csv", any(), any(), DEFAULT_DUMMY_FODSELNUMMER) } returns
+                    KlumpInfo(
+                        "id/sub/uuid2",
+                        "file2.csv",
+                        0,
+                        DEFAULT_DUMMY_FODSELNUMMER,
+                        "application/octet-stream",
+                        now,
+                    )
+                coEvery { it.lagre("id/sub/subsub/", "file3.csv", any(), any(), DEFAULT_DUMMY_FODSELNUMMER) } returns
+                    KlumpInfo(
+                        "id/sub/subsub/uuid3",
+                        "file3.csv",
+                        0,
+                        DEFAULT_DUMMY_FODSELNUMMER,
+                        "application/octet-stream",
+                        now,
+                    )
+            }
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
             listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
                 client.post("${fixture.path}/vedlegg/id/sub") {
@@ -184,21 +187,22 @@ internal class VedleggApiTest {
 
     @Test
     fun `Lagring av fil`() {
-        val mediator = mockk<Mediator>().also {
-            coEvery { it.lagre("id", "file.csv", any(), any(), defaultDummyFodselsnummer) } returns
-                KlumpInfo(
-                    "id/file1.csv",
-                    "file1.csv",
-                    0,
-                    defaultDummyFodselsnummer,
-                    "application/octet-stream",
-                    NOW,
-                )
-            coEvery { it.lagre("id", "file2.csv", any(), any(), defaultDummyFodselsnummer) } returns
-                KlumpInfo("id/file2.csv", "file.csv", 0, defaultDummyFodselsnummer, "application/octet-stream", NOW)
-            coEvery { it.lagre("id", "fil med space", any(), any(), defaultDummyFodselsnummer) } returns
-                KlumpInfo("id/uuid", "fil med space", 0, defaultDummyFodselsnummer, "application/octet-stream", NOW)
-        }
+        val mediator =
+            mockk<Mediator>().also {
+                coEvery { it.lagre("id", "file.csv", any(), any(), DEFAULT_DUMMY_FODSELNUMMER) } returns
+                    KlumpInfo(
+                        "id/file1.csv",
+                        "file1.csv",
+                        0,
+                        DEFAULT_DUMMY_FODSELNUMMER,
+                        "application/octet-stream",
+                        now,
+                    )
+                coEvery { it.lagre("id", "file2.csv", any(), any(), DEFAULT_DUMMY_FODSELNUMMER) } returns
+                    KlumpInfo("id/file2.csv", "file.csv", 0, DEFAULT_DUMMY_FODSELNUMMER, "application/octet-stream", now)
+                coEvery { it.lagre("id", "fil med space", any(), any(), DEFAULT_DUMMY_FODSELNUMMER) } returns
+                    KlumpInfo("id/uuid", "fil med space", 0, DEFAULT_DUMMY_FODSELNUMMER, "application/octet-stream", now)
+            }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
             listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
@@ -230,21 +234,21 @@ internal class VedleggApiTest {
     "urn": "urn:vedlegg:id/file1.csv",
     "filsti": "id/file1.csv",
     "storrelse": 0,
-    "tidspunkt": "${NOW.format(ISO_OFFSET_DATE_TIME)}"
+    "tidspunkt": "${now.format(ISO_OFFSET_DATE_TIME)}"
   },
   {
     "filnavn": "file.csv",
     "urn": "urn:vedlegg:id/file2.csv",
     "filsti": "id/file2.csv",
     "storrelse": 0,
-    "tidspunkt": "${NOW.format(ISO_OFFSET_DATE_TIME)}"
+    "tidspunkt": "${now.format(ISO_OFFSET_DATE_TIME)}"
   },
   {
     "filnavn": "fil med space",
     "urn": "urn:vedlegg:id/uuid",
     "filsti": "id/uuid",
     "storrelse": 0,
-    "tidspunkt": "${NOW.format(ISO_OFFSET_DATE_TIME)}"
+    "tidspunkt": "${now.format(ISO_OFFSET_DATE_TIME)}"
   }
 ]"""
                     response.contentType().toString() shouldBe "application/json; charset=UTF-8"
@@ -255,33 +259,38 @@ internal class VedleggApiTest {
 
     @Test
     fun `Hente vedlegg`() {
-        val mockMediator = mockk<Mediator>().also {
-            coEvery { it.hent(VedleggUrn("id/filnavn.pdf"), defaultDummyFodselsnummer) } returns Klump(
-                innhold = "1".toByteArray(),
-                klumpInfo = KlumpInfo(
-                    objektNavn = "id/filnavn.pdf",
-                    originalFilnavn = "filnavn.pdf",
-                    storrelse = 0,
-                    eier = defaultDummyFodselsnummer,
-                ),
-            )
+        val mockMediator =
+            mockk<Mediator>().also {
+                coEvery { it.hent(VedleggUrn("id/filnavn.pdf"), DEFAULT_DUMMY_FODSELNUMMER) } returns
+                    Klump(
+                        innhold = "1".toByteArray(),
+                        klumpInfo =
+                            KlumpInfo(
+                                objektNavn = "id/filnavn.pdf",
+                                originalFilnavn = "filnavn.pdf",
+                                storrelse = 0,
+                                eier = DEFAULT_DUMMY_FODSELNUMMER,
+                            ),
+                    )
 
-            coEvery { it.hent(VedleggUrn("id/sub/uuid"), defaultDummyFodselsnummer) } returns Klump(
-                innhold = "uuid".toByteArray(),
-                klumpInfo = KlumpInfo(
-                    objektNavn = "id/sub/uuid",
-                    originalFilnavn = "filnavn.pdf",
-                    storrelse = 0,
-                    eier = defaultDummyFodselsnummer,
-                ),
-            )
-            coEvery {
-                it.hent(
-                    VedleggUrn("id/finnesIkke.pdf"),
-                    defaultDummyFodselsnummer,
-                )
-            } throws NotFoundException("hjk")
-        }
+                coEvery { it.hent(VedleggUrn("id/sub/uuid"), DEFAULT_DUMMY_FODSELNUMMER) } returns
+                    Klump(
+                        innhold = "uuid".toByteArray(),
+                        klumpInfo =
+                            KlumpInfo(
+                                objektNavn = "id/sub/uuid",
+                                originalFilnavn = "filnavn.pdf",
+                                storrelse = 0,
+                                eier = DEFAULT_DUMMY_FODSELNUMMER,
+                            ),
+                    )
+                coEvery {
+                    it.hent(
+                        VedleggUrn("id/finnesIkke.pdf"),
+                        DEFAULT_DUMMY_FODSELNUMMER,
+                    )
+                } throws NotFoundException("hjk")
+            }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
             listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
@@ -304,16 +313,17 @@ internal class VedleggApiTest {
 
     @Test
     fun `Slette vedlegg`() {
-        val mockMediator = mockk<Mediator>().also {
-            coEvery { it.slett(VedleggUrn("id/filnavn.pdf"), defaultDummyFodselsnummer) } returns true
-            coEvery { it.slett(VedleggUrn("id/sub/uuid"), defaultDummyFodselsnummer) } returns true
-            coEvery {
-                it.slett(
-                    VedleggUrn("id/finnesIkke.pdf"),
-                    defaultDummyFodselsnummer,
-                )
-            } throws NotFoundException("hjkhk")
-        }
+        val mockMediator =
+            mockk<Mediator>().also {
+                coEvery { it.slett(VedleggUrn("id/filnavn.pdf"), DEFAULT_DUMMY_FODSELNUMMER) } returns true
+                coEvery { it.slett(VedleggUrn("id/sub/uuid"), DEFAULT_DUMMY_FODSELNUMMER) } returns true
+                coEvery {
+                    it.slett(
+                        VedleggUrn("id/finnesIkke.pdf"),
+                        DEFAULT_DUMMY_FODSELNUMMER,
+                    )
+                } throws NotFoundException("hjkhk")
+            }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
             listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
@@ -327,16 +337,18 @@ internal class VedleggApiTest {
 
     @Test
     fun statusPages() {
-        val mockMediator = mockk<Mediator>().also {
-            coEvery { it.hent(VedleggUrn("id/illegalargument"), any()) } throws IllegalArgumentException("test")
-            coEvery { it.hent(VedleggUrn("id/notOwner"), any()) } throws NotOwnerException("test")
-            coEvery { it.hent(VedleggUrn("id/ugyldiginnhold"), any()) } throws UgyldigFilInnhold(
-                "test",
-                mapOf(FeilType.FILE_VIRUS to "test"),
-            )
-            coEvery { it.hent(VedleggUrn("id/throwable"), any()) } throws Throwable("test")
-            coEvery { it.hent(VedleggUrn("id/notfound"), any()) } throws NotFoundException("test")
-        }
+        val mockMediator =
+            mockk<Mediator>().also {
+                coEvery { it.hent(VedleggUrn("id/illegalargument"), any()) } throws IllegalArgumentException("test")
+                coEvery { it.hent(VedleggUrn("id/notOwner"), any()) } throws NotOwnerException("test")
+                coEvery { it.hent(VedleggUrn("id/ugyldiginnhold"), any()) } throws
+                    UgyldigFilInnhold(
+                        "test",
+                        mapOf(FeilType.FILE_VIRUS to "test"),
+                    )
+                coEvery { it.hent(VedleggUrn("id/throwable"), any()) } throws Throwable("test")
+                coEvery { it.hent(VedleggUrn("id/notfound"), any()) } throws NotFoundException("test")
+            }
 
         withMockAuthServerAndTestApplication({ vedleggApi(mockMediator) }) {
             client.get("v1/obo/mellomlagring/vedlegg/id/illegalargument") { autentisert() }.status shouldBe HttpStatusCode.BadRequest
@@ -345,6 +357,7 @@ internal class VedleggApiTest {
             client.get("v1/obo/mellomlagring/vedlegg/id/notfound") { autentisert() }.status shouldBe HttpStatusCode.NotFound
             client.get("v1/obo/mellomlagring/vedlegg/id/ugyldiginnhold") { autentisert() }.let {
                 it.status shouldBe HttpStatusCode.BadRequest
+                @Suppress("ktlint:standard:max-line-length")
                 //language=JSON
                 it.bodyAsText() shouldBe """{"type":"about:blank","title":"Fil er ugyldig","status":400,"detail":"test feilet følgende valideringer: test","instance":"about:blank","errorType":"FILE_VIRUS"}""".trimIndent()
             }
@@ -354,7 +367,7 @@ internal class VedleggApiTest {
     private sealed class TestFixture(val path: String, val token: String) {
         class TokenX() : TestFixture("v1/obo/mellomlagring/", TestApplication.tokenXToken)
 
-        data class AzureAd(val eier: String = defaultDummyFodselsnummer) :
+        data class AzureAd(val eier: String = DEFAULT_DUMMY_FODSELNUMMER) :
             TestFixture("v1/azuread/mellomlagring/", TestApplication.azureAd)
     }
 

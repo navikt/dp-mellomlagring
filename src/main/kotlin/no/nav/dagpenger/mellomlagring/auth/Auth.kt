@@ -20,8 +20,7 @@ import kotlinx.coroutines.runBlocking
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
-fun ApplicationCall.azureAdEier(): String =
-    this.request.header("X-Eier") ?: throw IllegalArgumentException("Request mangler X-Eier header")
+fun ApplicationCall.azureAdEier(): String = this.request.header("X-Eier") ?: throw IllegalArgumentException("Request mangler X-Eier header")
 
 fun ApplicationCall.oboEier(): String =
     this.principal<JWTPrincipal>()?.let {
@@ -70,10 +69,11 @@ private fun cachedJwkProvider(jwksUri: String): JwkProvider {
         .build()
 }
 
-private val httpClient = HttpClient() {
-    install(ContentNegotiation) {
-        jackson {
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+private val httpClient =
+    HttpClient {
+        install(ContentNegotiation) {
+            jackson {
+                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            }
         }
     }
-}

@@ -12,7 +12,10 @@ import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
 internal object ImageProcessor {
-    fun mergePdf(accumulator: ByteArray, currentValue: ByteArray): ByteArray {
+    fun mergePdf(
+        accumulator: ByteArray,
+        currentValue: ByteArray,
+    ): ByteArray {
         return PDFDocument.merge(listOf(accumulator, currentValue)).use { pdf ->
             ByteArrayOutputStream().use { os ->
                 pdf.save(BufferedOutputStream(os))
@@ -38,7 +41,10 @@ internal object ImageProcessor {
         }
     }
 
-    private fun scaleImage(it: ByteArray, format: String): ByteArray {
+    private fun scaleImage(
+        it: ByteArray,
+        format: String,
+    ): ByteArray {
         return ByteArrayOutputStream().use { os ->
             ImageIO.write(
                 ImageScaler.scale(

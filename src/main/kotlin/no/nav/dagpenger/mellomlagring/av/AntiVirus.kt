@@ -21,7 +21,10 @@ import java.io.ByteArrayInputStream
 import kotlin.time.Duration.Companion.seconds
 
 internal interface AntiVirus {
-    suspend fun infisert(filnavn: String, filinnhold: ByteArray): Boolean
+    suspend fun infisert(
+        filnavn: String,
+        filinnhold: ByteArray,
+    ): Boolean
 }
 
 private val logger = KotlinLogging.logger { }
@@ -42,27 +45,28 @@ internal fun clamAv(
     registry: CollectorRegistry = CollectorRegistry.defaultRegistry,
 ): AntiVirus {
     return object : AntiVirus {
-        private val httpClient = HttpClient(engine) {
-            install(ContentNegotiation) {
-                jackson {
+        private val httpClient =
+            HttpClient(engine) {
+                install(ContentNegotiation) {
+                    jackson {
+                    }
+                }
+                install(HttpTimeout) {
+                    requestTimeoutMillis = 15.seconds.inWholeMilliseconds
+                }
+
+                install(PrometheusMetricsPlugin) {
+                    this.baseName = "dp_mellomlagring_clamav_client"
+                    this.registry = registry
+                }
+
+                install(HttpRequestRetry) {
+                    retryIf(3) { _, response: HttpResponse ->
+                        response.status.value.let { it in 400..599 }
+                    }
+                    exponentialDelay()
                 }
             }
-            install(HttpTimeout) {
-                requestTimeoutMillis = 15.seconds.inWholeMilliseconds
-            }
-
-            install(PrometheusMetricsPlugin) {
-                this.baseName = "dp_mellomlagring_clamav_client"
-                this.registry = registry
-            }
-
-            install(HttpRequestRetry) {
-                retryIf(3) { _, response: HttpResponse ->
-                    response.status.value.let { it in 400..599 }
-                }
-                exponentialDelay()
-            }
-        }
 
         private fun List<ScanResult>.registerMetrics() {
             this.forEach {
@@ -70,7 +74,10 @@ internal fun clamAv(
             }
         }
 
-        override suspend fun infisert(filnavn: String, filinnhold: ByteArray): Boolean {
+        override suspend fun infisert(
+            filnavn: String,
+            filinnhold: ByteArray,
+        ): Boolean {
             return runCatching<List<ScanResult>> {
                 httpClient.put {
                     url("http://clamav.nais-system.svc.cluster.local/scan")

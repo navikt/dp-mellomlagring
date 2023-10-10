@@ -9,7 +9,7 @@ import io.ktor.server.testing.testApplication
 import no.nav.security.mock.oauth2.MockOAuth2Server
 
 internal object TestApplication {
-    const val defaultDummyFodselsnummer = "123456789"
+    const val DEFAULT_DUMMY_FODSELNUMMER = "123456789"
 
     private val mockOAuth2Server: MockOAuth2Server by lazy {
         MockOAuth2Server().also { server ->
@@ -21,9 +21,10 @@ internal object TestApplication {
         mockOAuth2Server.issueToken(
             issuerId = Config.TokenX.name,
             audience = Config.TokenX.audience,
-            claims = mapOf<String, Any>(
-                "pid" to defaultDummyFodselsnummer,
-            ),
+            claims =
+                mapOf<String, Any>(
+                    "pid" to this.DEFAULT_DUMMY_FODSELNUMMER,
+                ),
         ).serialize()
     }
 
@@ -52,7 +53,10 @@ internal object TestApplication {
         }
     }
 
-    internal fun HttpRequestBuilder.autentisert(token: String = tokenXToken, xEier: String? = null) {
+    internal fun HttpRequestBuilder.autentisert(
+        token: String = tokenXToken,
+        xEier: String? = null,
+    ) {
         this.header(HttpHeaders.Authorization, "Bearer $token")
         xEier?.let {
             this.header("X-Eier", xEier)

@@ -10,8 +10,10 @@ import mu.KotlinLogging
 private val sikkerlogg = KotlinLogging.logger("tjenestekall")
 
 internal object BundleRequestDeserializer : JsonDeserializer<BundleRequest>() {
-
-    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): BundleRequest {
+    override fun deserialize(
+        p: JsonParser,
+        ctxt: DeserializationContext,
+    ): BundleRequest {
         return kotlin.runCatching {
             p.readValueAsTree<JsonNode>().let { node ->
                 BundleRequest(node.soknadId(), node.bundleNavn(), node.urns())
@@ -26,8 +28,11 @@ internal object BundleRequestDeserializer : JsonDeserializer<BundleRequest>() {
     }
 
     private fun JsonNode.soknadId() = this["soknadId"].asText()
+
     private fun JsonNode.bundleNavn() = this.get("bundleNavn").asText()
-    private fun JsonNode.urns(): Set<URN> = this.get("filer").map { urnNode ->
-        URN.rfc8141().parse(urnNode.get("urn").asText())
-    }.toSet()
+
+    private fun JsonNode.urns(): Set<URN> =
+        this.get("filer").map { urnNode ->
+            URN.rfc8141().parse(urnNode.get("urn").asText())
+        }.toSet()
 }

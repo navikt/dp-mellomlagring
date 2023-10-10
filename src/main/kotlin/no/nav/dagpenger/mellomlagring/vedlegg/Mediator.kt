@@ -14,7 +14,6 @@ import no.nav.dagpenger.mellomlagring.lagring.StoreException
 import java.util.UUID
 
 internal interface Mediator {
-
     suspend fun lagre(
         soknadsId: String,
         filnavn: String,
@@ -23,16 +22,32 @@ internal interface Mediator {
         eier: String,
     ): KlumpInfo
 
-    suspend fun liste(soknadsId: String, eier: String): List<KlumpInfo>
-    suspend fun hent(vedleggUrn: VedleggUrn, eier: String): Klump?
-    suspend fun slett(vedleggUrn: VedleggUrn, eier: String): Boolean
+    suspend fun liste(
+        soknadsId: String,
+        eier: String,
+    ): List<KlumpInfo>
+
+    suspend fun hent(
+        vedleggUrn: VedleggUrn,
+        eier: String,
+    ): Klump?
+
+    suspend fun slett(
+        vedleggUrn: VedleggUrn,
+        eier: String,
+    ): Boolean
+
     fun interface FilValidering {
-        suspend fun valider(filnavn: String, filinnhold: ByteArray): FilValideringResultat
+        suspend fun valider(
+            filnavn: String,
+            filinnhold: ByteArray,
+        ): FilValideringResultat
     }
 }
 
 abstract class FilValideringResultat(open val filnavn: String) {
     data class Gyldig(override val filnavn: String) : FilValideringResultat(filnavn)
+
     data class Ugyldig(override val filnavn: String, val feilMelding: String, val feilType: FeilType) :
         FilValideringResultat(filnavn)
 }
@@ -62,7 +77,6 @@ internal class MediatorImpl(
     private val filValideringer: List<Mediator.FilValidering> = emptyList(),
     private val uuidGenerator: () -> UUID = UUID::randomUUID,
 ) : Mediator {
-
     private fun kryptertStore(eier: String) = KryptertStore(eier, store, aead)
 
     override suspend fun lagre(
@@ -73,28 +87,36 @@ internal class MediatorImpl(
         eier: String,
     ): KlumpInfo {
         valider(filnavn, filinnhold)
-        val klumpInfo = KlumpInfo(
-            objektNavn = createStoreKey(soknadsId = soknadsId),
-            originalFilnavn = filnavn,
-            storrelse = filinnhold.size.toLong(),
-            filContentType = filContentType,
-            eier = eier,
-        )
+        val klumpInfo =
+            KlumpInfo(
+                objektNavn = createStoreKey(soknadsId = soknadsId),
+                originalFilnavn = filnavn,
+                storrelse = filinnhold.size.toLong(),
+                filContentType = filContentType,
+                eier = eier,
+            )
         return kryptertStore(eier).lagre(
-            klump = Klump(
-                innhold = filinnhold,
-                klumpInfo = klumpInfo,
-            ),
+            klump =
+                Klump(
+                    innhold = filinnhold,
+                    klumpInfo = klumpInfo,
+                ),
         ).getOrThrow().let { klumpInfo }
     }
 
-    override suspend fun liste(soknadsId: String, eier: String): List<KlumpInfo> {
+    override suspend fun liste(
+        soknadsId: String,
+        eier: String,
+    ): List<KlumpInfo> {
         return kryptertStore(eier)
             .listKlumpInfo(soknadsId)
             .getOrThrow()
     }
 
-    override suspend fun hent(vedleggUrn: VedleggUrn, eier: String): Klump? {
+    override suspend fun hent(
+        vedleggUrn: VedleggUrn,
+        eier: String,
+    ): Klump? {
         return vedleggUrn.nss.let { klumpNavn ->
             kryptertStore(eier).let { s ->
                 s.hvisFinnes(klumpNavn) {
@@ -104,7 +126,10 @@ internal class MediatorImpl(
         }
     }
 
-    override suspend fun slett(vedleggUrn: VedleggUrn, eier: String): Boolean {
+    override suspend fun slett(
+        vedleggUrn: VedleggUrn,
+        eier: String,
+    ): Boolean {
         return vedleggUrn.nss.let { klumpnavn ->
             kryptertStore(eier).let { s ->
                 s.hvisFinnes(klumpnavn) {
@@ -114,7 +139,10 @@ internal class MediatorImpl(
         }
     }
 
-    private suspend fun valider(filnavn: String, filinnhold: ByteArray) {
+    private suspend fun valider(
+        filnavn: String,
+        filinnhold: ByteArray,
+    ) {
         coroutineScope {
             filValideringer
                 .map { async { it.valider(filnavn, filinnhold) } }
@@ -145,7 +173,10 @@ internal class MediatorImpl(
         }
     }
 
-    private inline fun <T> Store.hvisFinnes(klumpNavn: String, block: () -> T?): T? {
+    private inline fun <T> Store.hvisFinnes(
+        klumpNavn: String,
+        block: () -> T?,
+    ): T? {
         return this.hentKlumpInfo(klumpNavn).getOrThrow()?.let { _ ->
             block.invoke()
         }

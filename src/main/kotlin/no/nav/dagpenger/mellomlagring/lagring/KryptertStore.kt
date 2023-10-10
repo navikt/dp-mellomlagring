@@ -53,7 +53,10 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
         }
     }
 
-    private inline fun <T> requireEier(storageKey: StorageKey, resultSupplier: () -> Result<T>): Result<T> {
+    private inline fun <T> requireEier(
+        storageKey: StorageKey,
+        resultSupplier: () -> Result<T>,
+    ): Result<T> {
         return store.hentKlumpInfo(storageKey).fold(
             onSuccess = {
                 when (it) {
@@ -102,8 +105,7 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
         return Klump(innhold = aead.decrypt(this.innhold, eier.toByteArray()), klumpInfo = this.klumpInfo)
     }
 
-    private fun String?.encrypt() =
-        this?.let { aead.encrypt(this.toByteArray(charset), fnr.toByteArray()).toString(charset) }
+    private fun String?.encrypt() = this?.let { aead.encrypt(this.toByteArray(charset), fnr.toByteArray()).toString(charset) }
 
     private fun String.decrypt() = aead.decrypt(this.toByteArray(charset), fnr.toByteArray()).toString(charset)
 }

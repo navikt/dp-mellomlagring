@@ -14,7 +14,6 @@ internal class S3Store(
     private val gcpStorage: Storage = Config.storage,
     private val bucketName: String = Config.bucketName,
 ) : Store {
-
     init {
         ensureBucketExists()
     }

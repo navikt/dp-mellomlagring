@@ -12,18 +12,18 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 internal class AntiVirusTest {
-
     @Test
     fun `Ikke infisert fil`() {
         runBlocking {
             clamAv(
-                engine = MockEngine {
-                    respond(
-                        content = """[{"Filename": "filnavn.pdf", "Result": "OK"}]""",
-                        status = HttpStatusCode.OK,
-                        headers = headersOf(HttpHeaders.ContentType, "application/json"),
-                    )
-                },
+                engine =
+                    MockEngine {
+                        respond(
+                            content = """[{"Filename": "filnavn.pdf", "Result": "OK"}]""",
+                            status = HttpStatusCode.OK,
+                            headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                        )
+                    },
                 registry = CollectorRegistry(),
             ).infisert("filnavn med masse space t.pdf", "innhold".toByteArray()) shouldBe false
         }
@@ -34,13 +34,14 @@ internal class AntiVirusTest {
         runBlocking {
             val registry = CollectorRegistry(true)
             clamAv(
-                engine = MockEngine {
-                    respond(
-                        content = """[{"Filename": "filnavn.pdf", "Result": "FOUND"}]""",
-                        status = HttpStatusCode.OK,
-                        headers = headersOf(HttpHeaders.ContentType, "application/json"),
-                    )
-                },
+                engine =
+                    MockEngine {
+                        respond(
+                            content = """[{"Filename": "filnavn.pdf", "Result": "FOUND"}]""",
+                            status = HttpStatusCode.OK,
+                            headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                        )
+                    },
                 registry = registry,
             ).infisert("filnavn.pdf", "innhold".toByteArray()) shouldBe true
 
@@ -57,13 +58,14 @@ internal class AntiVirusTest {
         runBlocking {
             shouldThrow<IllegalArgumentException> {
                 clamAv(
-                    engine = MockEngine {
-                        respond(
-                            content = """[]""",
-                            status = HttpStatusCode.OK,
-                            headers = headersOf(HttpHeaders.ContentType, "application/json"),
-                        )
-                    },
+                    engine =
+                        MockEngine {
+                            respond(
+                                content = """[]""",
+                                status = HttpStatusCode.OK,
+                                headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                            )
+                        },
                     registry = CollectorRegistry(),
                 ).infisert("filnavn.pdf", "innhold".toByteArray())
             }

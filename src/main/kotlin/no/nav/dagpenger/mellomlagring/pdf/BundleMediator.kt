@@ -13,14 +13,18 @@ private val sikkerlogg = KotlinLogging.logger("tjenestekall")
 private val logger = KotlinLogging.logger { }
 
 internal class BundleMediator(private val mediator: Mediator) {
-    suspend fun bundle(request: BundleRequest, eier: String): KlumpInfo {
+    suspend fun bundle(
+        request: BundleRequest,
+        eier: String,
+    ): KlumpInfo {
         Metrics.bundlerRequestCounter.inc()
         return kotlin.runCatching {
-            val pdf: ByteArray = request.filer
-                .map { hent(VedleggUrn(it.namespaceSpecificString().toString()), eier) }
-                .map { it.getOrThrow().innhold }
-                .map { it.tilPdf() }
-                .reduce(ImageProcessor::mergePdf)
+            val pdf: ByteArray =
+                request.filer
+                    .map { hent(VedleggUrn(it.namespaceSpecificString().toString()), eier) }
+                    .map { it.getOrThrow().innhold }
+                    .map { it.tilPdf() }
+                    .reduce(ImageProcessor::mergePdf)
 
             mediator.lagre(
                 soknadsId = request.soknadId,
@@ -38,7 +42,10 @@ internal class BundleMediator(private val mediator: Mediator) {
         }.getOrThrow()
     }
 
-    private suspend fun hent(urn: VedleggUrn, eier: String): Result<Klump> {
+    private suspend fun hent(
+        urn: VedleggUrn,
+        eier: String,
+    ): Result<Klump> {
         return kotlin.runCatching {
             mediator.hent(urn, eier)
         }.mapCatching {

@@ -51,7 +51,10 @@ import kotlin.time.measureTime
 
 // Hente azuread eller tokenx secret for  app
 // jwker.nais.io -> tokenx,  azurerator.nais.io -> azuread
-fun getAuthEnv(app: String, type: String = "jwker.nais.io"): Map<String, String> {
+fun getAuthEnv(
+    app: String,
+    type: String = "jwker.nais.io",
+): Map<String, String> {
     // file path to your KubeConfig
     val kubeConfigPath = System.getenv("KUBECONFIG")
 
@@ -75,14 +78,19 @@ fun getAuthEnv(app: String, type: String = "jwker.nais.io"): Map<String, String>
     }.first<V1Secret?>()?.data!!.mapValues { e -> String(e.value) }
 }
 
-suspend fun getOboToken(app: String, selvbetjeningsIdToken: String): String {
-    val tokenXConfig = OAuth2Config.TokenX(
-        config = getAuthEnv(app),
-    )
-    val tokenClient = OAuth2Client(
-        tokenEndpointUrl = tokenXConfig.tokenEndpointUrl,
-        authType = tokenXConfig.privateKey(),
-    )
+suspend fun getOboToken(
+    app: String,
+    selvbetjeningsIdToken: String,
+): String {
+    val tokenXConfig =
+        OAuth2Config.TokenX(
+            config = getAuthEnv(app),
+        )
+    val tokenClient =
+        OAuth2Client(
+            tokenEndpointUrl = tokenXConfig.tokenEndpointUrl,
+            authType = tokenXConfig.privateKey(),
+        )
 
     return tokenClient.tokenExchange(
         // 51818700273 -
@@ -92,9 +100,10 @@ suspend fun getOboToken(app: String, selvbetjeningsIdToken: String): String {
 }
 
 fun getAzureAdToken(app: String): String {
-    val azureadConfig = OAuth2Config.AzureAd(
-        getAuthEnv(app, "azurerator.nais.io"),
-    )
+    val azureadConfig =
+        OAuth2Config.AzureAd(
+            getAuthEnv(app, "azurerator.nais.io"),
+        )
     val tokenAzureAdClient: CachedOauth2Client by lazy {
         CachedOauth2Client(
             tokenEndpointUrl = azureadConfig.tokenEndpointUrl,
@@ -105,26 +114,28 @@ fun getAzureAdToken(app: String): String {
     return tokenAzureAdClient.clientCredentials("api://dev-gcp.teamdagpenger.dp-mellomlagring/.default").accessToken
 }
 
-val httpClientJackson = HttpClient {
-    install(ContentNegotiation) {
-        jackson {
-            registerModule(JavaTimeModule())
-            disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+val httpClientJackson =
+    HttpClient {
+        install(ContentNegotiation) {
+            jackson {
+                registerModule(JavaTimeModule())
+                disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            }
+        }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 130.seconds.inWholeMilliseconds
+            connectTimeoutMillis = 130.seconds.inWholeMilliseconds
+            socketTimeoutMillis = 130.seconds.inWholeMilliseconds
         }
     }
-    install(HttpTimeout) {
-        requestTimeoutMillis = 130.seconds.inWholeMilliseconds
-        connectTimeoutMillis = 130.seconds.inWholeMilliseconds
-        socketTimeoutMillis = 130.seconds.inWholeMilliseconds
+val plainHttpClient =
+    HttpClient {
+        install(HttpTimeout) {
+            requestTimeoutMillis = 130.seconds.inWholeMilliseconds
+            connectTimeoutMillis = 130.seconds.inWholeMilliseconds
+            socketTimeoutMillis = 130.seconds.inWholeMilliseconds
+        }
     }
-}
-val plainHttpClient = HttpClient {
-    install(HttpTimeout) {
-        requestTimeoutMillis = 130.seconds.inWholeMilliseconds
-        connectTimeoutMillis = 130.seconds.inWholeMilliseconds
-        socketTimeoutMillis = 130.seconds.inWholeMilliseconds
-    }
-}
 
 private data class BundleRequest(
     val bundleNavn: String,
@@ -141,8 +152,7 @@ private data class Response(
     val storrelse: Long,
     val tidspunkt: ZonedDateTime,
 ) {
-    private val _urn = URN.rfc8141().parse(urn)
-    fun nss(): String = _urn.namespaceSpecificString().toString()
+    fun nss(): String = URN.rfc8141().parse(urn).namespaceSpecificString().toString()
 }
 
 @ExtendWith(ParallelLoadExtension::class)
@@ -175,53 +185,60 @@ internal class E2E {
     fun volume() {
         println("Running test with id: $soknadId and eier $eier")
         val fileAsByteArray = "/middlesize.jpg".fileAsByteArray()
-        val formData = formData {
-            repeat(2) { n ->
-                append(
-                    "image",
-                    fileAsByteArray,
-                    Headers.build {
-                        append(HttpHeaders.ContentType, "image/jpeg")
-                        append(HttpHeaders.ContentDisposition, "filename=\"$n.jpg\"")
-                    },
-                )
+        val formData =
+            formData {
+                repeat(2) { n ->
+                    append(
+                        "image",
+                        fileAsByteArray,
+                        Headers.build {
+                            append(HttpHeaders.ContentType, "image/jpeg")
+                            append(HttpHeaders.ContentDisposition, "filename=\"$n.jpg\"")
+                        },
+                    )
+                }
             }
-        }
         runBlocking {
-            val oboToken = getOboToken(
-                "dp-soknadsdialog",
-                selvbetjeningsIdToken,
-            )
+            val oboToken =
+                getOboToken(
+                    "dp-soknadsdialog",
+                    selvbetjeningsIdToken,
+                )
             // Send filer til mellomlagring
-            val responseList = measure("Tid brukt på å sender opp filer") {
-                return@measure httpClientJackson.submitFormWithBinaryData(
-                    url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
-                    formData = formData,
-                ) {
-                    this.header("Authorization", "Bearer $oboToken")
-                }.body<List<Response>>()
-            }
+            val responseList =
+                measure("Tid brukt på å sender opp filer") {
+                    return@measure httpClientJackson.submitFormWithBinaryData(
+                        url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
+                        formData = formData,
+                    ) {
+                        this.header("Authorization", "Bearer $oboToken")
+                    }.body<List<Response>>()
+                }
 
             // Bundle filer
-            val bundleResponse = measure("Tid brukt for å bundle") {
-                responseList.map { it.urn }
-                httpClientJackson.post("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/pdf/bundle") {
-                    header("Authorization", "Bearer $oboToken")
-                    header(HttpHeaders.ContentType, "application/json")
-                    setBody(
-                        BundleRequest(
-                            bundleNavn = "bundle.pdf",
-                            soknadId = soknadId,
-                            filer = responseList.map { BundleRequest.URN(it.urn) },
-                        ),
-                    )
-                }.body<Response>()
-            }.also { println(it) }
+            val bundleResponse =
+                measure("Tid brukt for å bundle") {
+                    responseList.map { it.urn }
+                    httpClientJackson.post("https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/pdf/bundle") {
+                        header("Authorization", "Bearer $oboToken")
+                        header(HttpHeaders.ContentType, "application/json")
+                        setBody(
+                            BundleRequest(
+                                bundleNavn = "bundle.pdf",
+                                soknadId = soknadId,
+                                filer = responseList.map { BundleRequest.URN(it.urn) },
+                            ),
+                        )
+                    }.body<Response>()
+                }.also { println(it) }
         }
     }
 
     @OptIn(ExperimentalTime::class)
-    private inline fun <T : Any> measure(msg: String, block: () -> T): T {
+    private inline fun <T : Any> measure(
+        msg: String,
+        block: () -> T,
+    ): T {
         var t: T
         measureTime {
             t = block()
@@ -234,25 +251,27 @@ internal class E2E {
     fun e2e() {
         runBlocking {
             println("Running test with id: $soknadId and eier $eier")
-            val oboToken = getOboToken(
-                "dp-soknadsdialog",
-                selvbetjeningsIdToken,
-            )
+            val oboToken =
+                getOboToken(
+                    "dp-soknadsdialog",
+                    selvbetjeningsIdToken,
+                )
 
             // Send ugyldig filer
             listOf("test.txt", "protected.pdf").forEach { fil ->
                 httpClientJackson.submitFormWithBinaryData(
                     url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
-                    formData = formData {
-                        append(
-                            "text",
-                            "/$fil".fileAsByteArray(),
-                            Headers.build {
-                                append(HttpHeaders.ContentType, "text/plain")
-                                append(HttpHeaders.ContentDisposition, "filename=\"$fil\"")
-                            },
-                        )
-                    },
+                    formData =
+                        formData {
+                            append(
+                                "text",
+                                "/$fil".fileAsByteArray(),
+                                Headers.build {
+                                    append(HttpHeaders.ContentType, "text/plain")
+                                    append(HttpHeaders.ContentDisposition, "filename=\"$fil\"")
+                                },
+                            )
+                        },
                 ) {
                     this.header("Authorization", "Bearer $oboToken")
                 }.let {
@@ -264,32 +283,34 @@ internal class E2E {
             // Send filer til mellomlagring
             httpClientJackson.submitFormWithBinaryData(
                 url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
-                formData = formData {
-                    append(
-                        "image",
-                        "/smallimg1.jpg".fileAsByteArray(),
-                        Headers.build {
-                            append(HttpHeaders.ContentType, "image/jpeg")
-                            append(HttpHeaders.ContentDisposition, "filename=\"æ ø å.jpg\"")
-                        },
-                    )
-                },
+                formData =
+                    formData {
+                        append(
+                            "image",
+                            "/smallimg1.jpg".fileAsByteArray(),
+                            Headers.build {
+                                append(HttpHeaders.ContentType, "image/jpeg")
+                                append(HttpHeaders.ContentDisposition, "filename=\"æ ø å.jpg\"")
+                            },
+                        )
+                    },
             ) {
                 this.header("Authorization", "Bearer $oboToken")
             }.body<List<Response>>().also { println(it) }.size shouldBe 1
 
             httpClientJackson.submitFormWithBinaryData(
                 url = "https://dp-mellomlagring.dev.intern.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta2",
-                formData = formData {
-                    append(
-                        "image",
-                        "/Arbeidsforhold2.pdf".fileAsByteArray(),
-                        Headers.build {
-                            append(HttpHeaders.ContentType, "application/pdf")
-                            append(HttpHeaders.ContentDisposition, "filename=\"Arbeidsforhold.pdf\"")
-                        },
-                    )
-                },
+                formData =
+                    formData {
+                        append(
+                            "image",
+                            "/Arbeidsforhold2.pdf".fileAsByteArray(),
+                            Headers.build {
+                                append(HttpHeaders.ContentType, "application/pdf")
+                                append(HttpHeaders.ContentDisposition, "filename=\"Arbeidsforhold.pdf\"")
+                            },
+                        )
+                    },
             ) {
                 this.header("Authorization", "Bearer $oboToken")
             }.body<List<Response>>().also { println(it) }.size shouldBe 1

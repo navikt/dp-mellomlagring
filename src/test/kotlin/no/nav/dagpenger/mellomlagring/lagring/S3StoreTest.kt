@@ -41,17 +41,18 @@ internal class S3StoreTest {
             }
     }
 
-    private val TODAY = ZonedDateTime.now()
+    private val today = ZonedDateTime.now()
 
     @Test
     fun `Exception hvis ikke bucket finnes`() {
         require(gcs.isRunning) { "Container is not running" }
         shouldThrow<IllegalStateException> {
             S3Store(
-                gcpStorage = Config.localStorage(
-                    storageUrl = "http://${gcs.host}:${gcs.firstMappedPort}",
-                    createBucket = false,
-                ),
+                gcpStorage =
+                    Config.localStorage(
+                        storageUrl = "http://${gcs.host}:${gcs.firstMappedPort}",
+                        createBucket = false,
+                    ),
             )
         }
     }
@@ -60,44 +61,61 @@ internal class S3StoreTest {
     fun `happy path lagre,listing, henting og sletting av filer`() {
         require(gcsFixedHost.isRunning) { "Container is not running" }
 
-        val store = S3Store(
-            gcpStorage = Config.localStorage(
-                storageUrl = "http://${gcsFixedHost.host}:$FIXED_HOST_PORT",
-                createBucket = true,
-            ),
-        )
+        val store =
+            S3Store(
+                gcpStorage =
+                    Config.localStorage(
+                        storageUrl = "http://${gcsFixedHost.host}:$FIXED_HOST_PORT",
+                        createBucket = true,
+                    ),
+            )
 
         store.lagre(
             Klump(
                 innhold = "hubba".toByteArray(),
-                klumpInfo = KlumpInfo(
-                    objektNavn = "urn:vedlegg:id/hubba",
-                    originalFilnavn = "hubba",
-                    storrelse = 10,
-                    eier = "hubba eier",
-                    tidspunkt = TODAY,
-                ),
+                klumpInfo =
+                    KlumpInfo(
+                        objektNavn = "urn:vedlegg:id/hubba",
+                        originalFilnavn = "hubba",
+                        storrelse = 10,
+                        eier = "hubba eier",
+                        tidspunkt = today,
+                    ),
             ),
         ).isSuccess shouldBe true
 
         store.lagre(
             Klump(
                 innhold = "bubba".toByteArray(),
-                klumpInfo = KlumpInfo(
-                    objektNavn = "urn:vedlegg:id/bubba",
-                    originalFilnavn = "bubba",
-                    storrelse = 0,
-                    eier = null,
-                    tidspunkt = TODAY,
-                ),
+                klumpInfo =
+                    KlumpInfo(
+                        objektNavn = "urn:vedlegg:id/bubba",
+                        originalFilnavn = "bubba",
+                        storrelse = 0,
+                        eier = null,
+                        tidspunkt = today,
+                    ),
             ),
         ).isSuccess shouldBe true
 
         val orThrow = store.listKlumpInfo("urn:vedlegg:id").getOrThrow()
-        orThrow shouldContainExactlyInAnyOrder listOf(
-            KlumpInfo(objektNavn = "urn:vedlegg:id/bubba", originalFilnavn = "bubba", storrelse = 0, eier = null, tidspunkt = TODAY),
-            KlumpInfo(objektNavn = "urn:vedlegg:id/hubba", originalFilnavn = "hubba", storrelse = 10, eier = "hubba eier", tidspunkt = TODAY),
-        )
+        orThrow shouldContainExactlyInAnyOrder
+            listOf(
+                KlumpInfo(
+                    objektNavn = "urn:vedlegg:id/bubba",
+                    originalFilnavn = "bubba",
+                    storrelse = 0,
+                    eier = null,
+                    tidspunkt = today,
+                ),
+                KlumpInfo(
+                    objektNavn = "urn:vedlegg:id/hubba",
+                    originalFilnavn = "hubba",
+                    storrelse = 10,
+                    eier = "hubba eier",
+                    tidspunkt = today,
+                ),
+            )
 
         store.hent("urn:vedlegg:id/hubba").getOrNull().also {
             it shouldNotBe null
@@ -107,7 +125,7 @@ internal class S3StoreTest {
                 klump.klumpInfo.eier shouldBe "hubba eier"
                 klump.klumpInfo.storrelse shouldBe 10
                 String(klump.innhold) shouldBe "hubba"
-                klump.klumpInfo.tidspunkt shouldBe TODAY
+                klump.klumpInfo.tidspunkt shouldBe today
             }
         }
 

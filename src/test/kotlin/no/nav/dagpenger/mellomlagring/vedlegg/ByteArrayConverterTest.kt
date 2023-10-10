@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 internal class ByteArrayConverterTest {
-
     @Disabled
     @Test
     fun `slår sammen filer`() {

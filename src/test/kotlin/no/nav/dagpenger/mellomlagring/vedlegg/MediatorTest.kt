@@ -31,21 +31,24 @@ class MediatorTest {
     private val mediator by lazy {
         MediatorImpl(
             store = S3Store(gcpStorage = Config.localStorage("http://${gcsFixedHost.host}:$FIXED_HOST_PORT", true)),
-            filValideringer = listOf(
-                mockk<Mediator.FilValidering>().also {
-                    coEvery { it.valider(any(), any()) } returns FilValideringResultat.Gyldig("filnavn")
-                },
-            ),
+            filValideringer =
+                listOf(
+                    mockk<Mediator.FilValidering>().also {
+                        coEvery { it.valider(any(), any()) } returns FilValideringResultat.Gyldig("filnavn")
+                    },
+                ),
             aead = Crypto.aead,
             uuidGenerator = fixedUUIDGenerator(),
         )
     }
 
     private val fixedUUIDGenerator: () -> () -> UUID = {
-        val iterator = listOf<UUID>(
-            UUID.fromString("f9ece50c-e833-43c6-996e-aa70ddbc9870"),
-            UUID.fromString("7170c6c2-17ca-11ed-861d-0242ac120002"),
-        ).iterator();
+        val iterator =
+            listOf<UUID>(
+                UUID.fromString("f9ece50c-e833-43c6-996e-aa70ddbc9870"),
+                UUID.fromString("7170c6c2-17ca-11ed-861d-0242ac120002"),
+            ).iterator()
+        ;
         { iterator.next() }
     }
 
@@ -107,19 +110,26 @@ class MediatorTest {
 
     @Test
     fun filValidering() {
-        val mockedMediator: Mediator = MediatorImpl(
-            mockk<Store>(relaxed = true).also {
-                coEvery { it.lagre(any()) } returns Result.success(1)
-            },
-            filValideringer = listOf(
-                mockk<Mediator.FilValidering>().also {
-                    coEvery { it.valider("exception", any()) } throws Throwable("En feil")
-                    coEvery { it.valider("infisert", any()) } returns FilValideringResultat.Ugyldig("infisert", "virus", FeilType.FILE_VIRUS)
-                    coEvery { it.valider("OK", any()) } returns FilValideringResultat.Gyldig("gyldig")
+        val mockedMediator: Mediator =
+            MediatorImpl(
+                mockk<Store>(relaxed = true).also {
+                    coEvery { it.lagre(any()) } returns Result.success(1)
                 },
-            ),
-            aead = Crypto.aead,
-        )
+                filValideringer =
+                    listOf(
+                        mockk<Mediator.FilValidering>().also {
+                            coEvery { it.valider("exception", any()) } throws Throwable("En feil")
+                            coEvery { it.valider("infisert", any()) } returns
+                                FilValideringResultat.Ugyldig(
+                                    "infisert",
+                                    "virus",
+                                    FeilType.FILE_VIRUS,
+                                )
+                            coEvery { it.valider("OK", any()) } returns FilValideringResultat.Gyldig("gyldig")
+                        },
+                    ),
+                aead = Crypto.aead,
+            )
 
         runBlocking {
             shouldNotThrow<Throwable> {
@@ -138,17 +148,18 @@ class MediatorTest {
 
     @Test
     fun feilhåndtering() {
-        val mockedMediator: Mediator = MediatorImpl(
-            mockk<Store>().also {
-                every { it.hent(any()) } returns Result.failure(Throwable("feil"))
-                every { it.hentKlumpInfo(any()) } returns Result.failure(Throwable("feil"))
-                every { it.lagre(any()) } returns Result.failure(Throwable("feil"))
-                every { it.slett(any()) } returns Result.failure(Throwable("feil"))
-                every { it.listKlumpInfo(any()) } returns Result.failure(Throwable("feil"))
-            },
-            Crypto.aead,
-        )
-        runBlocking() {
+        val mockedMediator: Mediator =
+            MediatorImpl(
+                mockk<Store>().also {
+                    every { it.hent(any()) } returns Result.failure(Throwable("feil"))
+                    every { it.hentKlumpInfo(any()) } returns Result.failure(Throwable("feil"))
+                    every { it.lagre(any()) } returns Result.failure(Throwable("feil"))
+                    every { it.slett(any()) } returns Result.failure(Throwable("feil"))
+                    every { it.listKlumpInfo(any()) } returns Result.failure(Throwable("feil"))
+                },
+                Crypto.aead,
+            )
+        runBlocking {
             shouldThrow<StoreException> {
                 mockedMediator.hent(VedleggUrn("id"), "eier")
             }

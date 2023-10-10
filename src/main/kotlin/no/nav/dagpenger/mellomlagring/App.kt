@@ -43,21 +43,23 @@ import java.util.UUID
 private val logger = KotlinLogging.logger { }
 
 fun main() {
-    val mediator = MediatorImpl(
-        store = S3Store(),
-        filValideringer = listOf(FiltypeValidering, PdfValidering, AntiVirusValidering(clamAv())),
-        aead = Crypto.aead,
-    )
+    val mediator =
+        MediatorImpl(
+            store = S3Store(),
+            filValideringer = listOf(FiltypeValidering, PdfValidering, AntiVirusValidering(clamAv())),
+            aead = Crypto.aead,
+        )
     embeddedServer(CIO, port = 8080, module = mellomLagring(mediator)).start(wait = true)
 }
 
-internal fun mellomLagring(mediator: Mediator): Application.() -> Unit = {
-    ktorFeatures()
-    health()
-    vedleggApi(mediator)
-    pdfApi(BundleMediator(mediator))
-    metrics()
-}
+internal fun mellomLagring(mediator: Mediator): Application.() -> Unit =
+    {
+        ktorFeatures()
+        health()
+        vedleggApi(mediator)
+        pdfApi(BundleMediator(mediator))
+        metrics()
+    }
 
 internal fun Application.ktorFeatures() {
     install(CallLogging) {

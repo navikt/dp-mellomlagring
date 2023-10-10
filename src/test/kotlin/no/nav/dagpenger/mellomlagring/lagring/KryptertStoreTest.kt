@@ -28,36 +28,40 @@ internal class KryptertStoreTest {
     @Test
     fun `happypath lagre, listing, henting og sletting`() {
         require(gcsFixedHost.isRunning) { "Container is not running" }
-        val s3store = S3Store(
-            gcpStorage = Config.localStorage(
-                storageUrl = "http://${gcsFixedHost.host}:$FIXED_HOST_PORT",
-                createBucket = true,
-            ),
-        )
+        val s3store =
+            S3Store(
+                gcpStorage =
+                    Config.localStorage(
+                        storageUrl = "http://${gcsFixedHost.host}:$FIXED_HOST_PORT",
+                        createBucket = true,
+                    ),
+            )
         val kryptertStore = KryptertStore(fnr = testFnr, store = s3store, aead = Crypto.aead)
 
         val lagretHubbaUrn = "urn:vedlegg:id/hubba"
         kryptertStore.lagre(
             Klump(
                 innhold = "hubba".toByteArray(),
-                klumpInfo = KlumpInfo(
-                    objektNavn = lagretHubbaUrn,
-                    originalFilnavn = "hubbaOriginalFilnavn",
-                    storrelse = 6,
-                    eier = testFnr,
-                ),
+                klumpInfo =
+                    KlumpInfo(
+                        objektNavn = lagretHubbaUrn,
+                        originalFilnavn = "hubbaOriginalFilnavn",
+                        storrelse = 6,
+                        eier = testFnr,
+                    ),
             ),
         ).isSuccess shouldBe true
 
         kryptertStore.lagre(
             Klump(
                 innhold = "hubba bubba".toByteArray(),
-                klumpInfo = KlumpInfo(
-                    objektNavn = "urn:vedlegg:id/bubba",
-                    originalFilnavn = "hubbaOriginalFilnavn",
-                    storrelse = 6,
-                    eier = testFnr,
-                ),
+                klumpInfo =
+                    KlumpInfo(
+                        objektNavn = "urn:vedlegg:id/bubba",
+                        originalFilnavn = "hubbaOriginalFilnavn",
+                        storrelse = 6,
+                        eier = testFnr,
+                    ),
             ),
         ).isSuccess shouldBe true
 
@@ -91,23 +95,26 @@ internal class KryptertStoreTest {
     @Test
     fun `Har ikke tilgang til ressurser andre eier`() {
         require(gcsFixedHost.isRunning) { "Container is not running" }
-        val s3store = S3Store(
-            gcpStorage = Config.localStorage(
-                storageUrl = "http://${gcsFixedHost.host}:$FIXED_HOST_PORT",
-                createBucket = true,
-            ),
-        )
+        val s3store =
+            S3Store(
+                gcpStorage =
+                    Config.localStorage(
+                        storageUrl = "http://${gcsFixedHost.host}:$FIXED_HOST_PORT",
+                        createBucket = true,
+                    ),
+            )
         KryptertStore(fnr = testFnr, store = s3store, aead = Crypto.aead).also {
             require(
                 it.lagre(
                     Klump(
                         innhold = "hubba".toByteArray(),
-                        klumpInfo = KlumpInfo(
-                            objektNavn = "urn:vedlegg:id/hubba",
-                            originalFilnavn = "hubba",
-                            storrelse = 0,
-                            eier = testFnr,
-                        ),
+                        klumpInfo =
+                            KlumpInfo(
+                                objektNavn = "urn:vedlegg:id/hubba",
+                                originalFilnavn = "hubba",
+                                storrelse = 0,
+                                eier = testFnr,
+                            ),
                     ),
                 ).isSuccess,
             )
