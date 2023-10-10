@@ -81,8 +81,8 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(platform("com.google.cloud:libraries-bom:26.0.0"))
     implementation(platform(kotlin("bom")))
-    implementation("com.google.crypto.tink:tink:1.7.0")
-    implementation("com.google.crypto.tink:tink-gcpkms:1.7.0")
+    implementation("com.google.crypto.tink:tink:1.11.0")
+    implementation("com.google.crypto.tink:tink-gcpkms:1.11.0")
     implementation(libs.jackson.datatype.jsr310)
 
     runtimeOnly(libs.logback.core)
