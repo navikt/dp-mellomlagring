@@ -35,7 +35,7 @@ jobs:
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
           tag_latest: true # optional, default false
       - name: Archive NAIS yaml
-        if: github.ref == 'refs/heads/main'
+        if: success() || failure()
         uses: actions/upload-artifact@v3
         with:
           name: nais-yaml
