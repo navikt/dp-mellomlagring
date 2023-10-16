@@ -25,15 +25,23 @@ internal data class KlumpInfo(
     val tidspunkt: ZonedDateTime = ZonedDateTime.now(ZoneId.of("Europe/Oslo")),
 ) {
     companion object {
-        fun fromBlob(blob: Blob) =
-            KlumpInfo(
+        fun fromBlob(blob: Blob): KlumpInfo {
+            val tidspunkt: ZonedDateTime =
+                blob.metadata?.get("tidspunkt")?.let { ZonedDateTime.parse(it) } ?: blob.createTimeOffsetDateTime.let {
+                    ZonedDateTime.of(
+                        it.toLocalDateTime(),
+                        ZoneId.of("Europe/Oslo"),
+                    )
+                }
+            return KlumpInfo(
                 objektNavn = blob.name,
-                originalFilnavn = blob.metadata["originalFilnavn"] ?: blob.name,
-                storrelse = blob.metadata["storrelse "]?.toLong() ?: 0,
+                originalFilnavn = blob.metadata?.get("originalFilnavn") ?: blob.name,
+                storrelse = blob.metadata?.get("storrelse ")?.toLong() ?: 0,
                 filContentType = blob.contentType ?: "application/octet-stream",
-                eier = blob.metadata["eier"],
-                tidspunkt = ZonedDateTime.parse(blob.metadata["tidspunkt"]),
+                eier = blob.metadata?.get("eier"),
+                tidspunkt = tidspunkt,
             )
+        }
     }
 
     fun toMetadata(): Map<String, String> =
