@@ -65,9 +65,12 @@ tasks.withType<Test> {
 }
 
 dependencies {
+    implementation(kotlin("stdlib"))
+    implementation(platform(kotlin("bom")))
 
+    implementation(platform("com.google.cloud:libraries-bom:26.25.0"))
     implementation("com.google.cloud:google-cloud-storage")
-    implementation("de.slub-dresden:urnlib:2.0.1")
+
     implementation(libs.jackson.core)
     implementation(libs.konfig)
     implementation(libs.kotlin.logging)
@@ -78,12 +81,11 @@ dependencies {
     implementation(libs.dp.biblioteker.image.utils)
     implementation(libs.dp.biblioteker.ktor.klient.metrics)
     implementation(libs.micrometer.registry.prometheus)
-    implementation(kotlin("stdlib"))
-    implementation(platform("com.google.cloud:libraries-bom:26.0.0"))
-    implementation(platform(kotlin("bom")))
-    implementation("com.google.crypto.tink:tink:1.7.0")
-    implementation("com.google.crypto.tink:tink-gcpkms:1.7.0")
     implementation(libs.jackson.datatype.jsr310)
+
+    implementation("com.google.crypto.tink:tink:1.11.0")
+    implementation("com.google.crypto.tink:tink-gcpkms:1.9.0")
+    implementation("de.slub-dresden:urnlib:2.0.1")
 
     runtimeOnly(libs.logback.core)
     runtimeOnly(libs.logback.classic)
@@ -107,9 +109,8 @@ dependencies {
 
     testImplementation(libs.mockk)
 
-    val zerocodeVersion = "1.3.35"
-    testImplementation("org.jsmart:zerocode-tdd:$zerocodeVersion")
-    testImplementation("org.jsmart:zerocode-tdd-jupiter:$zerocodeVersion")
+    testImplementation("org.jsmart:zerocode-tdd:1.3.35")
+    testImplementation("org.jsmart:zerocode-tdd-jupiter:1.3.35")
 
     testImplementation("org.skyscreamer:jsonassert:1.5.1")
 
