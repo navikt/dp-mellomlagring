@@ -10,10 +10,6 @@ plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
-apply {
-    plugin("com.diffplug.spotless")
-}
-
 repositories {
     mavenCentral()
     maven("https://jitpack.io")
