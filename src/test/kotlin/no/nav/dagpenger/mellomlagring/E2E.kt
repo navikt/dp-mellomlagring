@@ -71,6 +71,7 @@ fun getAuthEnv(
         null,
         null,
         null,
+        false
     ).items.also { secrets ->
         secrets.sortByDescending<V1Secret?, OffsetDateTime> { it?.metadata?.creationTimestamp }
     }.first<V1Secret?>()?.data!!.mapValues { e -> String(e.value) }
