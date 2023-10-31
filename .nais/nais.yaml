@@ -48,6 +48,10 @@ spec:
         - application: dp-behov-soknad-pdf
         - application: dp-behov-journalforing
         - application: dp-vaktmester-mellomlagring
+        {{#if wonderwalled}}
+        - application: tokenx-token-generator
+          namespace: aura
+        {{/if}}
   tokenx:
     enabled: true
   azure:
