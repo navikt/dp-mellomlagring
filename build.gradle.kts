@@ -75,7 +75,7 @@ dependencies {
     implementation(libs.micrometer.registry.prometheus)
     implementation(libs.jackson.datatype.jsr310)
 
-    implementation("com.google.crypto.tink:tink:1.11.0")
+    implementation("com.google.crypto.tink:tink:1.12.0")
     implementation("com.google.crypto.tink:tink-gcpkms:1.9.0")
     implementation("de.slub-dresden:urnlib:2.0.1")
 
