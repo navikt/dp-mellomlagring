@@ -36,7 +36,7 @@ jobs:
           tag_latest: true # optional, default false
       - name: Archive NAIS yaml
         if: github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: nais-yaml
           path: .nais
@@ -51,12 +51,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Fetch NAIS yaml
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: nais-yaml
           path: .nais
 
-      - uses: nais/deploy/actions/deploy@v1
+      - uses: nais/deploy/actions/deploy@v2
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: dev-gcp
@@ -73,12 +73,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Fetch NAIS yaml
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: nais-yaml
           path: .nais
 
-      - uses: nais/deploy/actions/deploy@v1
+      - uses: nais/deploy/actions/deploy@v2
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: prod-gcp
