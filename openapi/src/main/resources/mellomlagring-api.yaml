@@ -1,0 +1,225 @@
+openapi: 3.0.0
+info:
+  title: API for lagring av filer
+  version: 1.0.0
+  description: |-
+    Begynte som et API for å mellomlagre filer som en del av søknadsprosessen, men er nå en generell tjeneste for å 
+    lagre, manipulere, og validere filer.
+    
+    Dokumentasjonen avviker fra faktisk implementasjon på noen punkter. URL-er krever hvilken token provider som skal 
+    brukes til validering. Målet er å skrive oss vekk fra dette.
+    
+    ## Validering 
+    Ved opplasting av filer gjøres følgende valideringer:
+    - Filen er enten PDF, JPG, eller PNG.
+    - Er filen PDF må den kunne leses som PDF.
+    - Alle filer scannes for virus med (ClamAV)[https://doc.nais.io/security/antivirus/].
+  contact:
+    name: '#team-dagpenger'
+servers:
+  - url: https://dp-mellomlagring.intern.dev.nav.no/v1
+    description: dev
+  - url: https://dp-mellomlagring.intern.nav.no/v1
+    description: prod
+tags:
+  - name: Filer 
+    description: >-
+      Opplasting av filer
+  - name: PDF
+    description: >-
+      Operasjoner for manipulering av PDF-filer
+paths:
+  /mellomlagring/vedlegg/{kontekstId}:
+    parameters:
+      - $ref: '#/components/parameters/KontekstId'
+    post:
+      tags:
+        - Filer
+      security:
+        - tokenX: [ ]
+        - azureAd: [ ]
+      summary: Last opp en fil
+      description: Filnavnet genereres automatisk
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Filen ble lastet opp vellykket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilMetadata'
+    get:
+      tags:
+        - Filer
+      security:
+        - tokenX: [ ]
+        - azureAd: [ ]
+      summary: Hent alle filer for en gitt kontekst
+      responses:
+        '200':
+          description: Liste over filer hentet vellykket
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: '#/components/schemas/FilMetadata'
+  /mellomlagring/vedlegg/{kontekstId}/{filId}:
+    parameters:
+      - $ref: '#/components/parameters/KontekstId'
+    post:
+      tags:
+        - Filer
+      security:
+        - tokenX: [ ]
+        - azureAd: [ ]
+      summary: Last opp fil med spesifikt filnavn
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Filen ble lastet opp
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilMetadata'
+    get:
+      tags:
+        - Filer
+      security:
+        - tokenX: [ ]
+        - azureAd: [ ]
+      summary: Hent spesifikk fil
+      responses:
+        '201':
+          description: Filinnholdet
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+    delete:
+      tags:
+        - Filer
+      security:
+        - tokenX: [ ]
+        - azureAd: [ ]
+      summary: Slett en fil
+      responses:
+        '204':
+          description: Filen ble slettet vellykket
+        '404':
+          description: Filen ble ikke funnet
+  /mellomlagring/pdf/bundle:
+    post:
+      tags:
+        - PDF
+      security:
+        - tokenX: [ ]
+      summary: Slå sammen flere filer til en felles PDF
+      description: >-
+        Slår sammen alle URN-ene i listen til en felles PDF. Den som gjør kallet må ha tilgang til alle filene som skal slås sammen.
+        
+        Filene må eies av samme bruker. Må ikke nødvendigvis tilhøre samme kontekst.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BundleRequest'
+      responses:
+        '201':
+          description: |-
+            Bundle opprettet. Returnerer en liste med URN-er som kan brukes til å hente ut PDF-en.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilMetadata'
+components:
+  schemas:
+    BundleRequest:
+      type: object
+      example:
+        soknadId: id1000
+        bundleNavn: bundle.pdf
+        filer:
+          - urn: urn:vedlegg:id1000/fil1.jpg
+          - urn: urn:vedlegg:id1000/fil2.jpg
+      properties:
+        soknadId:
+          type: string
+        bundleNavn:
+          description: Filnavn på den resulterende PDFen
+          type: string
+        filer:
+          type: array
+          items:
+            type: string
+            format: URN
+    FilMetadata:
+      type: object
+      example:
+        filnavn: bundle.pdf
+        urn: urn:vedlegg:objektnavn
+        filsti: objektnavn
+        storrelse: 1740304
+        tidspunkt: "2024-01-03T10:48:01.611721+01:00"
+      properties:
+        filnavn:
+          type: string
+        urn:
+          type: string
+        filsti:
+          type: string
+        storrelse:
+          type: integer
+        tidspunkt:
+          type: string
+          format: date-time
+  securitySchemes:
+    azureAd:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Bruker [AzureAD](https://docs.nais.io/security/auth/azure-ad) til autentisering. 
+        Token må ha `audience` satt til `[cluster]:teamdagpenger:dp-rapportering`.
+
+        For å teste APIet kan du lage et gyldig OBO-token ved å bruke wonderwalled:
+        - [dev-gcp](https://wonderwalled-idporten.intern.dev.nav.no/api/obo?aud=dev-gcp:teamdagpenger:dp-rapportering)
+    tokenX:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Bruker [TokenX](https://docs.nais.io/security/auth/tokenx/) til autentisering. Du må utveksle IDporten-token
+        til et TokenX-token hvor `audience` er satt til `[cluster]:teamdagpenger:dp-rapportering`.
+
+        For å teste APIet kan du lage et gyldig OBO-token ved å bruke wonderwalled:
+        - [dev-gcp](https://wonderwalled-idporten.intern.dev.nav.no/api/obo?aud=dev-gcp:teamdagpenger:dp-rapportering)
+  parameters:
+    KontekstId:
+      name: kontekstId
+      in: path
+      description: Kontekst for filene. Kan være en søknad, et vedtak eller lignende.
+      required: true
+      schema:
+        type: string

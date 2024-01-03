@@ -16,8 +16,10 @@ import io.ktor.server.plugins.callid.callIdMdc
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.plugins.swagger.swaggerUI
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
+import io.ktor.server.routing.routing
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config.Crypto
 import no.nav.dagpenger.mellomlagring.api.HttpProblem
@@ -59,6 +61,9 @@ internal fun mellomLagring(mediator: Mediator): Application.() -> Unit =
         vedleggApi(mediator)
         pdfApi(BundleMediator(mediator))
         metrics()
+        routing {
+            swaggerUI(path = "openapi", swaggerFile = "mellomlagring-api.yaml")
+        }
     }
 
 internal fun Application.ktorFeatures() {

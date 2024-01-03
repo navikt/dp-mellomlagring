@@ -74,6 +74,7 @@ dependencies {
     implementation(libs.dp.biblioteker.ktor.klient.metrics)
     implementation(libs.micrometer.registry.prometheus)
     implementation(libs.jackson.datatype.jsr310)
+    implementation("io.ktor:ktor-server-swagger:${libs.versions.ktor.get()}")
 
     implementation("com.google.crypto.tink:tink:1.12.0")
     implementation("com.google.crypto.tink:tink-gcpkms:1.9.0")
