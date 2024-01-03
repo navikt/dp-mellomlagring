@@ -63,6 +63,8 @@ dependencies {
     implementation(platform("com.google.cloud:libraries-bom:26.25.0"))
     implementation("com.google.cloud:google-cloud-storage")
 
+    implementation(project(":openapi"))
+
     implementation(libs.jackson.core)
     implementation(libs.konfig)
     implementation(libs.kotlin.logging)
