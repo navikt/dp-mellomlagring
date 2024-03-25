@@ -11,13 +11,9 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.request.delete
+import io.ktor.client.request.*
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
-import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
@@ -64,9 +60,7 @@ fun getAuthEnv(
     val client: ApiClient = ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(FileReader(kubeConfigPath))).build()
     Configuration.setDefaultApiClient(client)
     return CoreV1Api().listNamespacedSecret(
-        "teamdagpenger"
-    /*,
-    Dette APIet er fullstendig endre i v20 av kubernetes client
+        "teamdagpenger",
         null,
         null,
         null,
@@ -77,8 +71,8 @@ fun getAuthEnv(
         null,
         null,
         null,
-        false*/
-    ).execute().items.also { secrets ->
+        false
+    ).items.also { secrets ->
         secrets.sortByDescending<V1Secret?, OffsetDateTime> { it?.metadata?.creationTimestamp }
     }.first<V1Secret?>()?.data!!.mapValues { e -> String(e.value) }
 }
