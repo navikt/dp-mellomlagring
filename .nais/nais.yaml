@@ -59,8 +59,6 @@ spec:
   env:
     - name: DP_MELLOMLAGRING_BUCKETNAME
       value: {{bucketName}}
-    - name: JAVA_OPTS
-      value: -XX:MaxRAMPercentage=95 -XX:MinRAMPercentage=50 -XX:InitialRAMPercentage=25
   gcp:
     permissions:
       - resource:
