@@ -15,9 +15,7 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.Headers
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.*
 import io.ktor.serialization.jackson.jackson
 import io.ktor.util.toUpperCasePreservingASCIIRules
 import io.kubernetes.client.openapi.ApiClient
@@ -178,6 +176,43 @@ internal class E2E {
     // selvbetjeningstoken er tidsbegrenset, så det må erstattes med jevne mellomrom,
     // logg inn på søknaden i dev med eier 51818700273 og kopier selvbetjening-token fra devtools ->Appilcation->Storage
     private val selvbetjeningsIdToken = ""
+
+    private fun HttpRequestBuilder.autentisert(token: String) {
+        header(HttpHeaders.Authorization, "Bearer $token")
+    }
+
+    @Test
+    fun token() {
+        val token = getAzureAdToken("dp-behov-soknad-pdf").also { println(it) }
+
+    }
+
+    @Test
+    fun lastOppfil() {
+        val token = getAzureAdToken("dp-behov-soknad-pdf")
+        runBlocking {
+            // Send filer til mellomlagring
+            log("Send filer til mellomlagring")
+            val httpResponse = httpClientJackson.submitFormWithBinaryData(
+                url = "https://dp-mellomlagring.intern.dev.nav.no/v1/azuread/mellomlagring/vedlegg/oppgave/oppgaveId/type_brev",
+                formData =
+                formData {
+                    append(
+                        "image",
+                        "/smallimg1.jpg".fileAsByteArray(),
+                        Headers.build {
+                            append(HttpHeaders.ContentType, "image/jpeg")
+                            append(HttpHeaders.ContentDisposition, "filename=\"æ ø å.jpg\"")
+                        },
+                    )
+                },
+            ) {
+                this.header("Authorization", "Bearer $token")
+                this.header("X-Eier", value = eier)
+            }
+            println(httpResponse.body<List<Response>>())
+        }
+    }
 
     @Disabled
     @Test

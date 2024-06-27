@@ -45,6 +45,7 @@ spec:
       rules:
         - application: dp-soknadsdialog
         - application: dp-behov-soknad-pdf
+        - application: dp-behov-pdf-generator
         - application: dp-behov-journalforing
         - application: dp-vaktmester-mellomlagring
         {{#if wonderwalled}}
