@@ -107,7 +107,7 @@ dependencies {
     testImplementation("org.jsmart:zerocode-tdd:1.3.43")
     testImplementation("org.jsmart:zerocode-tdd-jupiter:1.3.43")
 
-    testImplementation("org.skyscreamer:jsonassert:1.5.2")
+    testImplementation("org.skyscreamer:jsonassert:1.5.1")
 
     // For E2E
     testImplementation("io.kubernetes:client-java:20.0.1-legacy")
