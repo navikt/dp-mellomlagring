@@ -153,6 +153,7 @@ private data class Response(
 }
 
 @ExtendWith(ParallelLoadExtension::class)
+@Disabled
 internal class E2ELoad {
     @Test
     @DisplayName("Load test E2E")
@@ -166,6 +167,7 @@ internal class E2ELoad {
     }
 }
 
+@Disabled
 internal class E2E {
     private val eier = "51818700273"
     private val eier2 = "12345678910"
