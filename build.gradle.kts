@@ -72,7 +72,7 @@ dependencies {
     implementation(libs.bundles.ktor.server)
     implementation(libs.ktor.server.cio)
     implementation(libs.ktor.server.metrics.micrometer)
-    implementation("no.nav.dagpenger:image-utils:2024.07.19-09.34.8eb59343194e")
+    implementation("no.nav.dagpenger:image-utils:2024.07.23-10.35.4fc49fbf0d7e")
     implementation(libs.dp.biblioteker.ktor.klient.metrics)
     implementation(libs.micrometer.registry.prometheus)
     implementation(libs.jackson.datatype.jsr310)
