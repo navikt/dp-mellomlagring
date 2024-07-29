@@ -84,7 +84,7 @@ dependencies {
 
     runtimeOnly(libs.logback.core)
     runtimeOnly(libs.logback.classic)
-    runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.4") {
+    runtimeOnly("net.logstash.logback:logstash-logback-encoder:8.0") {
         exclude("com.fasterxml.jackson.core")
     }
 
