@@ -110,6 +110,6 @@ dependencies {
     testImplementation("org.skyscreamer:jsonassert:1.5.3")
 
     // For E2E
-    testImplementation("io.kubernetes:client-java:21.0.1")
+    testImplementation("io.kubernetes:client-java:21.0.1-legacy")
     testImplementation(libs.dp.biblioteker.oauth2.klient)
 }
