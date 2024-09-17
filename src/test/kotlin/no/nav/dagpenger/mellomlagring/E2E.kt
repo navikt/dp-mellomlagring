@@ -93,7 +93,7 @@ suspend fun getOboToken(
         // 51818700273 -
         token = selvbetjeningsIdToken,
         audience = "dev-gcp:teamdagpenger:dp-mellomlagring",
-    ).accessToken
+    ).accessToken!!
 }
 
 fun getAzureAdToken(app: String): String {
@@ -108,7 +108,7 @@ fun getAzureAdToken(app: String): String {
         )
     }
 
-    return tokenAzureAdClient.clientCredentials("api://dev-gcp.teamdagpenger.dp-mellomlagring/.default").accessToken
+    return tokenAzureAdClient.clientCredentials("api://dev-gcp.teamdagpenger.dp-mellomlagring/.default").accessToken!!
 }
 
 val httpClientJackson =

@@ -32,9 +32,6 @@ kotlin {
         languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
-tasks.withType<Jar>().configureEach {
-    dependsOn("test")
-}
 
 configure<com.diffplug.gradle.spotless.SpotlessExtension> {
     kotlin {
@@ -74,7 +71,8 @@ dependencies {
     implementation(libs.ktor.server.metrics.micrometer)
     implementation("no.nav.dagpenger:image-utils:2024.08.21-09.06.7bf604df353d")
     implementation(libs.dp.biblioteker.ktor.klient.metrics)
-    implementation(libs.micrometer.registry.prometheus)
+
+    implementation("io.micrometer:micrometer-registry-prometheus:1.12.7")
     implementation(libs.jackson.datatype.jsr310)
     implementation("io.ktor:ktor-server-swagger:${libs.versions.ktor.get()}")
 
