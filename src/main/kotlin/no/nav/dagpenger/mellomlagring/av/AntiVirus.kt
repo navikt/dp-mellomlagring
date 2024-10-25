@@ -85,14 +85,14 @@ internal fun clamAv(
                 }.body()
             }.fold(
                 onSuccess = {
-                    require(it.isNotEmpty()) { "Skal ikke få tom liste fra clamv. Fil: $filnavn " }
-                    logger.info { "Scannet fil $filnavn med resultat $it" }
+                    require(it.isNotEmpty()) { "Skal ikke få tom liste fra clamv.  " }
+                    logger.info { "Scannet fil med resultat $it" }
                     it.also { result ->
                         result.registerMetrics()
                     }
                 },
                 onFailure = { t ->
-                    logger.warn(t) { "Fikk ikke scannet fil $filnavn: ${t.message}" }
+                    logger.warn(t) { "Fikk ikke scannet fil: ${t.message}" }
                     throw t
                 },
             ).any { it.infisert() }
