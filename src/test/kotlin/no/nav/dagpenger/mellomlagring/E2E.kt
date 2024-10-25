@@ -59,20 +59,11 @@ fun getAuthEnv(
     Configuration.setDefaultApiClient(client)
     return CoreV1Api().listNamespacedSecret(
         "teamdagpenger",
-        null,
-        null,
-        null,
-        null,
-        "app=$app,type=$type",
-        null,
-        null,
-        null,
-        null,
-        null,
-        false
-    ).items.also { secrets ->
-        secrets.sortByDescending<V1Secret?, OffsetDateTime> { it?.metadata?.creationTimestamp }
-    }.first<V1Secret?>()?.data!!.mapValues { e -> String(e.value) }
+    ).labelSelector("app=$app,type=$type")
+        .execute()
+        .items.also { secrets ->
+            secrets.sortByDescending<V1Secret?, OffsetDateTime> { it?.metadata?.creationTimestamp }
+        }.first<V1Secret?>()?.data!!.mapValues { e -> String(e.value) }
 }
 
 suspend fun getOboToken(

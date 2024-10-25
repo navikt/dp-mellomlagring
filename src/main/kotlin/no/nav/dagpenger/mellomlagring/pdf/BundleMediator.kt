@@ -38,7 +38,7 @@ internal class BundleMediator(private val mediator: Mediator) {
         }.onFailure {
             logger.warn(it) { "Feilet bundling av ${request.filer} med bundlenavn ${request.bundleNavn}. Se sikker logg for eier" }
             sikkerlogg.error { "Feilet bundling av ${request.filer} med bundlenavn ${request.bundleNavn} og eier $eier" }
-            Metrics.bundlerErrorTypesCounter.labels(it.javaClass.simpleName).inc()
+            Metrics.bundlerErrorTypesCounter.labelValues(it.javaClass.simpleName).inc()
         }.getOrThrow()
     }
 

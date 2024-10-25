@@ -1,13 +1,15 @@
 package no.nav.dagpenger.mellomlagring.av
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
-import io.prometheus.client.CollectorRegistry
+import io.prometheus.metrics.model.registry.PrometheusRegistry
+import io.prometheus.metrics.model.snapshots.CounterSnapshot
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
@@ -24,7 +26,7 @@ internal class AntiVirusTest {
                             headers = headersOf(HttpHeaders.ContentType, "application/json"),
                         )
                     },
-                registry = CollectorRegistry(),
+                registry = PrometheusRegistry(),
             ).infisert("filnavn med masse space t.pdf", "innhold".toByteArray()) shouldBe false
         }
     }
@@ -32,7 +34,7 @@ internal class AntiVirusTest {
     @Test
     fun `infisert fil`() {
         runBlocking {
-            val registry = CollectorRegistry(true)
+            val registry = PrometheusRegistry()
             clamAv(
                 engine =
                     MockEngine {
@@ -45,11 +47,13 @@ internal class AntiVirusTest {
                 registry = registry,
             ).infisert("filnavn.pdf", "innhold".toByteArray()) shouldBe true
 
-            registry.getSampleValue(
-                "dp_mellomlagring_clamav_client_status_total",
-                listOf("status").toTypedArray(),
-                listOf("200").toTypedArray(),
-            ) shouldBe 1
+            registry.scrape().also { snapshots ->
+                val teller =
+                    snapshots.find { it.metadata.name == "dp_mellomlagring_clamav_client_status" }
+                        .shouldNotBeNull() as CounterSnapshot
+                teller.dataPoints.first().labels.get("status") shouldBe "200"
+                teller.dataPoints.first().value shouldBe 1.0
+            }
         }
     }
 
@@ -66,7 +70,7 @@ internal class AntiVirusTest {
                                 headers = headersOf(HttpHeaders.ContentType, "application/json"),
                             )
                         },
-                    registry = CollectorRegistry(),
+                    registry = PrometheusRegistry(),
                 ).infisert("filnavn.pdf", "innhold".toByteArray())
             }
         }
