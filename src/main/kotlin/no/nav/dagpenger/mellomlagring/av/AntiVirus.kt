@@ -13,7 +13,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.request.url
 import io.ktor.client.statement.HttpResponse
 import io.ktor.serialization.jackson.jackson
-import io.prometheus.client.CollectorRegistry
+import io.prometheus.metrics.model.registry.PrometheusRegistry
 import mu.KotlinLogging
 import no.nav.dagpenger.ktor.client.metrics.PrometheusMetricsPlugin
 import no.nav.dagpenger.mellomlagring.monitoring.Metrics
@@ -42,7 +42,7 @@ internal data class ScanResult(
 
 internal fun clamAv(
     engine: HttpClientEngine = CIO.create(),
-    registry: CollectorRegistry = CollectorRegistry.defaultRegistry,
+    registry: PrometheusRegistry = PrometheusRegistry.defaultRegistry,
 ): AntiVirus {
     return object : AntiVirus {
         private val httpClient =
@@ -52,7 +52,7 @@ internal fun clamAv(
                     }
                 }
                 install(HttpTimeout) {
-                    requestTimeoutMillis = 15.seconds.inWholeMilliseconds
+                    requestTimeoutMillis = 30.seconds.inWholeMilliseconds
                 }
 
                 install(PrometheusMetricsPlugin) {
@@ -70,7 +70,7 @@ internal fun clamAv(
 
         private fun List<ScanResult>.registerMetrics() {
             this.forEach {
-                Metrics.antivirusResultCounter.labels(it.result).inc()
+                Metrics.antivirusResultCounter.labelValues(it.result).inc()
             }
         }
 
@@ -85,14 +85,14 @@ internal fun clamAv(
                 }.body()
             }.fold(
                 onSuccess = {
-                    require(it.isNotEmpty()) { "Skal ikke få tom liste fra clamv. Fil: $filnavn " }
-                    logger.info { "Scannet fil $filnavn med resultat $it" }
+                    require(it.isNotEmpty()) { "Skal ikke få tom liste fra clamv.  " }
+                    logger.info { "Scannet fil med resultat $it" }
                     it.also { result ->
                         result.registerMetrics()
                     }
                 },
                 onFailure = { t ->
-                    logger.warn(t) { "Fikk ikke scannet fil $filnavn: ${t.message}" }
+                    logger.warn(t) { "Fikk ikke scannet fil: ${t.message}" }
                     throw t
                 },
             ).any { it.infisert() }
