@@ -6,7 +6,7 @@ plugins {
     application
     alias(libs.plugins.kotlin)
     alias(libs.plugins.spotless)
-    id("com.gradleup.shadow") version "8.3.4"
+    id("com.gradleup.shadow") version "8.3.5"
 }
 
 repositories {
