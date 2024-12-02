@@ -30,17 +30,17 @@ private object Kek {
  */
 fun main() {
     AeadConfig.register()
-    GcpKmsClient.register(Optional.of(Kek.DEV), Optional.empty())
+    GcpKmsClient.register(Optional.of(Kek.PROD), Optional.empty())
 
     val aead =
-        KmsEnvelopeAeadKeyManager.createKeyTemplate(Kek.DEV, KeyTemplates.get("AES128_GCM")).let {
+        KmsEnvelopeAeadKeyManager.createKeyTemplate(Kek.PROD, KeyTemplates.get("AES128_GCM")).let {
             KeysetHandle.generateNew(it).getPrimitive(Aead::class.java)
         }.also { it.check() }
 
     val gcs = StorageOptions.getDefaultInstance().service
 
     val blob =
-        gcs.get(BlobId.of("teamdagpenger-mellomlagring-dev", "c061c0c3-cf9e-4764-b058-090e2a77edfb/f3884faf-1c44-4233-97e2-7529ed956c98"))
+        gcs.get(BlobId.of("teamdagpenger-mellomlagring-prod", "oppgave/0193793f-4fe1-7e27-9e5c-735a951a06ee/40c38f27-f60b-4e7d-8664-1d91dd4ffb6c"))
     blob.getContent().let {
         println("Filstørellse: ${it.size}")
         aead.decrypt(it, "51818700273".toByteArray())
