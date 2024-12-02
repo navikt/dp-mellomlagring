@@ -5,6 +5,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.MultiPartData
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
+import io.ktor.http.content.streamProvider
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
@@ -18,7 +19,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-import io.ktor.utils.io.toByteArray
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -150,7 +150,7 @@ internal class FileUploadHandler(private val mediator: Mediator) {
 
                         jobs.add(
                             async(Dispatchers.IO) {
-                                val bytes = part.provider().toByteArray()
+                                val bytes = part.streamProvider().readBytes()
                                 mediator.lagre(
                                     soknadsId,
                                     fileName,

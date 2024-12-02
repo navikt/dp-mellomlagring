@@ -70,7 +70,7 @@ dependencies {
     implementation(libs.ktor.server.cio)
     implementation(libs.ktor.server.metrics.micrometer)
     implementation("no.nav.dagpenger:image-utils:2024.10.24-13.47.d2fb89767416")
-    implementation("no.nav.dagpenger:ktor-client-metrics:2024.10.31-15.02.1d4f08a38d24")
+    implementation(libs.dp.biblioteker.ktor.klient.metrics)
 
     implementation("io.micrometer:micrometer-registry-prometheus:1.14.1")
     implementation(libs.jackson.datatype.jsr310)
@@ -109,5 +109,5 @@ dependencies {
 
     // For E2E
     testImplementation("io.kubernetes:client-java:21.0.2")
-    testImplementation("no.nav.dagpenger:oauth2-klient:2024.10.31-15.02.1d4f08a38d24")
+    testImplementation(libs.dp.biblioteker.oauth2.klient)
 }

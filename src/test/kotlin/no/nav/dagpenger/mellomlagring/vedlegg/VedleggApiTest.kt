@@ -16,7 +16,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
-import io.ktor.utils.io.core.append
 import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.dagpenger.mellomlagring.TestApplication
