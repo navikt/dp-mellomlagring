@@ -76,7 +76,7 @@ dependencies {
     implementation(libs.jackson.datatype.jsr310)
     implementation("io.ktor:ktor-server-swagger:${libs.versions.ktor.get()}")
 
-    implementation("com.google.crypto.tink:tink:1.15.0")
+    implementation("com.google.crypto.tink:tink:1.16.0")
     implementation("com.google.crypto.tink:tink-gcpkms:1.10.0")
     implementation("de.slub-dresden:urnlib:2.0.1")
 
