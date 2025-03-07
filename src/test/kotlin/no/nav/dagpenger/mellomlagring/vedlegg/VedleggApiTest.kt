@@ -16,6 +16,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.utils.io.core.append
 import io.mockk.coEvery
 import io.mockk.mockk
 import no.nav.dagpenger.mellomlagring.TestApplication
@@ -54,14 +55,16 @@ internal class VedleggApiTest {
     fun `Bad request hvis xEier header ikke er satt på kall med azuread autentisering`() {
         TestFixture.AzureAd().let { fixture ->
             withMockAuthServerAndTestApplication({ vedleggApi(mockk(relaxed = true)) }) {
-                client.get("${fixture.path}/vedlegg/1") {
-                    autentisert(
-                        token = TestApplication.azureAd,
-                        xEier = DEFAULT_DUMMY_FODSELNUMMER,
-                    )
-                }.status shouldBe HttpStatusCode.OK
+                client
+                    .get("${fixture.path}/vedlegg/1") {
+                        autentisert(
+                            token = TestApplication.azureAd,
+                            xEier = DEFAULT_DUMMY_FODSELNUMMER,
+                        )
+                    }.status shouldBe HttpStatusCode.OK
 
-                client.get("${fixture.path}/vedlegg/1") { autentisert(token = TestApplication.azureAd) }
+                client
+                    .get("${fixture.path}/vedlegg/1") { autentisert(token = TestApplication.azureAd) }
                     .status shouldBe HttpStatusCode.BadRequest
             }
         }
@@ -157,30 +160,33 @@ internal class VedleggApiTest {
             }
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
             listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
-                client.post("${fixture.path}/vedlegg/id/sub") {
-                    autentisert(fixture)
-                    setBody(
-                        MultiPartFormDataContent(
-                            formData {
-                                append("hubba", "file1.csv", ContentType.Text.CSV) { this.append("1") }
-                                append("hubba", "file2.csv", ContentType.Text.CSV) { this.append("1") }
-                            },
-                            "boundary",
-                            ContentType.MultiPart.FormData.withParameter("boundary", "boundary"),
-                        ),
-                    )
-                }.let { response ->
-                    response.status shouldBe HttpStatusCode.Created
-                    response.contentType().toString() shouldBe "application/json; charset=UTF-8"
-                    response.bodyAsText().let {
-                        //                        json.size() shouldBe 2
-                        jacksonObjectMapper().readTree(it).sortedBy { node -> node.get("filnavn").asText() }
-                            .let { sortedNodes ->
-                                sortedNodes.first().get("urn").asText() shouldBe "urn:vedlegg:id/sub/uuid1"
-                                sortedNodes.last().get("urn").asText() shouldBe "urn:vedlegg:id/sub/uuid2"
-                            }
+                client
+                    .post("${fixture.path}/vedlegg/id/sub") {
+                        autentisert(fixture)
+                        setBody(
+                            MultiPartFormDataContent(
+                                formData {
+                                    append("hubba", "file1.csv", ContentType.Text.CSV) { this.append("1") }
+                                    append("hubba", "file2.csv", ContentType.Text.CSV) { this.append("1") }
+                                },
+                                "boundary",
+                                ContentType.MultiPart.FormData.withParameter("boundary", "boundary"),
+                            ),
+                        )
+                    }.let { response ->
+                        response.status shouldBe HttpStatusCode.Created
+                        response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+                        response.bodyAsText().let {
+                            //                        json.size() shouldBe 2
+                            jacksonObjectMapper()
+                                .readTree(it)
+                                .sortedBy { node -> node.get("filnavn").asText() }
+                                .let { sortedNodes ->
+                                    sortedNodes.first().get("urn").asText() shouldBe "urn:vedlegg:id/sub/uuid1"
+                                    sortedNodes.last().get("urn").asText() shouldBe "urn:vedlegg:id/sub/uuid2"
+                                }
+                        }
                     }
-                }
             }
         }
     }
@@ -206,29 +212,30 @@ internal class VedleggApiTest {
 
         withMockAuthServerAndTestApplication({ vedleggApi(mediator) }) {
             listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
-                client.post("${fixture.path}/vedlegg/id") {
-                    autentisert(fixture)
-                    setBody(
-                        MultiPartFormDataContent(
-                            formData {
-                                append("hubba", "file.csv", ContentType.Text.CSV) {
-                                    this.append("1")
-                                }
-                                append("hubba", "file2.csv", ContentType.Text.CSV) {
-                                    this.append("2")
-                                }
-                                append("hubba", "fil med space", ContentType.Text.CSV) {
-                                    this.append("3")
-                                }
-                            },
-                            "boundary",
-                            ContentType.MultiPart.FormData.withParameter("boundary", "boundary"),
-                        ),
-                    )
-                }.let { response ->
-                    response.status shouldBe HttpStatusCode.Created
-                    //language=JSON
-                    response.bodyAsText() shouldBeJson """[
+                client
+                    .post("${fixture.path}/vedlegg/id") {
+                        autentisert(fixture)
+                        setBody(
+                            MultiPartFormDataContent(
+                                formData {
+                                    append("hubba", "file.csv", ContentType.Text.CSV) {
+                                        this.append("1")
+                                    }
+                                    append("hubba", "file2.csv", ContentType.Text.CSV) {
+                                        this.append("2")
+                                    }
+                                    append("hubba", "fil med space", ContentType.Text.CSV) {
+                                        this.append("3")
+                                    }
+                                },
+                                "boundary",
+                                ContentType.MultiPart.FormData.withParameter("boundary", "boundary"),
+                            ),
+                        )
+                    }.let { response ->
+                        response.status shouldBe HttpStatusCode.Created
+                        //language=JSON
+                        response.bodyAsText() shouldBeJson """[
   {
     "filnavn": "file1.csv",
     "urn": "urn:vedlegg:id/file1.csv",
@@ -251,8 +258,8 @@ internal class VedleggApiTest {
     "tidspunkt": "${now.format(ISO_OFFSET_DATE_TIME)}"
   }
 ]"""
-                    response.contentType().toString() shouldBe "application/json; charset=UTF-8"
-                }
+                        response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+                    }
             }
         }
     }
@@ -359,16 +366,21 @@ internal class VedleggApiTest {
                 it.status shouldBe HttpStatusCode.BadRequest
                 @Suppress("ktlint:standard:max-line-length")
                 //language=JSON
-                it.bodyAsText() shouldBe """{"type":"about:blank","title":"Fil er ugyldig","status":400,"detail":"test feilet følgende valideringer: test","instance":"about:blank","errorType":"FILE_VIRUS"}""".trimIndent()
+                it.bodyAsText() shouldBe
+                    """{"type":"about:blank","title":"Fil er ugyldig","status":400,"detail":"test feilet følgende valideringer: test","instance":"about:blank","errorType":"FILE_VIRUS"}""".trimIndent()
             }
         }
     }
 
-    private sealed class TestFixture(val path: String, val token: String) {
-        class TokenX() : TestFixture("v1/obo/mellomlagring/", TestApplication.tokenXToken)
+    private sealed class TestFixture(
+        val path: String,
+        val token: String,
+    ) {
+        class TokenX : TestFixture("v1/obo/mellomlagring/", TestApplication.tokenXToken)
 
-        data class AzureAd(val eier: String = DEFAULT_DUMMY_FODSELNUMMER) :
-            TestFixture("v1/azuread/mellomlagring/", TestApplication.azureAd)
+        data class AzureAd(
+            val eier: String = DEFAULT_DUMMY_FODSELNUMMER,
+        ) : TestFixture("v1/azuread/mellomlagring/", TestApplication.azureAd)
     }
 
     private fun HttpRequestBuilder.autentisert(fixture: TestFixture) {

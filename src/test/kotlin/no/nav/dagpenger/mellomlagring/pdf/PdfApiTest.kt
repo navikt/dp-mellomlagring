@@ -40,11 +40,12 @@ internal class PdfApiTest {
     @Test
     fun `Autoriset dersom tokenX token i request`() {
         withMockAuthServerAndTestApplication({ pdfApi(mockk(relaxed = true)) }) {
-            client.post(BUNDLE_PATH) {
-                autentisert(
-                    token = tokenXToken,
-                )
-            }.status shouldNotBe HttpStatusCode.Unauthorized
+            client
+                .post(BUNDLE_PATH) {
+                    autentisert(
+                        token = tokenXToken,
+                    )
+                }.status shouldNotBe HttpStatusCode.Unauthorized
         }
     }
 
@@ -64,20 +65,22 @@ internal class PdfApiTest {
                 },
             )
         }) {
-            client.post(BUNDLE_PATH) {
-                autentisert(token = tokenXToken)
-                header(HttpHeaders.ContentType, "application/json")
-                setBody(bundleBody)
-            }.let { response ->
-                response.status shouldBe HttpStatusCode.Created
-                response.contentType().toString() shouldBe "application/json; charset=UTF-8"
-                //language=JSON
-                response.bodyAsText() shouldBe """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:objektnavn","filsti":"objektnavn","storrelse":0,"tidspunkt":"${
-                    now.format(
-                        DateTimeFormatter.ISO_OFFSET_DATE_TIME,
-                    )
-                }"}"""
-            }
+            client
+                .post(BUNDLE_PATH) {
+                    autentisert(token = tokenXToken)
+                    header(HttpHeaders.ContentType, "application/json")
+                    setBody(bundleBody)
+                }.let { response ->
+                    response.status shouldBe HttpStatusCode.Created
+                    response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+                    //language=JSON
+                    response.bodyAsText() shouldBe
+                        """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:objektnavn","filsti":"objektnavn","storrelse":0,"tidspunkt":"${
+                            now.format(
+                                DateTimeFormatter.ISO_OFFSET_DATE_TIME,
+                            )
+                        }"}"""
+                }
         }
     }
 

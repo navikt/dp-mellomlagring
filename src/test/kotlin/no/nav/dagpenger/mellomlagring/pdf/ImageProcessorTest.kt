@@ -34,26 +34,27 @@ internal class ImageProcessorTest {
     @Test
     fun `slår sammen pdfer`() {
         shouldNotThrowAny {
-            ImageProcessor.mergePdf("/fisk1.jpg".fileAsByteArray().tilPdf(), "/fisk2.jpg".fileAsByteArray().tilPdf())
+            ImageProcessor
+                .mergePdf("/fisk1.jpg".fileAsByteArray().tilPdf(), "/fisk2.jpg".fileAsByteArray().tilPdf())
                 .takeIf { skrivTilFil }
                 ?.let {
                     File("build/tmp/jpgOgJpg.pdf").writeBytes(it)
                 }
 
-            ImageProcessor.mergePdf(
-                "/Arbeidsforhold.pdf".fileAsByteArray().tilPdf(),
-                "/fisk2.jpg".fileAsByteArray().tilPdf(),
-            )
-                .takeIf { skrivTilFil }
+            ImageProcessor
+                .mergePdf(
+                    "/Arbeidsforhold.pdf".fileAsByteArray().tilPdf(),
+                    "/fisk2.jpg".fileAsByteArray().tilPdf(),
+                ).takeIf { skrivTilFil }
                 ?.let {
                     File("build/tmp/PdfOgJpg.pdf").writeBytes(it)
                 }
 
-            ImageProcessor.mergePdf(
-                "/Arbeidsforhold.pdf".fileAsByteArray().tilPdf(),
-                "/Arbeidsforhold.pdf".fileAsByteArray().tilPdf(),
-            )
-                .takeIf { skrivTilFil }
+            ImageProcessor
+                .mergePdf(
+                    "/Arbeidsforhold.pdf".fileAsByteArray().tilPdf(),
+                    "/Arbeidsforhold.pdf".fileAsByteArray().tilPdf(),
+                ).takeIf { skrivTilFil }
                 ?.let {
                     File("build/tmp/PdfOgPdf.pdf").writeBytes(it)
                 }
