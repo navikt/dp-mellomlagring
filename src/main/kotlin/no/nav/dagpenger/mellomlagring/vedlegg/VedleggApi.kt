@@ -58,14 +58,13 @@ internal fun Route.vedlegg(
     eierResolver: ApplicationCall.() -> String,
 ) {
     route("/mellomlagring/vedlegg/{id}") {
-        fun ApplicationCall.id(): String {
-            return this.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
-        }
+        fun ApplicationCall.id(): String = this.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
 
         post {
             val multiPartData = call.receiveMultipart()
             val respond =
-                fileUploadHandler.handleFileupload(multiPartData, call.id(), call.eierResolver())
+                fileUploadHandler
+                    .handleFileupload(multiPartData, call.id(), call.eierResolver())
                     .map(KlumpInfo::toResponse)
             call.respond(HttpStatusCode.Created, respond)
         }
@@ -78,19 +77,17 @@ internal fun Route.vedlegg(
         }
 
         route("/{subPath...}") {
-            fun ApplicationCall.subPath(): String {
-                return this.parameters.getAll("subPath")?.joinToString("/")
+            fun ApplicationCall.subPath(): String =
+                this.parameters.getAll("subPath")?.joinToString("/")
                     ?: throw IllegalArgumentException("Fant ikke subPath")
-            }
 
-            fun ApplicationCall.fullPath(): String {
-                return listOf(this.id(), this.subPath()).joinToString("/")
-            }
+            fun ApplicationCall.fullPath(): String = listOf(this.id(), this.subPath()).joinToString("/")
 
             post {
                 val multiPartData = call.receiveMultipart()
                 val respond =
-                    fileUploadHandler.handleFileupload(multiPartData, call.fullPath(), call.eierResolver())
+                    fileUploadHandler
+                        .handleFileupload(multiPartData, call.fullPath(), call.eierResolver())
                         .map(KlumpInfo::toResponse)
                 call.respond(HttpStatusCode.Created, respond)
             }
@@ -135,13 +132,15 @@ private data class Response(
     val tidspunkt: ZonedDateTime,
 )
 
-internal class FileUploadHandler(private val mediator: Mediator) {
+internal class FileUploadHandler(
+    private val mediator: Mediator,
+) {
     suspend fun handleFileupload(
         multiPartData: MultiPartData,
         soknadsId: String,
         eier: String,
-    ): List<KlumpInfo> {
-        return coroutineScope {
+    ): List<KlumpInfo> =
+        coroutineScope {
             val jobs = mutableListOf<Deferred<KlumpInfo>>()
             multiPartData.forEachPart { part ->
                 when (part) {
@@ -177,5 +176,4 @@ internal class FileUploadHandler(private val mediator: Mediator) {
             }
             jobs.awaitAll()
         }
-    }
 }

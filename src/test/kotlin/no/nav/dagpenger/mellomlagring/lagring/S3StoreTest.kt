@@ -70,33 +70,35 @@ internal class S3StoreTest {
                     ),
             )
 
-        store.lagre(
-            Klump(
-                innhold = "hubba".toByteArray(),
-                klumpInfo =
-                    KlumpInfo(
-                        objektNavn = "urn:vedlegg:id/hubba",
-                        originalFilnavn = "hubba",
-                        storrelse = 10,
-                        eier = "hubba eier",
-                        tidspunkt = today,
-                    ),
-            ),
-        ).isSuccess shouldBe true
+        store
+            .lagre(
+                Klump(
+                    innhold = "hubba".toByteArray(),
+                    klumpInfo =
+                        KlumpInfo(
+                            objektNavn = "urn:vedlegg:id/hubba",
+                            originalFilnavn = "hubba",
+                            storrelse = 10,
+                            eier = "hubba eier",
+                            tidspunkt = today,
+                        ),
+                ),
+            ).isSuccess shouldBe true
 
-        store.lagre(
-            Klump(
-                innhold = "bubba".toByteArray(),
-                klumpInfo =
-                    KlumpInfo(
-                        objektNavn = "urn:vedlegg:id/bubba",
-                        originalFilnavn = "bubba",
-                        storrelse = 0,
-                        eier = null,
-                        tidspunkt = today,
-                    ),
-            ),
-        ).isSuccess shouldBe true
+        store
+            .lagre(
+                Klump(
+                    innhold = "bubba".toByteArray(),
+                    klumpInfo =
+                        KlumpInfo(
+                            objektNavn = "urn:vedlegg:id/bubba",
+                            originalFilnavn = "bubba",
+                            storrelse = 0,
+                            eier = null,
+                            tidspunkt = today,
+                        ),
+                ),
+            ).isSuccess shouldBe true
 
         val orThrow = store.listKlumpInfo("urn:vedlegg:id").getOrThrow()
         orThrow shouldContainExactlyInAnyOrder

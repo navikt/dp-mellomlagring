@@ -45,11 +45,18 @@ internal interface Mediator {
     }
 }
 
-abstract class FilValideringResultat(open val filnavn: String) {
-    data class Gyldig(override val filnavn: String) : FilValideringResultat(filnavn)
+abstract class FilValideringResultat(
+    open val filnavn: String,
+) {
+    data class Gyldig(
+        override val filnavn: String,
+    ) : FilValideringResultat(filnavn)
 
-    data class Ugyldig(override val filnavn: String, val feilMelding: String, val feilType: FeilType) :
-        FilValideringResultat(filnavn)
+    data class Ugyldig(
+        override val filnavn: String,
+        val feilMelding: String,
+        val feilType: FeilType,
+    ) : FilValideringResultat(filnavn)
 }
 
 enum class FeilType {
@@ -59,13 +66,20 @@ enum class FeilType {
     FILE_ENCRYPTED,
 }
 
-internal class NotOwnerException(msg: String) : Throwable(msg)
+internal class NotOwnerException(
+    msg: String,
+) : Throwable(msg)
 
-internal class UgyldigFilInnhold(filnavn: String, val feilMeldinger: Map<FeilType, String>) : Throwable() {
+internal class UgyldigFilInnhold(
+    filnavn: String,
+    val feilMeldinger: Map<FeilType, String>,
+) : Throwable() {
     override val message: String = "$filnavn feilet følgende valideringer: ${feilMeldinger.values.joinToString(", ")}"
 }
 
-internal class NotFoundException(ressursNøkkel: String) : Throwable() {
+internal class NotFoundException(
+    ressursNøkkel: String,
+) : Throwable() {
     override val message: String = "Fant ikke ressurse med nøkkel $ressursNøkkel"
 }
 
@@ -95,49 +109,48 @@ internal class MediatorImpl(
                 filContentType = filContentType,
                 eier = eier,
             )
-        return kryptertStore(eier).lagre(
-            klump =
-                Klump(
-                    innhold = filinnhold,
-                    klumpInfo = klumpInfo,
-                ),
-        ).getOrThrow().let { klumpInfo }
+        return kryptertStore(eier)
+            .lagre(
+                klump =
+                    Klump(
+                        innhold = filinnhold,
+                        klumpInfo = klumpInfo,
+                    ),
+            ).getOrThrow()
+            .let { klumpInfo }
     }
 
     override suspend fun liste(
         soknadsId: String,
         eier: String,
-    ): List<KlumpInfo> {
-        return kryptertStore(eier)
+    ): List<KlumpInfo> =
+        kryptertStore(eier)
             .listKlumpInfo(soknadsId)
             .getOrThrow()
-    }
 
     override suspend fun hent(
         vedleggUrn: VedleggUrn,
         eier: String,
-    ): Klump? {
-        return vedleggUrn.nss.let { klumpNavn ->
+    ): Klump? =
+        vedleggUrn.nss.let { klumpNavn ->
             kryptertStore(eier).let { s ->
                 s.hvisFinnes(klumpNavn) {
                     s.hent(klumpNavn).getOrThrow()
                 }
             }
         }
-    }
 
     override suspend fun slett(
         vedleggUrn: VedleggUrn,
         eier: String,
-    ): Boolean {
-        return vedleggUrn.nss.let { klumpnavn ->
+    ): Boolean =
+        vedleggUrn.nss.let { klumpnavn ->
             kryptertStore(eier).let { s ->
                 s.hvisFinnes(klumpnavn) {
                     s.slett(klumpnavn).getOrThrow()
                 } ?: false
             }
         }
-    }
 
     private suspend fun valider(
         filnavn: String,
@@ -158,12 +171,10 @@ internal class MediatorImpl(
         }
     }
 
-    private fun createStoreKey(soknadsId: String): StorageKey {
-        return "$soknadsId/${uuidGenerator()}"
-    }
+    private fun createStoreKey(soknadsId: String): StorageKey = "$soknadsId/${uuidGenerator()}"
 
-    private fun <T> Result<T>.getOrThrow(): T {
-        return this.getOrElse {
+    private fun <T> Result<T>.getOrThrow(): T =
+        this.getOrElse {
             when (it) {
                 is NotOwnerException -> throw it
                 is UgyldigFilInnhold -> throw it
@@ -171,14 +182,12 @@ internal class MediatorImpl(
                 else -> throw StoreException(it.message ?: "Ukjent feil")
             }
         }
-    }
 
     private inline fun <T> Store.hvisFinnes(
         klumpNavn: String,
         block: () -> T?,
-    ): T? {
-        return this.hentKlumpInfo(klumpNavn).getOrThrow()?.let { _ ->
+    ): T? =
+        this.hentKlumpInfo(klumpNavn).getOrThrow()?.let { _ ->
             block.invoke()
         }
-    }
 }

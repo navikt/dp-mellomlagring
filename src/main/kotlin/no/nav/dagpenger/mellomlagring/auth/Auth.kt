@@ -58,8 +58,8 @@ private data class OpenIDConfiguration(
     val issuer: String,
 )
 
-private fun cachedJwkProvider(jwksUri: String): JwkProvider {
-    return JwkProviderBuilder(URL(jwksUri))
+private fun cachedJwkProvider(jwksUri: String): JwkProvider =
+    JwkProviderBuilder(URL(jwksUri))
         .cached(10, 24, TimeUnit.HOURS) // cache up to 10 JWKs for 24 hours
         .rateLimited(
             10,
@@ -67,7 +67,6 @@ private fun cachedJwkProvider(jwksUri: String): JwkProvider {
             TimeUnit.MINUTES,
         ) // if not cached, only allow max 10 different keys per minute to be fetched from external provider
         .build()
-}
 
 private val httpClient =
     HttpClient {

@@ -33,29 +33,36 @@ fun main() {
     GcpKmsClient.register(Optional.of(Kek.DEV), Optional.empty())
 
     val aead =
-        KmsEnvelopeAeadKeyManager.createKeyTemplate(Kek.DEV, KeyTemplates.get("AES128_GCM")).let {
-            KeysetHandle.generateNew(it).getPrimitive(Aead::class.java)
-        }.also { it.check() }
+        KmsEnvelopeAeadKeyManager
+            .createKeyTemplate(Kek.DEV, KeyTemplates.get("AES128_GCM"))
+            .let {
+                KeysetHandle.generateNew(it).getPrimitive(Aead::class.java)
+            }.also { it.check() }
 
     val gcs = StorageOptions.getDefaultInstance().service
 
     val blob =
         gcs.get(BlobId.of("teamdagpenger-mellomlagring-dev", "c061c0c3-cf9e-4764-b058-090e2a77edfb/f3884faf-1c44-4233-97e2-7529ed956c98"))
-    blob.getContent().let {
-        println("Filstørellse: ${it.size}")
-        aead.decrypt(it, "51818700273".toByteArray())
-    }?.let {
-        File("out.pdf").writeBytes(it)
-    }
+    blob
+        .getContent()
+        .let {
+            println("Filstørellse: ${it.size}")
+            aead.decrypt(it, "51818700273".toByteArray())
+        }?.let {
+            File("out.pdf").writeBytes(it)
+        }
 }
 
 private fun Aead.check() {
     val charset = Charset.forName("ISO-8859-1")
-    this.encrypt("hubba".toByteArray(charset), "hubba".toByteArray()).toString(charset).let {
-        this.decrypt(it.toByteArray(charset), "hubba".toByteArray())
-    }.let {
-        assert("hubba" == it.toString(charset)) {
-            println("Aead funker ei")
+    this
+        .encrypt("hubba".toByteArray(charset), "hubba".toByteArray())
+        .toString(charset)
+        .let {
+            this.decrypt(it.toByteArray(charset), "hubba".toByteArray())
+        }.let {
+            assert("hubba" == it.toString(charset)) {
+                println("Aead funker ei")
+            }
         }
-    }
 }

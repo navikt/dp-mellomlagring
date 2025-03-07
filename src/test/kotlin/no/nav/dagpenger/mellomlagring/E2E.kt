@@ -19,7 +19,6 @@ import io.ktor.http.*
 import io.ktor.serialization.jackson.jackson
 import io.ktor.util.toUpperCasePreservingASCIIRules
 import io.kubernetes.client.openapi.ApiClient
-import io.kubernetes.client.openapi.Configuration
 import io.kubernetes.client.openapi.apis.CoreV1Api
 import io.kubernetes.client.openapi.models.V1Secret
 import io.kubernetes.client.util.ClientBuilder
@@ -39,7 +38,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.io.File
 import java.io.FileReader
-import java.time.OffsetDateTime
 import java.time.ZonedDateTime
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
@@ -56,15 +54,17 @@ fun getAuthEnv(
 
     // IF this fails do kubectl get pod to aquire credentials
     val client: ApiClient = ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(FileReader(kubeConfigPath))).build()
-    Configuration.setDefaultApiClient(client)
-    return CoreV1Api().listNamespacedSecret(
-        "teamdagpenger",
-    ).labelSelector("app=$app,type=$type")
-        .execute()
-        .items.also { secrets ->
-            secrets.sortByDescending<V1Secret?, OffsetDateTime> { it?.metadata?.creationTimestamp }
-        }.first<V1Secret?>()?.data!!.mapValues { e -> String(e.value) }
+
+    return CoreV1Api(client)
+        .listNamespacedSecret(
+            "teamdagpenger",
+        ).execute().items.filter {
+            it.metadata.labels?.get("app") == app && it.metadata.labels?.get("type") == type
+        }.first<V1Secret?>()
+        ?.data!!
+        .mapValues { e -> String(e.value) }
 }
+
 
 suspend fun getOboToken(
     app: String,
@@ -84,7 +84,7 @@ suspend fun getOboToken(
         // 51818700273 -
         token = selvbetjeningsIdToken,
         audience = "dev-gcp:teamdagpenger:dp-mellomlagring",
-    ).accessToken!!
+    ).access_token!!
 }
 
 fun getAzureAdToken(app: String): String {
@@ -99,7 +99,7 @@ fun getAzureAdToken(app: String): String {
         )
     }
 
-    return tokenAzureAdClient.clientCredentials("api://dev-gcp.teamdagpenger.dp-mellomlagring/.default").accessToken!!
+    return tokenAzureAdClient.clientCredentials("api://dev-gcp.teamdagpenger.dp-mellomlagring/.default").access_token!!
 }
 
 val httpClientJackson =
@@ -170,14 +170,10 @@ internal class E2E {
     // logg inn på søknaden i dev med eier 51818700273 og kopier selvbetjening-token fra devtools ->Appilcation->Storage
     private val selvbetjeningsIdToken = ""
 
-    private fun HttpRequestBuilder.autentisert(token: String) {
-        header(HttpHeaders.Authorization, "Bearer $token")
-    }
 
     @Test
     fun token() {
         val token = getAzureAdToken("dp-behov-soknad-pdf").also { println(it) }
-
     }
 
     @Test
@@ -189,16 +185,16 @@ internal class E2E {
             val httpResponse = httpClientJackson.submitFormWithBinaryData(
                 url = "https://dp-mellomlagring.intern.dev.nav.no/v1/azuread/mellomlagring/vedlegg/oppgave/oppgaveId/type_brev",
                 formData =
-                formData {
-                    append(
-                        "image",
-                        "/smallimg1.jpg".fileAsByteArray(),
-                        Headers.build {
-                            append(HttpHeaders.ContentType, "image/jpeg")
-                            append(HttpHeaders.ContentDisposition, "filename=\"æ ø å.jpg\"")
-                        },
-                    )
-                },
+                    formData {
+                        append(
+                            "image",
+                            "/smallimg1.jpg".fileAsByteArray(),
+                            Headers.build {
+                                append(HttpHeaders.ContentType, "image/jpeg")
+                                append(HttpHeaders.ContentDisposition, "filename=\"æ ø å.jpg\"")
+                            },
+                        )
+                    },
             ) {
                 this.header("Authorization", "Bearer $token")
                 this.header("X-Eier", value = eier)
@@ -292,16 +288,16 @@ internal class E2E {
                 httpClientJackson.submitFormWithBinaryData(
                     url = "https://dp-mellomlagring.intern.dev.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
                     formData =
-                    formData {
-                        append(
-                            "text",
-                            "/$fil".fileAsByteArray(),
-                            Headers.build {
-                                append(HttpHeaders.ContentType, "text/plain")
-                                append(HttpHeaders.ContentDisposition, "filename=\"$fil\"")
-                            },
-                        )
-                    },
+                        formData {
+                            append(
+                                "text",
+                                "/$fil".fileAsByteArray(),
+                                Headers.build {
+                                    append(HttpHeaders.ContentType, "text/plain")
+                                    append(HttpHeaders.ContentDisposition, "filename=\"$fil\"")
+                                },
+                            )
+                        },
                 ) {
                     this.header("Authorization", "Bearer $oboToken")
                 }.let {
@@ -315,16 +311,16 @@ internal class E2E {
             httpClientJackson.submitFormWithBinaryData(
                 url = "https://dp-mellomlagring.intern.dev.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta1",
                 formData =
-                formData {
-                    append(
-                        "image",
-                        "/smallimg1.jpg".fileAsByteArray(),
-                        Headers.build {
-                            append(HttpHeaders.ContentType, "image/jpeg")
-                            append(HttpHeaders.ContentDisposition, "filename=\"æ ø å.jpg\"")
-                        },
-                    )
-                },
+                    formData {
+                        append(
+                            "image",
+                            "/smallimg1.jpg".fileAsByteArray(),
+                            Headers.build {
+                                append(HttpHeaders.ContentType, "image/jpeg")
+                                append(HttpHeaders.ContentDisposition, "filename=\"æ ø å.jpg\"")
+                            },
+                        )
+                    },
             ) {
                 this.header("Authorization", "Bearer $oboToken")
             }.body<List<Response>>().also { println(it) }.size shouldBe 1
@@ -332,16 +328,16 @@ internal class E2E {
             httpClientJackson.submitFormWithBinaryData(
                 url = "https://dp-mellomlagring.intern.dev.nav.no/v1/obo/mellomlagring/vedlegg/$soknadId/fakta2",
                 formData =
-                formData {
-                    append(
-                        "image",
-                        "/Arbeidsforhold2.pdf".fileAsByteArray(),
-                        Headers.build {
-                            append(HttpHeaders.ContentType, "application/pdf")
-                            append(HttpHeaders.ContentDisposition, "filename=\"Arbeidsforhold.pdf\"")
-                        },
-                    )
-                },
+                    formData {
+                        append(
+                            "image",
+                            "/Arbeidsforhold2.pdf".fileAsByteArray(),
+                            Headers.build {
+                                append(HttpHeaders.ContentType, "application/pdf")
+                                append(HttpHeaders.ContentDisposition, "filename=\"Arbeidsforhold.pdf\"")
+                            },
+                        )
+                    },
             ) {
                 this.header("Authorization", "Bearer $oboToken")
             }.body<List<Response>>().also { println(it) }.size shouldBe 1
