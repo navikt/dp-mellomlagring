@@ -7,7 +7,6 @@ import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
@@ -19,11 +18,11 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.utils.io.toByteArray
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
@@ -141,39 +140,41 @@ internal class FileUploadHandler(
         eier: String,
     ): List<KlumpInfo> =
         coroutineScope {
-            val jobs = mutableListOf<Deferred<KlumpInfo>>()
+            val files = mutableListOf<Pair<String, ByteArray>>()
             multiPartData.forEachPart { part ->
                 when (part) {
                     is PartData.FileItem -> {
                         val fileName = part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
-
-                        jobs.add(
-                            async(Dispatchers.IO) {
-                                val bytes = part.provider().toByteArray()
-                                mediator.lagre(
-                                    soknadsId,
-                                    fileName,
-                                    bytes,
-                                    part.contentType?.toString() ?: "application/octet-stream",
-                                    eier,
-                                )
-                            },
-                        )
+                        files.add(fileName to part.provider().toByteArray())
                     }
+
                     is PartData.BinaryItem ->
                         part.dispose().also {
                             logger.warn { "binary item not supported" }
                         }
+
                     is PartData.FormItem ->
                         part.dispose().also {
                             logger.warn { "form item not supported" }
                         }
+
                     is PartData.BinaryChannelItem ->
                         part.dispose().also {
                             logger.warn { "BinaryChannel item not supported" }
                         }
                 }
             }
-            jobs.awaitAll()
+            files
+                .map { file ->
+                    async(Dispatchers.IO) {
+                        mediator.lagre(
+                            soknadsId,
+                            file.first,
+                            file.second,
+                            "application/octet-stream",
+                            eier,
+                        )
+                    }
+                }.awaitAll()
         }
 }
