@@ -50,7 +50,7 @@ spec:
         - application: dp-vaktmester-mellomlagring
         {{#if wonderwalled}}
         - application: tokenx-token-generator
-          namespace: aura
+          namespace: nais
         {{/if}}
   tokenx:
     enabled: true
