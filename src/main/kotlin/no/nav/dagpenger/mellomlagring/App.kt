@@ -13,7 +13,7 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.logging.toLogString
 import io.ktor.server.plugins.callid.CallId
 import io.ktor.server.plugins.callid.callIdMdc
-import io.ktor.server.plugins.callloging.CallLogging
+import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.plugins.swagger.swaggerUI
@@ -118,7 +118,10 @@ internal fun Application.ktorFeatures() {
                             title = "Fil er ugyldig",
                             status = 400,
                             detail = cause.message,
-                            errorType = cause.feilMeldinger.keys.first().name,
+                            errorType =
+                                cause.feilMeldinger.keys
+                                    .first()
+                                    .name,
                         ),
                     )
                 }

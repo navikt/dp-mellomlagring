@@ -10,7 +10,11 @@ import java.security.GeneralSecurityException
 
 private val sikkerlogg = KotlinLogging.logger("tjenestekall")
 
-internal class KryptertStore(private val fnr: String, private val store: Store, private val aead: Aead) : Store {
+internal class KryptertStore(
+    private val fnr: String,
+    private val store: Store,
+    private val aead: Aead,
+) : Store {
     companion object {
         private val charset = Charset.forName("ISO-8859-1")
     }
@@ -20,9 +24,7 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
             store.hent(storageKey).map { it?.decrypt(fnr) }
         }
 
-    override fun lagre(klump: Klump): Result<Int> {
-        return store.lagre(klump.encrypt(fnr))
-    }
+    override fun lagre(klump: Klump): Result<Int> = store.lagre(klump.encrypt(fnr))
 
     override fun slett(storageKey: StorageKey): Result<Boolean> = requireEier(storageKey) { store.slett(storageKey) }
 
@@ -47,17 +49,16 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
         )
     }
 
-    override fun listKlumpInfo(keyPrefix: StorageKey): Result<List<KlumpInfo>> {
-        return store.listKlumpInfo(keyPrefix).map { klumpInfoList ->
+    override fun listKlumpInfo(keyPrefix: StorageKey): Result<List<KlumpInfo>> =
+        store.listKlumpInfo(keyPrefix).map { klumpInfoList ->
             klumpInfoList.filter { it.erEier() }
         }
-    }
 
     private inline fun <T> requireEier(
         storageKey: StorageKey,
         resultSupplier: () -> Result<T>,
-    ): Result<T> {
-        return store.hentKlumpInfo(storageKey).fold(
+    ): Result<T> =
+        store.hentKlumpInfo(storageKey).fold(
             onSuccess = {
                 when (it) {
                     null -> Result.failure(NotFoundException(storageKey))
@@ -74,10 +75,9 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
                 Result.failure(it)
             },
         )
-    }
 
-    private fun KlumpInfo?.erEier(): Boolean {
-        return when (val kryptertEier = this?.eier) {
+    private fun KlumpInfo?.erEier(): Boolean =
+        when (val kryptertEier = this?.eier) {
             null -> {
                 sikkerlogg.warn { "Fant ikke eier for klumpinfo: $this" }
                 false
@@ -91,7 +91,6 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
                 }
             }
         }
-    }
 
     private fun Klump.encrypt(eier: String): Klump {
         val klumpInfo1 = this.klumpInfo.copy(eier = this.klumpInfo.eier.encrypt())
@@ -101,9 +100,8 @@ internal class KryptertStore(private val fnr: String, private val store: Store, 
         )
     }
 
-    private fun Klump.decrypt(eier: String): Klump {
-        return Klump(innhold = aead.decrypt(this.innhold, eier.toByteArray()), klumpInfo = this.klumpInfo)
-    }
+    private fun Klump.decrypt(eier: String): Klump =
+        Klump(innhold = aead.decrypt(this.innhold, eier.toByteArray()), klumpInfo = this.klumpInfo)
 
     private fun String?.encrypt() = this?.let { aead.encrypt(this.toByteArray(charset), fnr.toByteArray()).toString(charset) }
 

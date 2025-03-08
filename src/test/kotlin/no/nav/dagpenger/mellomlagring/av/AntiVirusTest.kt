@@ -49,9 +49,13 @@ internal class AntiVirusTest {
 
             registry.scrape().also { snapshots ->
                 val teller =
-                    snapshots.find { it.metadata.name == "dp_mellomlagring_clamav_client_status" }
+                    snapshots
+                        .find { it.metadata.name == "dp_mellomlagring_clamav_client_status" }
                         .shouldNotBeNull() as CounterSnapshot
-                teller.dataPoints.first().labels.get("status") shouldBe "200"
+                teller.dataPoints
+                    .first()
+                    .labels
+                    .get("status") shouldBe "200"
                 teller.dataPoints.first().value shouldBe 1.0
             }
         }

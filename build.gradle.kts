@@ -6,7 +6,7 @@ plugins {
     application
     alias(libs.plugins.kotlin)
     alias(libs.plugins.spotless)
-    id("com.gradleup.shadow") version "8.3.5"
+    id("com.gradleup.shadow") version "8.3.6"
 }
 
 repositories {
@@ -69,20 +69,20 @@ dependencies {
     implementation(libs.bundles.ktor.server)
     implementation(libs.ktor.server.cio)
     implementation(libs.ktor.server.metrics.micrometer)
-    implementation("no.nav.dagpenger:image-utils:2024.09.20-13.31.40516c678fde")
-    implementation(libs.dp.biblioteker.ktor.klient.metrics)
+    implementation("no.nav.dagpenger:image-utils:2024.12.10-13.49.efde9da2574c")
+    implementation("no.nav.dagpenger:ktor-client-metrics:2025.02.13-18.02.052b7c34baab")
 
-    implementation("io.micrometer:micrometer-registry-prometheus:1.13.6")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.14.4")
     implementation(libs.jackson.datatype.jsr310)
     implementation("io.ktor:ktor-server-swagger:${libs.versions.ktor.get()}")
 
-    implementation("com.google.crypto.tink:tink:1.15.0")
+    implementation("com.google.crypto.tink:tink:1.16.0")
     implementation("com.google.crypto.tink:tink-gcpkms:1.10.0")
     implementation("de.slub-dresden:urnlib:2.0.1")
 
     runtimeOnly(libs.logback.core)
     runtimeOnly(libs.logback.classic)
-    runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.4") {
+    runtimeOnly("net.logstash.logback:logstash-logback-encoder:8.0") {
         exclude("com.fasterxml.jackson.core")
     }
 
@@ -107,7 +107,6 @@ dependencies {
 
     testImplementation("org.skyscreamer:jsonassert:1.5.3")
 
-    // For E2E
-    testImplementation("io.kubernetes:client-java:21.0.2")
-    testImplementation(libs.dp.biblioteker.oauth2.klient)
+    testImplementation("io.kubernetes:client-java:23.0.0")
+    testImplementation("no.nav.dagpenger:oauth2-klient:2025.02.13-18.02.052b7c34baab")
 }

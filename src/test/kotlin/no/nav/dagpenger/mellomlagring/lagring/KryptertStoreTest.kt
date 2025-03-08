@@ -39,31 +39,33 @@ internal class KryptertStoreTest {
         val kryptertStore = KryptertStore(fnr = testFnr, store = s3store, aead = Crypto.aead)
 
         val lagretHubbaUrn = "urn:vedlegg:id/hubba"
-        kryptertStore.lagre(
-            Klump(
-                innhold = "hubba".toByteArray(),
-                klumpInfo =
-                    KlumpInfo(
-                        objektNavn = lagretHubbaUrn,
-                        originalFilnavn = "hubbaOriginalFilnavn",
-                        storrelse = 6,
-                        eier = testFnr,
-                    ),
-            ),
-        ).isSuccess shouldBe true
+        kryptertStore
+            .lagre(
+                Klump(
+                    innhold = "hubba".toByteArray(),
+                    klumpInfo =
+                        KlumpInfo(
+                            objektNavn = lagretHubbaUrn,
+                            originalFilnavn = "hubbaOriginalFilnavn",
+                            storrelse = 6,
+                            eier = testFnr,
+                        ),
+                ),
+            ).isSuccess shouldBe true
 
-        kryptertStore.lagre(
-            Klump(
-                innhold = "hubba bubba".toByteArray(),
-                klumpInfo =
-                    KlumpInfo(
-                        objektNavn = "urn:vedlegg:id/bubba",
-                        originalFilnavn = "hubbaOriginalFilnavn",
-                        storrelse = 6,
-                        eier = testFnr,
-                    ),
-            ),
-        ).isSuccess shouldBe true
+        kryptertStore
+            .lagre(
+                Klump(
+                    innhold = "hubba bubba".toByteArray(),
+                    klumpInfo =
+                        KlumpInfo(
+                            objektNavn = "urn:vedlegg:id/bubba",
+                            originalFilnavn = "hubbaOriginalFilnavn",
+                            storrelse = 6,
+                            eier = testFnr,
+                        ),
+                ),
+            ).isSuccess shouldBe true
 
         s3store.hent(lagretHubbaUrn).getOrThrow().also {
             require(it != null)
@@ -105,18 +107,19 @@ internal class KryptertStoreTest {
             )
         KryptertStore(fnr = testFnr, store = s3store, aead = Crypto.aead).also {
             require(
-                it.lagre(
-                    Klump(
-                        innhold = "hubba".toByteArray(),
-                        klumpInfo =
-                            KlumpInfo(
-                                objektNavn = "urn:vedlegg:id/hubba",
-                                originalFilnavn = "hubba",
-                                storrelse = 0,
-                                eier = testFnr,
-                            ),
-                    ),
-                ).isSuccess,
+                it
+                    .lagre(
+                        Klump(
+                            innhold = "hubba".toByteArray(),
+                            klumpInfo =
+                                KlumpInfo(
+                                    objektNavn = "urn:vedlegg:id/hubba",
+                                    originalFilnavn = "hubba",
+                                    storrelse = 0,
+                                    eier = testFnr,
+                                ),
+                        ),
+                    ).isSuccess,
             )
         }
 

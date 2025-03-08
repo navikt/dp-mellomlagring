@@ -35,16 +35,14 @@ internal data class ScanResult(
     @JsonProperty("Result")
     val result: String,
 ) {
-    fun infisert(): Boolean {
-        return result.uppercase() != "OK"
-    }
+    fun infisert(): Boolean = result.uppercase() != "OK"
 }
 
 internal fun clamAv(
     engine: HttpClientEngine = CIO.create(),
     registry: PrometheusRegistry = PrometheusRegistry.defaultRegistry,
-): AntiVirus {
-    return object : AntiVirus {
+): AntiVirus =
+    object : AntiVirus {
         private val httpClient =
             HttpClient(engine) {
                 install(ContentNegotiation) {
@@ -77,12 +75,13 @@ internal fun clamAv(
         override suspend fun infisert(
             filnavn: String,
             filinnhold: ByteArray,
-        ): Boolean {
-            return runCatching<List<ScanResult>> {
-                httpClient.put {
-                    url("http://clamav.nais-system.svc.cluster.local/scan")
-                    setBody(ByteArrayInputStream(filinnhold))
-                }.body()
+        ): Boolean =
+            runCatching<List<ScanResult>> {
+                httpClient
+                    .put {
+                        url("http://clamav.nais-system.svc.cluster.local/scan")
+                        setBody(ByteArrayInputStream(filinnhold))
+                    }.body()
             }.fold(
                 onSuccess = {
                     require(it.isNotEmpty()) { "Skal ikke få tom liste fra clamv.  " }
@@ -96,6 +95,4 @@ internal fun clamAv(
                     throw t
                 },
             ).any { it.infisert() }
-        }
     }
-}

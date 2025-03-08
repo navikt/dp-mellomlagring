@@ -5,10 +5,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.MultiPartData
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
-import io.ktor.http.content.streamProvider
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
@@ -19,11 +17,12 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-import kotlinx.coroutines.Deferred
+import io.ktor.utils.io.toByteArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
@@ -58,14 +57,13 @@ internal fun Route.vedlegg(
     eierResolver: ApplicationCall.() -> String,
 ) {
     route("/mellomlagring/vedlegg/{id}") {
-        fun ApplicationCall.id(): String {
-            return this.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
-        }
+        fun ApplicationCall.id(): String = this.parameters["id"] ?: throw IllegalArgumentException("Fant ikke id")
 
         post {
             val multiPartData = call.receiveMultipart()
             val respond =
-                fileUploadHandler.handleFileupload(multiPartData, call.id(), call.eierResolver())
+                fileUploadHandler
+                    .handleFileupload(multiPartData, call.id(), call.eierResolver())
                     .map(KlumpInfo::toResponse)
             call.respond(HttpStatusCode.Created, respond)
         }
@@ -78,19 +76,17 @@ internal fun Route.vedlegg(
         }
 
         route("/{subPath...}") {
-            fun ApplicationCall.subPath(): String {
-                return this.parameters.getAll("subPath")?.joinToString("/")
+            fun ApplicationCall.subPath(): String =
+                this.parameters.getAll("subPath")?.joinToString("/")
                     ?: throw IllegalArgumentException("Fant ikke subPath")
-            }
 
-            fun ApplicationCall.fullPath(): String {
-                return listOf(this.id(), this.subPath()).joinToString("/")
-            }
+            fun ApplicationCall.fullPath(): String = listOf(this.id(), this.subPath()).joinToString("/")
 
             post {
                 val multiPartData = call.receiveMultipart()
                 val respond =
-                    fileUploadHandler.handleFileupload(multiPartData, call.fullPath(), call.eierResolver())
+                    fileUploadHandler
+                        .handleFileupload(multiPartData, call.fullPath(), call.eierResolver())
                         .map(KlumpInfo::toResponse)
                 call.respond(HttpStatusCode.Created, respond)
             }
@@ -135,47 +131,50 @@ private data class Response(
     val tidspunkt: ZonedDateTime,
 )
 
-internal class FileUploadHandler(private val mediator: Mediator) {
+internal class FileUploadHandler(
+    private val mediator: Mediator,
+) {
     suspend fun handleFileupload(
         multiPartData: MultiPartData,
         soknadsId: String,
         eier: String,
-    ): List<KlumpInfo> {
-        return coroutineScope {
-            val jobs = mutableListOf<Deferred<KlumpInfo>>()
+    ): List<KlumpInfo> =
+        coroutineScope {
+            val files = mutableListOf<Pair<String, ByteArray>>()
             multiPartData.forEachPart { part ->
                 when (part) {
                     is PartData.FileItem -> {
                         val fileName = part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
-
-                        jobs.add(
-                            async(Dispatchers.IO) {
-                                val bytes = part.streamProvider().readBytes()
-                                mediator.lagre(
-                                    soknadsId,
-                                    fileName,
-                                    bytes,
-                                    part.contentType?.toString() ?: "application/octet-stream",
-                                    eier,
-                                )
-                            },
-                        )
+                        files.add(fileName to part.provider().toByteArray())
                     }
+
                     is PartData.BinaryItem ->
                         part.dispose().also {
                             logger.warn { "binary item not supported" }
                         }
+
                     is PartData.FormItem ->
                         part.dispose().also {
                             logger.warn { "form item not supported" }
                         }
+
                     is PartData.BinaryChannelItem ->
                         part.dispose().also {
                             logger.warn { "BinaryChannel item not supported" }
                         }
                 }
             }
-            jobs.awaitAll()
+            files
+                .map { file ->
+                    async(Dispatchers.IO) {
+                        mediator.lagre(
+                            soknadsId,
+                            file.first,
+                            file.second,
+                            "application/octet-stream",
+                            eier,
+                        )
+                    }
+                }.awaitAll()
         }
-    }
 }

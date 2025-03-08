@@ -18,21 +18,23 @@ internal object TestApplication {
     }
 
     internal val tokenXToken: String by lazy {
-        mockOAuth2Server.issueToken(
-            issuerId = Config.TokenX.name,
-            audience = Config.TokenX.audience,
-            claims =
-                mapOf<String, Any>(
-                    "pid" to this.DEFAULT_DUMMY_FODSELNUMMER,
-                ),
-        ).serialize()
+        mockOAuth2Server
+            .issueToken(
+                issuerId = Config.TokenX.name,
+                audience = Config.TokenX.audience,
+                claims =
+                    mapOf<String, Any>(
+                        "pid" to this.DEFAULT_DUMMY_FODSELNUMMER,
+                    ),
+            ).serialize()
     }
 
     internal val azureAd: String by lazy {
-        mockOAuth2Server.issueToken(
-            issuerId = Config.AzureAd.name,
-            audience = Config.AzureAd.audience,
-        ).serialize()
+        mockOAuth2Server
+            .issueToken(
+                issuerId = Config.AzureAd.name,
+                audience = Config.AzureAd.audience,
+            ).serialize()
     }
 
     internal fun withMockAuthServerAndTestApplication(
