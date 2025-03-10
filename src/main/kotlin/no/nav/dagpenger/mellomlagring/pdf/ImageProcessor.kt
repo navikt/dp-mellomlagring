@@ -15,17 +15,16 @@ internal object ImageProcessor {
     fun mergePdf(
         accumulator: ByteArray,
         currentValue: ByteArray,
-    ): ByteArray {
-        return PDFDocument.merge(listOf(accumulator, currentValue)).use { pdf ->
+    ): ByteArray =
+        PDFDocument.merge(listOf(accumulator, currentValue)).use { pdf ->
             ByteArrayOutputStream().use { os ->
                 pdf.save(BufferedOutputStream(os))
                 os.toByteArray()
             }
         }
-    }
 
-    fun ByteArray.tilPdf(): ByteArray {
-        return when {
+    fun ByteArray.tilPdf(): ByteArray =
+        when {
             this.isJpeg() -> {
                 scaleImage(this, "jpeg")
             }
@@ -39,13 +38,12 @@ internal object ImageProcessor {
                 throw IllegalArgumentException("ukjent format")
             }
         }
-    }
 
     private fun scaleImage(
         it: ByteArray,
         format: String,
-    ): ByteArray {
-        return ByteArrayOutputStream().use { os ->
+    ): ByteArray =
+        ByteArrayOutputStream().use { os ->
             ImageIO.write(
                 ImageScaler.scale(
                     it,
@@ -57,5 +55,4 @@ internal object ImageProcessor {
             )
             ImageConverter.toPDF(os.toByteArray())
         }
-    }
 }

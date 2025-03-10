@@ -55,7 +55,10 @@ internal object Config {
             ConfigurationProperties.systemProperties() overriding EnvironmentVariables() overriding defaultProperties
 
     object AzureAd {
-        internal data class PreAuthorizedApp(val name: String, val clientId: String) {
+        internal data class PreAuthorizedApp(
+            val name: String,
+            val clientId: String,
+        ) {
             companion object {
                 fun from(data: String): List<PreAuthorizedApp> = jacksonObjectMapper().readValue(data)
             }
@@ -124,12 +127,14 @@ internal object Config {
     internal fun localStorage(
         storageUrl: String,
         createBucket: Boolean,
-    ) = StorageOptions.newBuilder()
+    ) = StorageOptions
+        .newBuilder()
         .setCredentials(NoCredentials.getInstance())
         .setHost(storageUrl) // From docker-compose
         .setProjectId("dagpenger")
         .build()
-        .service.also { it ->
+        .service
+        .also { it ->
             if (createBucket && it.get(bucketName) == null) {
                 it.create(BucketInfo.of(bucketName))
             }

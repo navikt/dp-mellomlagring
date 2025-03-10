@@ -59,7 +59,8 @@ class MediatorTest {
                 klumpinfo.objektNavn shouldBe "id/f9ece50c-e833-43c6-996e-aa70ddbc9870"
                 klumpinfo.originalFilnavn shouldBe "hubba"
             }
-            mediator.lagre("id", "hubba bubba", "hubba bubba".toByteArray(), "application/octet-stream", "eier")
+            mediator
+                .lagre("id", "hubba bubba", "hubba bubba".toByteArray(), "application/octet-stream", "eier")
                 .let { klumpinfo ->
                     klumpinfo.objektNavn shouldBe "id/7170c6c2-17ca-11ed-861d-0242ac120002"
                     klumpinfo.originalFilnavn shouldBe "hubba bubba"

@@ -11,14 +11,13 @@ internal class VedleggUrn(
     }
 
     val urn: String =
-        kotlin.runCatching { URN.rfc8141().parse("urn:$VEDLEGG_NAMESPACE_IDENTIFIER:$nss") }
+        kotlin
+            .runCatching { URN.rfc8141().parse("urn:$VEDLEGG_NAMESPACE_IDENTIFIER:$nss") }
             .map { it.toString() }
             .onFailure { t -> throw IllegalArgumentException(t) }
             .getOrThrow()
 
-    override fun equals(other: Any?): Boolean {
-        return other != null && other is VedleggUrn && this.urn == other.urn
-    }
+    override fun equals(other: Any?): Boolean = other != null && other is VedleggUrn && this.urn == other.urn
 
     override fun hashCode() = urn.hashCode()
 

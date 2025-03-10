@@ -8,16 +8,17 @@ import no.nav.dagpenger.pdf.InvalidPDFDocument
 import no.nav.dagpenger.pdf.PDFDocument
 import no.nav.dagpenger.pdf.ValidPDFDocument
 
-internal class AntiVirusValidering(private val antiVirus: AntiVirus) : Mediator.FilValidering {
+internal class AntiVirusValidering(
+    private val antiVirus: AntiVirus,
+) : Mediator.FilValidering {
     override suspend fun valider(
         filnavn: String,
         filinnhold: ByteArray,
-    ): FilValideringResultat {
-        return when (antiVirus.infisert(filnavn, filinnhold)) {
+    ): FilValideringResultat =
+        when (antiVirus.infisert(filnavn, filinnhold)) {
             true -> FilValideringResultat.Ugyldig(filnavn, "Fil har virus", FeilType.FILE_VIRUS)
             else -> FilValideringResultat.Gyldig(filnavn)
         }
-    }
 }
 
 internal object FiltypeValidering : Mediator.FilValidering {
