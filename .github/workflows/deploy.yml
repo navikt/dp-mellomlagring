@@ -39,7 +39,7 @@ jobs:
     name: Deploy to dev
     needs: [build]
     environment: dev-gcp
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/upgrade/alot'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.1.0
@@ -50,19 +50,19 @@ jobs:
           VARS: .nais/dev.yaml
           VAR: image=${{ needs.build.outputs.image }}
           PRINT_PAYLOAD: true
-
-  deploy-prod:
-    name: Deploy to Production
-    needs: [build, deploy-dev]
-    environment: prod-gcp
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4.1.0
-      - uses: nais/deploy/actions/deploy@v2
-        env:
-          CLUSTER: prod-gcp
-          RESOURCE: .nais/nais.yaml
-          VARS: .nais/prod.yaml
-          VAR: image=${{ needs.build.outputs.image }}
-          PRINT_PAYLOAD: true
+#
+#  deploy-prod:
+#    name: Deploy to Production
+#    needs: [build, deploy-dev]
+#    environment: prod-gcp
+#    if: github.ref == 'refs/heads/main'
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v4.1.0
+#      - uses: nais/deploy/actions/deploy@v2
+#        env:
+#          CLUSTER: prod-gcp
+#          RESOURCE: .nais/nais.yaml
+#          VARS: .nais/prod.yaml
+#          VAR: image=${{ needs.build.outputs.image }}
+#          PRINT_PAYLOAD: true
