@@ -166,9 +166,9 @@ internal class E2E {
     // må erstattes om en skal sende inn filer på nytt
     private val soknadId = UUID.randomUUID().toString()
 
-    // selvbetjeningstoken er tidsbegrenset, så det må erstattes med jevne mellomrom,
-    // logg inn på søknaden i dev med eier 51818700273 og kopier selvbetjening-token fra devtools ->Appilcation->Storage
-    private val selvbetjeningsIdToken = ""
+    // oboToken er tidsbegrenset, så det må erstattes med jevne mellomrom,
+    // Hent fra https://tokenx-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:teamdagpenger:dp-mellomlagring
+    private val oboToken = ""
 
 
     @Test
@@ -222,11 +222,6 @@ internal class E2E {
                 }
             }
         runBlocking {
-            val oboToken =
-                getOboToken(
-                    "dp-soknadsdialog",
-                    selvbetjeningsIdToken,
-                )
             // Send filer til mellomlagring
             val responseList =
                 measure("Tid brukt på å sender opp filer") {
@@ -276,11 +271,6 @@ internal class E2E {
     fun e2e() {
         runBlocking {
             log("Running test with id: $soknadId and eier $eier")
-            val oboToken =
-                getOboToken(
-                    "dp-soknadsdialog",
-                    selvbetjeningsIdToken,
-                )
 
             // Send ugyldig filer
             log("sender ugyldige filer")
