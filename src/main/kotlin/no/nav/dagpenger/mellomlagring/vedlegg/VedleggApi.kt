@@ -4,7 +4,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.MultiPartData
 import io.ktor.http.content.PartData
-import io.ktor.http.content.forEachPart
+import io.ktor.http.content.asFlow
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.auth.authenticate
@@ -20,9 +20,10 @@ import io.ktor.server.routing.routing
 import io.ktor.utils.io.toByteArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
@@ -141,40 +142,30 @@ internal class FileUploadHandler(
     ): List<KlumpInfo> =
         coroutineScope {
             val files = mutableListOf<Pair<String, ByteArray>>()
-            multiPartData.forEachPart { part ->
-                when (part) {
-                    is PartData.FileItem -> {
-                        val fileName = part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
-                        files.add(fileName to part.provider().toByteArray())
+            multiPartData
+                .asFlow()
+                .mapNotNull { part ->
+                    when (part) {
+                        is PartData.FileItem -> {
+                            val fileName = part.originalFileName ?: throw IllegalArgumentException("Filnavn mangler")
+                            async(Dispatchers.IO) {
+                                mediator.lagre(
+                                    soknadsId = soknadsId,
+                                    filnavn = fileName,
+                                    filinnhold = part.provider().toByteArray(),
+                                    filContentType = "application/octet-stream",
+                                    eier = eier,
+                                )
+                            }
+                        }
+                        else -> {
+                            part.dispose().also {
+                                logger.warn { "Only file item supported" }
+                            }
+                            null
+                        }
                     }
-
-                    is PartData.BinaryItem ->
-                        part.dispose().also {
-                            logger.warn { "binary item not supported" }
-                        }
-
-                    is PartData.FormItem ->
-                        part.dispose().also {
-                            logger.warn { "form item not supported" }
-                        }
-
-                    is PartData.BinaryChannelItem ->
-                        part.dispose().also {
-                            logger.warn { "BinaryChannel item not supported" }
-                        }
-                }
-            }
-            files
-                .map { file ->
-                    async(Dispatchers.IO) {
-                        mediator.lagre(
-                            soknadsId,
-                            file.first,
-                            file.second,
-                            "application/octet-stream",
-                            eier,
-                        )
-                    }
-                }.awaitAll()
+                }.map { it.await() }
+                .toList()
         }
 }
