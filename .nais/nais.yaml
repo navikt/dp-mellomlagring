@@ -9,7 +9,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-body-size: "64M"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
 spec:
-  image: {{image}}
+  image: "{{image}}"
   port: 8080
   liveness:
     path: "internal/isalive"
@@ -59,7 +59,7 @@ spec:
       enabled: true
   env:
     - name: DP_MELLOMLAGRING_BUCKETNAME
-      value: {{bucketName}}
+      value: "{{bucketName}}"
   gcp:
     permissions:
       - resource:
@@ -68,4 +68,4 @@ spec:
           name: /locations/europe-north1/keyRings/dp-mellomlagring/cryptoKeys/dp-mellomlagring
         role: roles/cloudkms.cryptoKeyEncrypterDecrypter
     buckets:
-      - name: {{ bucketName }}
+      - name: "{{ bucketName }}"
