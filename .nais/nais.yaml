@@ -69,3 +69,11 @@ spec:
         role: roles/cloudkms.cryptoKeyEncrypterDecrypter
     buckets:
       - name: "{{ bucketName }}"
+  observability:
+    logging:
+      destinations:
+        - id: loki
+        - id: elastic
+    autoInstrumentation:
+      enabled: true
+      runtime: java
