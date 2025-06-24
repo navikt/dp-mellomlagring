@@ -107,6 +107,6 @@ dependencies {
 
     testImplementation("org.skyscreamer:jsonassert:1.5.3")
 
-    testImplementation("io.kubernetes:client-java:23.0.0")
+    testImplementation("io.kubernetes:client-java:24.0.0-legacy")
     testImplementation("no.nav.dagpenger:oauth2-klient:2025.04.26-14.51.bbf9ece5f5ec")
 }
