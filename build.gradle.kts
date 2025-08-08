@@ -78,7 +78,7 @@ dependencies {
 
     implementation("com.google.crypto.tink:tink:1.18.0")
     implementation("com.google.crypto.tink:tink-gcpkms:1.10.0")
-    implementation("de.slub-dresden:urnlib:2.0.1")
+    implementation("de.slub-dresden:urnlib:3.0.0")
 
     runtimeOnly(libs.logback.core)
     runtimeOnly(libs.logback.classic)
