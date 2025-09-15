@@ -44,6 +44,7 @@ spec:
     inbound:
       rules:
         - application: dp-soknadsdialog
+        - application: dp-brukerdialog-frontend
         - application: dp-behov-soknad-pdf
         - application: dp-behov-pdf-generator
         - application: dp-behov-journalforing
