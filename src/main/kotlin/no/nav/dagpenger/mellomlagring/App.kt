@@ -43,8 +43,10 @@ import org.slf4j.event.Level
 import java.util.UUID
 
 private val logger = KotlinLogging.logger { }
+private val sikkerlogg = KotlinLogging.logger("tjenestekall")
 
 fun main() {
+    sikkerlogg.info { "Starter mellomlagring..." }
     val mediator =
         MediatorImpl(
             store = S3Store(),
