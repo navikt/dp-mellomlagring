@@ -46,8 +46,8 @@ internal object Config {
                 "TOKEN_X_WELL_KNOWN_URL" to "http://localhost:4443",
                 "TOKEN_X_CLIENT_ID" to "tokenxClientId",
                 "AZURE_APP_PRE_AUTHORIZED_APPS" to
-                        //language=JSON
-                        """ [ { "name": "EnApp", "clientId": "clientId-til-tillatt-app-123" } ]""",
+                    //language=JSON
+                    """ [ { "name": "EnApp", "clientId": "clientId-til-tillatt-app-123" } ]""",
             ),
         )
 

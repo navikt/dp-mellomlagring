@@ -20,7 +20,6 @@ import io.ktor.serialization.jackson.jackson
 import io.ktor.util.toUpperCasePreservingASCIIRules
 import io.kubernetes.client.openapi.ApiClient
 import io.kubernetes.client.openapi.apis.CoreV1Api
-import io.kubernetes.client.openapi.models.V1Secret
 import io.kubernetes.client.util.ClientBuilder
 import io.kubernetes.client.util.KubeConfig
 import kotlinx.coroutines.runBlocking
@@ -58,10 +57,20 @@ fun getAuthEnv(
     return CoreV1Api(client)
         .listNamespacedSecret(
             "teamdagpenger",
-        ).execute().items.first {
-            it.metadata.labels?.get("app") == app && it.metadata.labels?.get("type") == type
-        }
-        ?.data!!
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        ).items.first {
+            it.metadata?.labels?.get("app") == app && it.metadata?.labels?.get("type") == type
+        }?.data!!
         .mapValues { e -> String(e.value) }
 }
 
