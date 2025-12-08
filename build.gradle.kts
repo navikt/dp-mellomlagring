@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin)
     alias(libs.plugins.spotless)
     id("com.gradleup.shadow") version "9.2.2"
+    id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
 }
 
 repositories {
@@ -20,27 +21,12 @@ application {
     mainClass.set("no.nav.dagpenger.mellomlagring.AppKt")
 }
 
-tasks.withType<KotlinCompile>().configureEach {
-    kotlinOptions {
-        jvmTarget = "21"
-    }
-    dependsOn("spotlessApply")
-}
-
 kotlin {
-    jvmToolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
-    }
+    jvmToolchain(21)
 }
 
-configure<com.diffplug.gradle.spotless.SpotlessExtension> {
-    kotlin {
-        ktlint()
-    }
-
-    kotlinGradle {
-        ktlint()
-    }
+tasks.withType<KotlinCompile>().configureEach {
+    dependsOn("ktlintFormat")
 }
 
 tasks.withType<Test> {
