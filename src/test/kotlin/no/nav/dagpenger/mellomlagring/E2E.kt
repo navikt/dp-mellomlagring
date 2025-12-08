@@ -58,9 +58,9 @@ fun getAuthEnv(
     return CoreV1Api(client)
         .listNamespacedSecret(
             "teamdagpenger",
-        ).execute().items.filter {
+        ).execute().items.first {
             it.metadata.labels?.get("app") == app && it.metadata.labels?.get("type") == type
-        }.first<V1Secret?>()
+        }
         ?.data!!
         .mapValues { e -> String(e.value) }
 }
