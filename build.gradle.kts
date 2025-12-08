@@ -37,6 +37,10 @@ tasks.withType<Test> {
         exceptionFormat = TestExceptionFormat.FULL
         events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
     }
+    maxParallelForks =
+        Runtime.getRuntime().availableProcessors().also {
+            println("Using $it to build ${project.name}")
+        }
 }
 
 dependencies {
