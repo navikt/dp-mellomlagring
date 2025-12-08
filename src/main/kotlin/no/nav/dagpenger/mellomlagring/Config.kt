@@ -92,6 +92,7 @@ internal object Config {
     object Crypto {
         val aead: Aead by lazy {
             AeadConfig.register()
+
             keysetHandle.getPrimitive(Aead::class.java)
         }
         private val keysetHandle: KeysetHandle by lazy {

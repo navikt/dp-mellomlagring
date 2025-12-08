@@ -2,6 +2,7 @@ package no.nav.dagpenger.mellomlagring
 
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.jackson.jackson
@@ -20,7 +21,6 @@ import io.ktor.server.plugins.swagger.swaggerUI
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
 import io.ktor.server.routing.routing
-import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config.Crypto
 import no.nav.dagpenger.mellomlagring.api.HttpProblem
 import no.nav.dagpenger.mellomlagring.api.health

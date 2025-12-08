@@ -1,6 +1,6 @@
 package no.nav.dagpenger.mellomlagring.pdf
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
 import no.nav.dagpenger.mellomlagring.monitoring.Metrics

@@ -1,5 +1,6 @@
 package no.nav.dagpenger.mellomlagring.vedlegg
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.MultiPartData
@@ -25,7 +26,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withContext
-import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.auth.azureAdEier
 import no.nav.dagpenger.mellomlagring.auth.oboEier

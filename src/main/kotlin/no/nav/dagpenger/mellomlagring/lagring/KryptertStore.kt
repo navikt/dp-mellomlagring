@@ -1,8 +1,8 @@
 package no.nav.dagpenger.mellomlagring.lagring
 
 import com.google.crypto.tink.Aead
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.utils.io.core.toByteArray
-import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.vedlegg.NotFoundException
 import no.nav.dagpenger.mellomlagring.vedlegg.NotOwnerException
 import java.nio.charset.Charset

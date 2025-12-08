@@ -1,10 +1,10 @@
 package no.nav.dagpenger.mellomlagring.vedlegg
 
 import com.google.crypto.tink.Aead
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import mu.KotlinLogging
 import no.nav.dagpenger.mellomlagring.lagring.Klump
 import no.nav.dagpenger.mellomlagring.lagring.KlumpInfo
 import no.nav.dagpenger.mellomlagring.lagring.KryptertStore

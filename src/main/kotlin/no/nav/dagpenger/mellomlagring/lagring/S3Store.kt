@@ -4,7 +4,7 @@ import com.google.cloud.storage.Blob.BlobSourceOption
 import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.dagpenger.mellomlagring.Config
 import java.nio.ByteBuffer
 
