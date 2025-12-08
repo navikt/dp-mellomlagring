@@ -9,6 +9,7 @@ import com.google.cloud.storage.StorageOptions
 import com.google.crypto.tink.Aead
 import com.google.crypto.tink.KeyTemplates
 import com.google.crypto.tink.KeysetHandle
+import com.google.crypto.tink.RegistryConfiguration
 import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.aead.KmsEnvelopeAeadKeyManager
 import com.google.crypto.tink.integration.gcpkms.GcpKmsClient
@@ -45,8 +46,8 @@ internal object Config {
                 "TOKEN_X_WELL_KNOWN_URL" to "http://localhost:4443",
                 "TOKEN_X_CLIENT_ID" to "tokenxClientId",
                 "AZURE_APP_PRE_AUTHORIZED_APPS" to
-                    //language=JSON
-                    """ [ { "name": "EnApp", "clientId": "clientId-til-tillatt-app-123" } ]""",
+                        //language=JSON
+                        """ [ { "name": "EnApp", "clientId": "clientId-til-tillatt-app-123" } ]""",
             ),
         )
 
@@ -92,8 +93,7 @@ internal object Config {
     object Crypto {
         val aead: Aead by lazy {
             AeadConfig.register()
-
-            keysetHandle.getPrimitive(Aead::class.java)
+            keysetHandle.getPrimitive(RegistryConfiguration.get(), Aead::class.java)
         }
         private val keysetHandle: KeysetHandle by lazy {
             KeysetHandle.generateNew(keyTemplate)
