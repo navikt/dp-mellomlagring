@@ -59,8 +59,8 @@ dependencies {
     implementation(libs.bundles.ktor.server)
     implementation(libs.ktor.server.cio)
     implementation(libs.ktor.server.metrics.micrometer)
-    implementation("no.nav.dagpenger:image-utils:2025.11.27-14.20.4aa9aa3d3d14")
-    implementation("no.nav.dagpenger:ktor-client-metrics:2025.11.27-14.20.4aa9aa3d3d14")
+    implementation("no.nav.dagpenger:image-utils:2025.12.19-08.15.2e150cd55270")
+    implementation("no.nav.dagpenger:ktor-client-metrics:2025.12.19-08.15.2e150cd55270")
 
     implementation("io.micrometer:micrometer-registry-prometheus:1.16.1")
     implementation(libs.jackson.datatype.jsr310)
@@ -98,5 +98,5 @@ dependencies {
     testImplementation("org.skyscreamer:jsonassert:1.5.3")
 
     testImplementation("io.kubernetes:client-java:25.0.0-legacy")
-    testImplementation("no.nav.dagpenger:oauth2-klient:2025.11.27-14.20.4aa9aa3d3d14")
+    testImplementation("no.nav.dagpenger:oauth2-klient:2025.12.19-08.15.2e150cd55270")
 }
