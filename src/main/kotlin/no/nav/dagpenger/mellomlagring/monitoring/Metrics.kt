@@ -38,4 +38,19 @@ object Metrics {
             .name("${namespace}_pdf_bundle_request_counter")
             .help("Teller antall pdf bundle")
             .register()
+
+    val vedleggErrorTypesCounter =
+        Counter
+            .builder()
+            .name("${namespace}_vedlegg_error_types_count")
+            .help("Teller feil på vedleggsinnhold")
+            .labelNames("exception_name")
+            .register()
+
+    val vedleggRequestCounter =
+        Counter
+            .builder()
+            .name("${namespace}_vedlegg_request_counter")
+            .help("Teller antall vedlegg")
+            .register()
 }
