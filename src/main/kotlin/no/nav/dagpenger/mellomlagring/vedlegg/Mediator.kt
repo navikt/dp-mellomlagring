@@ -11,6 +11,7 @@ import no.nav.dagpenger.mellomlagring.lagring.KryptertStore
 import no.nav.dagpenger.mellomlagring.lagring.StorageKey
 import no.nav.dagpenger.mellomlagring.lagring.Store
 import no.nav.dagpenger.mellomlagring.lagring.StoreException
+import no.nav.dagpenger.mellomlagring.monitoring.Metrics
 import java.util.UUID
 
 internal interface Mediator {
@@ -100,6 +101,7 @@ internal class MediatorImpl(
         filContentType: String,
         eier: String,
     ): KlumpInfo {
+        Metrics.vedleggRequestCounter.inc()
         valider(filnavn, filinnhold)
         val klumpInfo =
             KlumpInfo(
@@ -164,8 +166,9 @@ internal class MediatorImpl(
                 .associate { it.feilType to it.feilMelding }
                 .takeIf { it.isNotEmpty() }
                 ?.let {
-                    throw UgyldigFilInnhold(filnavn, it).also {
-                        logger.warn { "Filvaliderings feil: ${it.message}" }
+                    throw UgyldigFilInnhold(filnavn, it).also { feil ->
+                        Metrics.vedleggErrorTypesCounter.labelValues(feil.javaClass.simpleName).inc()
+                        logger.warn { "Filvaliderings feil: ${feil.message}" }
                     }
                 }
         }
