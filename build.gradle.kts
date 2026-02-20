@@ -92,8 +92,8 @@ dependencies {
 
     testImplementation(libs.mockk)
 
-    testImplementation("org.jsmart:zerocode-tdd:1.3.45")
-    testImplementation("org.jsmart:zerocode-tdd-jupiter:1.3.45")
+    testImplementation("org.jsmart:zerocode-tdd:1.3.47")
+    testImplementation("org.jsmart:zerocode-tdd-jupiter:1.3.47")
 
     testImplementation("org.skyscreamer:jsonassert:1.5.3")
 
