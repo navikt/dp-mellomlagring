@@ -67,7 +67,7 @@ dependencies {
     implementation("io.ktor:ktor-server-swagger:${libs.versions.ktor.get()}")
 
     implementation("com.google.crypto.tink:tink:1.22.0")
-    implementation("com.google.crypto.tink:tink-gcpkms:1.10.0")
+    implementation("com.google.crypto.tink:tink-gcpkms:1.11.0")
     implementation("de.slub-dresden:urnlib:3.0.0")
 
     runtimeOnly(libs.logback.core)
