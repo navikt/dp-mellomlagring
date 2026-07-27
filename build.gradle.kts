@@ -6,7 +6,7 @@ plugins {
     application
     alias(libs.plugins.kotlin)
     alias(libs.plugins.spotless)
-    id("com.gradleup.shadow") version "9.4.2"
+    id("com.gradleup.shadow") version "9.5.1"
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
 }
 
@@ -66,8 +66,8 @@ dependencies {
     implementation(libs.jackson.datatype.jsr310)
     implementation("io.ktor:ktor-server-swagger:${libs.versions.ktor.get()}")
 
-    implementation("com.google.crypto.tink:tink:1.21.0")
-    implementation("com.google.crypto.tink:tink-gcpkms:1.10.0")
+    implementation("com.google.crypto.tink:tink:1.23.0")
+    implementation("com.google.crypto.tink:tink-gcpkms:1.11.0")
     implementation("de.slub-dresden:urnlib:3.0.0")
 
     runtimeOnly(libs.logback.core)
