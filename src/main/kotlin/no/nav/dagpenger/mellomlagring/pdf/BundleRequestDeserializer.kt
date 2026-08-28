@@ -1,15 +1,15 @@
 package no.nav.dagpenger.mellomlagring.pdf
 
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonDeserializer
-import com.fasterxml.jackson.databind.JsonNode
 import de.slub.urn.URN
 import io.github.oshai.kotlinlogging.KotlinLogging
+import tools.jackson.core.JsonParser
+import tools.jackson.databind.DeserializationContext
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ValueDeserializer
 
 private val sikkerlogg = KotlinLogging.logger("tjenestekall")
 
-internal object BundleRequestDeserializer : JsonDeserializer<BundleRequest>() {
+internal object BundleRequestDeserializer : ValueDeserializer<BundleRequest>() {
     override fun deserialize(
         p: JsonParser,
         ctxt: DeserializationContext,
@@ -22,19 +22,19 @@ internal object BundleRequestDeserializer : JsonDeserializer<BundleRequest>() {
             }.fold(
                 onSuccess = { it },
                 onFailure = { t ->
-                    sikkerlogg.error("Kunne ikke deserialisere bundlerequest: " + t.cause)
+                    sikkerlogg.error(t.cause) { "Kunne ikke deserialisere bundlerequest" }
                     throw IllegalArgumentException(t)
                 },
             )
 
-    private fun JsonNode.soknadId() = this["soknadId"].asText()
+    private fun JsonNode.soknadId() = this["soknadId"].asString()
 
-    private fun JsonNode.bundleNavn() = this.get("bundleNavn").asText()
+    private fun JsonNode.bundleNavn() = this.get("bundleNavn").asString()
 
     private fun JsonNode.urns(): Set<URN> =
-        this
-            .get("filer")
+        this["filer"]
+            .toList()
             .map { urnNode ->
-                URN.rfc8141().parse(urnNode.get("urn").asText())
+                URN.rfc8141().parse(urnNode.get("urn").asString())
             }.toSet()
 }

@@ -21,7 +21,7 @@ internal class S3Store(
     private fun ensureBucketExists() {
         when (gcpStorage.get(bucketName) != null) {
             false -> throw IllegalStateException("Fant ikke bucket med navn $bucketName. Må provisjoneres")
-            true -> logger.info("Bucket $bucketName funnet.")
+            true -> logger.info { "Bucket $bucketName funnet." }
         }
     }
 
@@ -54,7 +54,7 @@ internal class S3Store(
             }.onFailure { e ->
                 logger.warn(e) { "Feilet med å lagre fil med id: ${blobInfo.blobId.name}" }
             }.onSuccess {
-                logger.info("Lagret fil med blobid: ${blobInfo.blobId.name} og bytes: $it")
+                logger.info { "Lagret fil med blobid: ${blobInfo.blobId.name} og bytes: $it" }
             }
     }
 
@@ -63,9 +63,9 @@ internal class S3Store(
             .runCatching {
                 gcpStorage.get(BlobId.of(bucketName, storageKey))?.delete(BlobSourceOption.generationMatch()) ?: false
             }.onFailure { e ->
-                logger.warn("Feilet å slette fil med id: $storageKey", e)
+                logger.warn(e) { "Feilet å slette fil med id: $storageKey" }
             }.onSuccess {
-                logger.info("Fil $storageKey slettet med resultat: $it ")
+                logger.info { "Fil $storageKey slettet med resultat: $it " }
             }
 
     override fun hentKlumpInfo(storageKey: StorageKey): Result<KlumpInfo?> =

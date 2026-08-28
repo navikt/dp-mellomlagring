@@ -72,7 +72,7 @@ internal class PdfApiTest {
                     setBody(bundleBody)
                 }.let { response ->
                     response.status shouldBe HttpStatusCode.Created
-                    response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+                    response.contentType().toString() shouldBe "application/json"
                     //language=JSON
                     response.bodyAsText() shouldBe
                         """{"filnavn":"bundle.pdf","urn":"urn:vedlegg:objektnavn","filsti":"objektnavn","storrelse":0,"tidspunkt":"${

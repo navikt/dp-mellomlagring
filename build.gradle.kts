@@ -3,11 +3,9 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    application
-    alias(libs.plugins.kotlin)
-    alias(libs.plugins.spotless)
-    id("com.gradleup.shadow") version "9.6.1"
+    kotlin("jvm") version "2.4.10"
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
+    application
 }
 
 repositories {
@@ -22,7 +20,7 @@ application {
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(25)
 }
 
 tasks.withType<KotlinCompile>().configureEach {
@@ -52,7 +50,7 @@ dependencies {
 
     implementation(project(":openapi"))
 
-    implementation(libs.jackson.core)
+    implementation(libs.bundles.jackson)
     implementation(libs.konfig)
     implementation(libs.kotlin.logging)
     implementation(libs.bundles.ktor.client)
@@ -63,7 +61,6 @@ dependencies {
     implementation("no.nav.dagpenger:ktor-client-metrics:2025.12.19-08.15.2e150cd55270")
 
     implementation("io.micrometer:micrometer-registry-prometheus:1.17.1")
-    implementation(libs.jackson.datatype.jsr310)
     implementation("io.ktor:ktor-server-swagger:${libs.versions.ktor.get()}")
 
     implementation("com.google.crypto.tink:tink:1.23.0")

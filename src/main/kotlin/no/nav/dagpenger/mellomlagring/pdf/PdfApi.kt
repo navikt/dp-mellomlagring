@@ -1,10 +1,8 @@
 package no.nav.dagpenger.mellomlagring.pdf
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import de.slub.urn.URN
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
-import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -15,6 +13,7 @@ import io.ktor.server.routing.routing
 import no.nav.dagpenger.mellomlagring.Config
 import no.nav.dagpenger.mellomlagring.auth.oboEier
 import no.nav.dagpenger.mellomlagring.vedlegg.VedleggUrn
+import tools.jackson.databind.annotation.JsonDeserialize
 import java.time.ZonedDateTime
 
 internal fun Application.pdfApi(mediator: BundleMediator) {

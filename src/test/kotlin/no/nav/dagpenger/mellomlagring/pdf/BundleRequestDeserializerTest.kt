@@ -1,9 +1,9 @@
 package no.nav.dagpenger.mellomlagring.pdf
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.matchers.shouldBe
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.ObjectMapper
 
 internal class BundleRequestDeserializerTest {
     @Test

@@ -97,7 +97,7 @@ internal class VedleggApiTest {
             listOf(TestFixture.TokenX(), TestFixture.AzureAd()).forEach { fixture ->
                 client.get("${fixture.path}/vedlegg/id") { autentisert(fixture) }.let { response ->
                     response.status shouldBe HttpStatusCode.OK
-                    response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+                    response.contentType().toString() shouldBe "application/json"
                     //language=JSON
                     response.bodyAsText() shouldBeJson """[
   {
@@ -119,7 +119,7 @@ internal class VedleggApiTest {
 
                 client.get("${fixture.path}/vedlegg/finnesikke") { autentisert(fixture) }.let { response ->
                     response.status shouldBe HttpStatusCode.OK
-                    response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+                    response.contentType().toString() shouldBe "application/json"
                     response.bodyAsText() shouldBe """[]"""
                 }
             }
@@ -175,7 +175,7 @@ internal class VedleggApiTest {
                         )
                     }.let { response ->
                         response.status shouldBe HttpStatusCode.Created
-                        response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+                        response.contentType().toString() shouldBe "application/json"
                         response.bodyAsText().let {
                             //                        json.size() shouldBe 2
                             jacksonObjectMapper()
@@ -258,7 +258,7 @@ internal class VedleggApiTest {
     "tidspunkt": "${now.format(ISO_OFFSET_DATE_TIME)}"
   }
 ]"""
-                        response.contentType().toString() shouldBe "application/json; charset=UTF-8"
+                        response.contentType().toString() shouldBe "application/json"
                     }
             }
         }
