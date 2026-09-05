@@ -49,6 +49,7 @@ spec:
         - application: dp-behov-pdf-generator
         - application: dp-behov-journalforing
         - application: dp-vaktmester-mellomlagring
+        - application: dp-mine-dagpenger-frontend
         {{#if wonderwalled}}
         - application: tokenx-token-generator
           namespace: nais
