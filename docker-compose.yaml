@@ -1,7 +1,7 @@
 version: '3'
 services:
   s3:
-    image: fsouza/fake-gcs-server
+    image: fsouza/fake-gcs-server@sha256:797ce226d62f947c009dc40246b30cfb456b8473d8241407f9d6f2c04e4d69ef
     entrypoint: [ "/bin/fake-gcs-server", "-data", "/data", "-scheme", "http" ]
     ports:
       - "50000:4443"
