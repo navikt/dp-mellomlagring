@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/github/copilot-cli-hooks-schema/main/schema.json",
+  "hooks": {
+    "sessionEnd": [
+      {
+        "name": "ktlint-format",
+        "description": "Formatterer Kotlin-kode med ktlint før sesjonen avsluttes (samme sjekk som dependsOn KotlinCompile i build.gradle.kts).",
+        "command": "./gradlew ktlintFormat"
+      }
+    ]
+  }
+}
