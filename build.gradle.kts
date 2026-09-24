@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "2.4.20"
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
+    alias(libs.plugins.shadow.jar)
     application
 }
 
