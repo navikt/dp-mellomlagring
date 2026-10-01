@@ -46,7 +46,7 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(platform(kotlin("bom")))
 
-    implementation(platform("com.google.cloud:libraries-bom:26.89.0"))
+    implementation(platform("com.google.cloud:libraries-bom:26.90.0"))
     implementation("com.google.cloud:google-cloud-storage")
 
     implementation(project(":openapi"))
