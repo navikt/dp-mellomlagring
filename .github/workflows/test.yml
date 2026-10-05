@@ -1,6 +1,7 @@
 name: Test Branches
 
 on:
+  merge_group: 
   push:
     branches-ignore:
       - 'main'
