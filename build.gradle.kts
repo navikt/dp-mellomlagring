@@ -65,7 +65,7 @@ dependencies {
     implementation("io.micrometer:micrometer-registry-prometheus:1.17.1")
     implementation("io.ktor:ktor-server-swagger:${libs.versions.ktor.get()}")
 
-    implementation("com.google.crypto.tink:tink:1.23.0")
+    implementation("com.google.crypto.tink:tink:1.24.0")
     implementation("com.google.crypto.tink:tink-gcpkms:1.12.0")
     implementation("de.slub-dresden:urnlib:3.0.0")
 
