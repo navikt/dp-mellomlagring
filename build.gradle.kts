@@ -60,7 +60,7 @@ dependencies {
     implementation(libs.ktor.server.metrics.micrometer)
 
     implementation("no.nav.dagpenger:image-utils:2026.10.19-06.23.ec3aaa4756e0")
-    implementation("no.nav.dagpenger:ktor-client-metrics:2026.10.15-18.29.4e256bf96fe2")
+    implementation("no.nav.dagpenger:ktor-client-metrics:2026.10.19-06.23.ec3aaa4756e0")
 
     implementation("io.micrometer:micrometer-registry-prometheus:1.17.1")
     implementation("io.ktor:ktor-server-swagger:${libs.versions.ktor.get()}")
