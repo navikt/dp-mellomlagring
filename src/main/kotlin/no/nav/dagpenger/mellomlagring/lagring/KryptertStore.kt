@@ -20,7 +20,6 @@ internal class KryptertStore(
 ) : Store {
     companion object {
         private val charset = Charset.forName("ISO-8859-1")
-        internal const val MAKS_NYE_FORSØK = 15
     }
 
     override fun hent(storageKey: StorageKey): Result<Klump?> =
@@ -33,7 +32,7 @@ internal class KryptertStore(
     override fun slett(storageKey: StorageKey): Result<Boolean> = requireEier(storageKey) { store.slett(storageKey) }
 
     override fun hentKlumpInfo(storageKey: StorageKey): Result<KlumpInfo?> {
-        val klumpInfo = hentKlumpInfoMedRetry(storageKey)
+        val klumpInfo = store.hentKlumpInfo(storageKey)
         return klumpInfo.fold(
             onSuccess = {
                 when (it) {
@@ -53,56 +52,14 @@ internal class KryptertStore(
         )
     }
 
-    override fun listKlumpInfo(keyPrefix: StorageKey): Result<List<KlumpInfo>> {
-        val sjekket = mutableSetOf<String>()
-        val egne = linkedMapOf<String, KlumpInfo>()
-        var forsøk = 0
-        while (true) {
-            val liste = store.listKlumpInfo(keyPrefix).getOrElse { return Result.failure(it) }
-            liste
-                .filter { it.objektNavn !in sjekket && !it.harKodetEier() }
-                .forEach {
-                    sjekket.add(it.objektNavn)
-                    if (it.erEier()) egne[it.objektNavn] = it
-                }
-            val gjenstårKodet = liste.any { it.objektNavn !in sjekket }
-            if (!gjenstårKodet || forsøk >= MAKS_NYE_FORSØK) {
-                if (forsøk > 0) registrerRetry("listing av $keyPrefix", forsøk, lyktes = !gjenstårKodet)
-                return Result.success(egne.values.toList())
-            }
-            forsøk++
-        }
-    }
-
-    // GCS returnerer av og til binær eier-metadata RFC 2047-kodet (=?UTF-8?Q?...?=), som ikke kan dekrypteres.
-    // Samme objekt gir ofte rå verdi ved neste kall. Gjelder bare objekter uten eier_v2. Henter bare metadata, ikke innhold.
-    private fun hentKlumpInfoMedRetry(storageKey: StorageKey): Result<KlumpInfo?> {
-        var resultat = store.hentKlumpInfo(storageKey)
-        var forsøk = 0
-        while (forsøk < MAKS_NYE_FORSØK && resultat.getOrNull()?.harKodetEier() == true) {
-            forsøk++
-            resultat = store.hentKlumpInfo(storageKey)
-        }
-        if (forsøk > 0) registrerRetry(storageKey, forsøk, lyktes = resultat.getOrNull()?.harKodetEier() != true)
-        return resultat
-    }
-
-    private fun registrerRetry(
-        hva: String,
-        forsøk: Int,
-        lyktes: Boolean,
-    ) {
-        logger.info { "Eier-metadata var RFC 2047-kodet ved $hva. Nye forsøk: $forsøk, lyktes: $lyktes" }
-        Metrics.eierMetadataRetryCounter.labelValues(if (lyktes) "ok" else "feilet").inc()
-    }
-
-    private fun KlumpInfo.harKodetEier(): Boolean = eierV2 == null && eier?.startsWith("=?") == true
+    override fun listKlumpInfo(keyPrefix: StorageKey): Result<List<KlumpInfo>> =
+        store.listKlumpInfo(keyPrefix).map { liste -> liste.filter { it.erEier() } }
 
     private inline fun <T> requireEier(
         storageKey: StorageKey,
         resultSupplier: () -> Result<T>,
     ): Result<T> =
-        hentKlumpInfoMedRetry(storageKey).fold(
+        store.hentKlumpInfo(storageKey).fold(
             onSuccess = {
                 when (it) {
                     null -> Result.failure(NotFoundException(storageKey))
@@ -121,23 +78,41 @@ internal class KryptertStore(
         )
 
     private fun KlumpInfo?.erEier(): Boolean {
+        if (this == null) return false
+        if (eierV2 == null && KodetEier.erKodet(eier)) return erEierAvKodet(eier!!)
         val kryptertEier: ByteArray? =
             when {
-                this == null -> null
                 eierV2 != null -> runCatching { Base64.getDecoder().decode(eierV2) }.getOrNull()
                 else -> eier?.toByteArray(charset)
             }
         if (kryptertEier == null) {
-            sikkerlogg.warn { "Fant ikke gyldig eier for klumpinfo: ${this?.objektNavn}" }
+            sikkerlogg.warn { "Fant ikke gyldig eier for klumpinfo: $objektNavn" }
             return false
         }
-        return try {
-            aead.decrypt(kryptertEier, fnr.toByteArray()).toString(charset) == fnr
-        } catch (e: GeneralSecurityException) {
-            sikkerlogg.warn { "Fnr matcher ikke fødselsnummer på ressurs" }
-            false
+        return dekrypterOgSammenlign(kryptertEier).also {
+            if (!it) sikkerlogg.warn { "Fnr matcher ikke fødselsnummer på ressurs" }
         }
     }
+
+    // Gamle objekter uten eier_v2: GCS returnerer eier RFC 2047-kodet og tvetydig (se KodetEier).
+    // AEAD avviser alle kandidater som ikke er nøyaktig den opprinnelige ciphertexten for dette fnr.
+    private fun KlumpInfo.erEierAvKodet(kodet: String): Boolean {
+        val kandidater = KodetEier.kandidater(kodet)
+        val treff = kandidater.indexOfFirst { dekrypterOgSammenlign(it) }
+        val lyktes = treff >= 0
+        logger.info {
+            "Eier-metadata var RFC 2047-kodet ved $objektNavn. Kandidater: ${kandidater.size}, forsøk: ${if (lyktes) treff + 1 else kandidater.size}, lyktes: $lyktes"
+        }
+        Metrics.eierMetadataDekodetCounter.labelValues(if (lyktes) "ok" else "feilet").inc()
+        return lyktes
+    }
+
+    private fun dekrypterOgSammenlign(kryptertEier: ByteArray): Boolean =
+        try {
+            aead.decrypt(kryptertEier, fnr.toByteArray()).toString(charset) == fnr
+        } catch (e: GeneralSecurityException) {
+            false
+        }
 
     private fun Klump.encrypt(eier: String): Klump {
         val kryptertEier = this.klumpInfo.eier?.let { aead.encrypt(it.toByteArray(charset), fnr.toByteArray()) }

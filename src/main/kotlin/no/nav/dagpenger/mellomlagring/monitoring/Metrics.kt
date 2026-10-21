@@ -47,11 +47,11 @@ object Metrics {
             .labelNames("exception_name")
             .register()
 
-    val eierMetadataRetryCounter =
+    val eierMetadataDekodetCounter =
         Counter
             .builder()
-            .name("${namespace}_eier_metadata_retry_count")
-            .help("Teller nye lesinger av eier-metadata som GCS returnerte RFC 2047-kodet")
+            .name("${namespace}_eier_metadata_dekodet_count")
+            .help("Teller eierskapssjekker der GCS returnerte eier-metadata RFC 2047-kodet og vi dekodet den")
             .labelNames("resultat")
             .register()
 
