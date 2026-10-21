@@ -23,6 +23,7 @@ internal data class KlumpInfo(
     val eier: String? = null,
     val filContentType: String = "application/octet-stream",
     val tidspunkt: ZonedDateTime = ZonedDateTime.now(ZoneId.of("Europe/Oslo")),
+    val eierV2: String? = null,
 ) {
     companion object {
         fun fromBlob(blob: Blob): KlumpInfo {
@@ -39,6 +40,7 @@ internal data class KlumpInfo(
                 storrelse = blob.metadata?.get("storrelse ")?.toLong() ?: 0,
                 filContentType = blob.contentType ?: "application/octet-stream",
                 eier = blob.metadata?.get("eier"),
+                eierV2 = blob.metadata?.get("eier_v2"),
                 tidspunkt = tidspunkt,
             )
         }
@@ -51,6 +53,7 @@ internal data class KlumpInfo(
             "tidspunkt" to tidspunkt.toString(),
         ).also { map ->
             eier?.let { map["eier"] = it }
+            eierV2?.let { map["eier_v2"] = it }
         }.toMap()
 }
 
