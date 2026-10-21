@@ -47,6 +47,14 @@ object Metrics {
             .labelNames("exception_name")
             .register()
 
+    val eierMetadataRetryCounter =
+        Counter
+            .builder()
+            .name("${namespace}_eier_metadata_retry_count")
+            .help("Teller nye lesinger av eier-metadata som GCS returnerte RFC 2047-kodet")
+            .labelNames("resultat")
+            .register()
+
     val vedleggRequestCounter =
         Counter
             .builder()
