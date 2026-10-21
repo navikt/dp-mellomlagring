@@ -4,6 +4,8 @@ Fillager for dp-* applikasjoner. Lagrer dokumenter i gs buckets.
 
 ## [Kryptering med Google Tink](docs/encryption.md)
 
+## [Eier-metadata og RFC 2047-koding fra GCS](docs/eier-metadata.md)
+
 ## Manuelle tester i dev
 Filoperasjoner mot gs er ikke alltid mulig å gjøre lokalt. Tester mot dev kan kjøres via E2E klassen i testmappa
 
