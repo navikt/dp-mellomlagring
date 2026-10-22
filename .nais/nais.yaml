@@ -6,6 +6,8 @@ metadata:
   labels:
     "team": "teamdagpenger"
     "subteam": "stsb"
+    "okonomisystem": "false"
+    "fagsystem": "DAGPENGER"
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "64M"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
