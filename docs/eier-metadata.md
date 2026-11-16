@@ -1,6 +1,6 @@
 # Eier-metadata og RFC 2047-koding fra GCS
 
-Hver fil har eieren(ident) lagret kryptert i GCS-metadata. Siden 21. oktober 2026 returnerer GCS feltet `eier` kodet og med endrede linjeskift. Derfor kan vi ikke lese eieren direkte for filer som er lastet opp før 21. oktober 2026. Dette dokumentet forklarer hvorfor, hvordan appen håndterer det, og hva du gjør når en fil likevel feiler.
+Hver fil har eieren (ident) lagret kryptert i GCS-metadata. Fra 21. oktober 2026 returnerte GCS i en periode feltet `eier` kodet og med endrede linjeskift. Dette dokumentet forklarer hva som skjedde, og hvorfor vi har to eierfelt.
 
 ## Slik lagres eieren
 
@@ -11,86 +11,33 @@ Hver fil har eieren(ident) lagret kryptert i GCS-metadata. Siden 21. oktober 202
 | `eier` | Rå bytes tolket som ISO-8859-1-streng | Alle versjoner |
 | `eier_v2` | Base64 av de samme bytene | Fra 21. oktober 2026 kl. 11.38 |
 
-Filer fra før det tidspunktet har bare `eier`.
+Filer fra før det tidspunktet har bare `eier`. Eierskapssjekken bruker `eier_v2` når feltet finnes, og ellers `eier`.
 
-## Hva GCS gjør med `eier`
+## Hva som skjedde
 
-Når GCS returnerer binær metadata, skjer to ting med verdien:
+Fra 21. oktober 2026 kl. 01.25 UTC gjorde GCS to ting med binær metadata før den ble returnert:
 
-1. Både `\n` og `\r` blir til `\r\n`.
-2. Resultatet blir RFC 2047-kodet, for eksempel `=?UTF-8?Q?=00=00=00c=0D=0A=24...?=`.
+1. Både `\n` og `\r` ble til `\r\n`.
+2. Resultatet ble RFC 2047-kodet, for eksempel `=?UTF-8?Q?=00=00=00c=0D=0A=24...?=`.
 
-Steg 2 kan reverseres. Steg 1 kan ikke, fordi vi ikke vet om en `\r\n` opprinnelig var `\n`, `\r` eller `\r\n`.
+Steg 1 kan ikke reverseres, så AEAD-dekrypteringen feilet og appen svarte 403 for gamle filer. Vi la til `eier_v2` for nye filer og dekoding med kandidater for gamle filer.
 
-Vi har testet JSON-, XML- og gRPC-API-et mot filer der fasiten ligger i `eier_v2`. Alle tre returnerte samme kodede verdi, og ingen av dem returnerte de opprinnelige bytene.
+Google bekreftet 16. november 2026 at endringen var ment å gjøre XML-API-et RFC 9110-kompatibelt, der metadata returneres som `x-goog-meta-*`-headere. Den lå i en felles komponent og traff derfor også JSON-API-et. Google har bekreftet dette:
 
-Vi så kodede verdier første gang 21. oktober 2026. Om formiddagen gjaldt det noen av kallene for gamle filer. Fra ettermiddagen gjaldt det alle kallene vi sjekket. Vi vet ikke om endringen er permanent.
+- JSON-API-et og gRPC returnerer metadata som før, også med linjeskift.
+- Kodingen er slått av til den bare gjelder XML-API-et.
+- Fremtidige endringer i XML-API-et blir varslet i release notes.
 
-## Slik løser appen det
+16. november 2026 returnerte dev-bucketen `eier` rått for alle 4945 filer uten `eier_v2`. Dekodingen er derfor fjernet.
 
-`eier_v2` er base64 og blir ikke endret av GCS. Nye filer bruker det feltet.
+## Hvorfor vi beholder `eier_v2`
 
-For gamle filer uten `eier_v2` gjør [`KodetEier`](../src/main/kotlin/no/nav/dagpenger/mellomlagring/lagring/KodetEier.kt) dette:
+Base64 tåler at GCS endrer håndteringen av binær metadata igjen. Det gjelder også hvis vi tar i bruk XML-API-et. Ikke fjern `eier_v2` eller begynn å lese bare `eier` på nytt.
 
-1. Den dekoder RFC 2047 med `QCodec` eller `BCodec` fra commons-codec.
-2. Den deler verdien på hver `\r\n` og lager alle mulige originaler, de såkalte kandidatene. Hvert tvetydig sted kan være `\n`, `\r` eller `\r\n`, så n steder gir 3ⁿ kandidater.
-3. Den sorterer kandidatene med færrest `\r\n` først og deretter færrest `\r`. Ekte `\r\n` i ciphertext er sjeldent.
+## Hvis det skjer igjen
 
-`KryptertStore.erEierAvKodet` prøver kandidatene med `aead.decrypt(kandidat, fnr)`. Bare den nøyaktig riktige originalen kan dekrypteres med fødselsnummeret til den som spør. Feil person kan derfor aldri få tilgang, uansett hvor mange kandidater som prøves.
-
-Eksempel: originalen `A B \n C D` kommer tilbake som `A B \r\n C D`. Kandidatene blir da `A B \n C D`, `A B \r C D` og `A B \r\n C D`.
-
-### Grenser
-
-Hver kandidat koster ett KMS-kall. Derfor har koden to grenser:
-
-- `MAKS_TVETYDIGE = 6`: Har filen flere tvetydige steder enn det, gir vi opp med en gang.
-- `MAKS_KANDIDATER = 32`: Vi prøver maksimalt 32 kandidater.
-
-I prod har riktig kandidat stort sett vært nummer 1, og det høyeste vi har sett, er nummer 6. Når riktig person spør, gir dette omtrent 25 % flere KMS-kall for gamle filer. Når feil person spør, prøves alle kandidatene, opptil 32 KMS-kall.
-
-### Når det feiler
-
-Finner vi ingen kandidat, svarer appen 403, som før.
-
-Vi anslår at dette gjelder rundt 0,2 % av de gamle filene som blir lest. Tallet er regnet ut, ikke målt. Utregningen bygger på at omtrent 130 av de 141 bytene er tilfeldige, og at hver av dem har sannsynlighet 2/256 for å være `\n` eller `\r`. Byte 4 er alltid `\n`.
-
-| Tvetydige steder | Andel filer | Resultat |
-|---|---|---|
-| 1–5 | ~99,6 % | Alle kandidater uten `\r\n` blir prøvd |
-| 6 | ~0,33 % | Bare 32 av 64 blir prøvd, så omtrent halvparten feiler |
-| 7 eller flere | ~0,07 % | Vi gir opp |
-
-## Overvåking
-
-- Metrikk: `dp_mellomlagring_eier_metadata_dekodet_count{resultat="ok"|"feilet"}`
-- Logglinje per sjekk, uten fødselsnummer: `Eier-metadata var RFC 2047-kodet ved <objekt>. Kandidater: X, forsøk: Y, lyktes: true|false`
-
-## Manuell fiks for en fil som feiler
-
-Med fødselsnummeret til eieren kan vi finne riktig kandidat utenfor appen, uten grensene, og skrive den til `eier_v2`. Fødselsnummeret finner vi ut fra søknad-ID-en, som er første del av objektnavnet.
-
-1. Finn objektnavnet i loggen (`lyktes: false`).
-2. Finn fødselsnummeret via søknad-ID-en.
-3. Lag alle kandidatene og dekrypter hver av dem med KMS-nøkkelen `dp-mellomlagring` og fødselsnummeret som associated data. Bare én kandidat dekrypterer.
-4. Skriv den kandidaten base64-kodet til `eier_v2`:
-
-```bash
-curl -s -X PATCH \
-  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-  -H "Content-Type: application/json" \
-  -d '{"metadata":{"eier_v2":"<base64>"}}' \
-  "https://storage.googleapis.com/storage/v1/b/teamdagpenger-mellomlagring-prod/o/<url-kodet objektnavn>"
-```
-
-5. Sjekk at filen kan hentes.
-
-> [!CAUTION]
-> Fødselsnummeret skal bare ligge i minnet. Det skal ikke inn i filer, logger eller shell-historikk. Steg 3 krever decrypt-tilgang til KMS-nøkkelen i prod.
-
-Det finnes ikke noe ferdig verktøy for steg 3 ennå. Fire filer ble fikset 21. oktober 2026 ved å prøve kandidat 1 og 2 direkte.
+Kommer `eier` kodet tilbake igjen, får gamle filer 403 med `Fnr matcher ikke fødselsnummer på ressurs` i sikkerloggen. Dekodingen som fantes, ligger i git-historikken (`KodetEier.kt`).
 
 ## Veien videre
 
 - Slutte å skrive `eier` når alle filer har `eier_v2`.
-- Få bekreftet fra Nais eller Google om endringen er permanent.

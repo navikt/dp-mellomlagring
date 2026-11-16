@@ -33,8 +33,8 @@ docker-compose up                                                     # Start fa
 - **`lagring/`** — `Store`-interfacet dekoreres: `S3Store` (ekte GCS-tilgang) wrappes av
   `KryptertStore`, som legger til Tink-kryptering av filinnhold og eier-metadata, samt
   eierskapskontroll. All tilgang går via `MediatorImpl.kryptertStore(eier)`.
-  GCS returnerer `eier` RFC 2047-kodet for gamle filer; se `docs/eier-metadata.md` før du endrer
-  `KodetEier` eller eierskapssjekken.
+  Eier lagres i både `eier` og `eier_v2` (base64); se `docs/eier-metadata.md` før du endrer
+  eierskapssjekken.
 - **`pdf/`** — `BundleMediator` bygger sammensatte PDF-er fra flere vedlegg; wrapper `Mediator`.
 - **`av/`** — `AntiVirus` (ClamAV) er én av flere `Mediator.FilValidering`-implementasjoner som
   kjøres parallelt via coroutines.

@@ -3,7 +3,6 @@ package no.nav.dagpenger.mellomlagring.lagring
 import com.google.crypto.tink.Aead
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.utils.io.core.toByteArray
-import no.nav.dagpenger.mellomlagring.monitoring.Metrics
 import no.nav.dagpenger.mellomlagring.vedlegg.NotFoundException
 import no.nav.dagpenger.mellomlagring.vedlegg.NotOwnerException
 import java.nio.charset.Charset
@@ -11,7 +10,6 @@ import java.security.GeneralSecurityException
 import java.util.Base64
 
 private val sikkerlogg = KotlinLogging.logger("tjenestekall")
-private val logger = KotlinLogging.logger {}
 
 internal class KryptertStore(
     private val fnr: String,
@@ -79,7 +77,6 @@ internal class KryptertStore(
 
     private fun KlumpInfo?.erEier(): Boolean {
         if (this == null) return false
-        if (eierV2 == null && KodetEier.erKodet(eier)) return erEierAvKodet(eier!!)
         val kryptertEier: ByteArray? =
             when {
                 eierV2 != null -> runCatching { Base64.getDecoder().decode(eierV2) }.getOrNull()
@@ -92,19 +89,6 @@ internal class KryptertStore(
         return dekrypterOgSammenlign(kryptertEier).also {
             if (!it) sikkerlogg.warn { "Fnr matcher ikke fødselsnummer på ressurs" }
         }
-    }
-
-    // Gamle objekter uten eier_v2: GCS returnerer eier RFC 2047-kodet og tvetydig (se KodetEier).
-    // AEAD avviser alle kandidater som ikke er nøyaktig den opprinnelige ciphertexten for dette fnr.
-    private fun KlumpInfo.erEierAvKodet(kodet: String): Boolean {
-        val kandidater = KodetEier.kandidater(kodet)
-        val treff = kandidater.indexOfFirst { dekrypterOgSammenlign(it) }
-        val lyktes = treff >= 0
-        logger.info {
-            "Eier-metadata var RFC 2047-kodet ved $objektNavn. Kandidater: ${kandidater.size}, forsøk: ${if (lyktes) treff + 1 else kandidater.size}, lyktes: $lyktes"
-        }
-        Metrics.eierMetadataDekodetCounter.labelValues(if (lyktes) "ok" else "feilet").inc()
-        return lyktes
     }
 
     private fun dekrypterOgSammenlign(kryptertEier: ByteArray): Boolean =
