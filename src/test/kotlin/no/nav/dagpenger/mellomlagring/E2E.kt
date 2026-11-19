@@ -61,20 +61,9 @@ fun getAuthEnv(
     val client: ApiClient = ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(FileReader(kubeConfigPath))).build()
 
     return CoreV1Api(client)
-        .listNamespacedSecret(
-            "teamdagpenger",
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
-        ).items.first {
+        .listNamespacedSecret("teamdagpenger")
+        .execute()
+        .items.first {
             it.metadata?.labels?.get("app") == app && it.metadata?.labels?.get("type") == type
         }?.data!!
         .mapValues { e -> String(e.value) }
