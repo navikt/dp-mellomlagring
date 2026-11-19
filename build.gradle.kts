@@ -62,7 +62,7 @@ dependencies {
     implementation("no.nav.dagpenger:image-utils:2026.11.12-12.16.6c115ef19241")
     implementation("no.nav.dagpenger:ktor-client-metrics:2026.11.12-12.16.6c115ef19241")
 
-    implementation("io.micrometer:micrometer-registry-prometheus:1.17.2")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.18.0")
     implementation("io.ktor:ktor-server-swagger:${libs.versions.ktor.get()}")
 
     implementation("com.google.crypto.tink:tink:1.24.0")
